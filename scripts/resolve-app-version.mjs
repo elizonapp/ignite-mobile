@@ -55,3 +55,10 @@ export function resolveAppVersion() {
   const sha = resolveBuildSha();
   return sha ? `${semver} (${sha})` : semver;
 }
+
+/** Git tag for releases, e.g. v0.8.2-ba3559d */
+export function resolveReleaseTag() {
+  const semver = resolveAppSemver();
+  const sha = resolveBuildSha();
+  return sha ? `v${semver}-${sha}` : `v${semver}`;
+}

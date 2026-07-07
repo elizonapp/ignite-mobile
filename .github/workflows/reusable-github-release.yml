@@ -1,0 +1,66 @@
+name: Reusable — GitHub release
+
+on:
+  workflow_call:
+    inputs:
+      project-dir:
+        type: string
+        required: true
+
+jobs:
+  release:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.10"
+
+      - name: Resolve release metadata
+        id: meta
+        working-directory: ${{ inputs.project-dir }}
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          TAG=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log(m.resolveReleaseTag()))")
+          TITLE=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log('elizon ' + m.resolveAppVersion()))")
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-files
+          pattern: "*"
+          merge-multiple: false
+
+      - name: List release files
+        run: find release-files -type f | sort
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.title }}
+          generate_release_notes: true
+          make_latest: true
+          overwrite: true
+          body: |
+            Automated elizon client build from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+
+            ### Artifacts
+
+            | Platform | Folder |
+            |---|---|
+            | Web bundle | `web-dist/` |
+            | Linux (AppImage) | `desktop-linux/` |
+            | Windows installer | `desktop-windows-installer/` |
+            | Windows portable | `desktop-windows-portable/` |
+            | macOS (DMG) | `desktop-macos/` |
+            | Android (debug APK) | `android-debug-apk/` |
+          files: |
+            release-files/**/*

@@ -46,3 +46,11 @@ jobs:
     with:
       project-dir: .
     secrets: inherit
+
+  release:
+    needs: [web-build, desktop-linux, desktop-windows, desktop-macos, android]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    uses: ./.github/workflows/reusable-github-release.yml
+    with:
+      project-dir: .
+    secrets: inherit

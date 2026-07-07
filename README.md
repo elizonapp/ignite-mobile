@@ -115,6 +115,15 @@ Workflow **Build** (standalone repo) or **Mobile App** (monorepo orchestrator):
 
 Artifacts are available for 14–30 days under **Actions → Run → Artifacts**.
 
+### GitHub Releases
+
+On every push to `main`, the **Build** workflow creates a [GitHub Release](https://github.com/elizonapp/ignite-mobile/releases) after all platform jobs succeed:
+
+- Tag format: `v{semver}-{short-sha}` (e.g. `v0.8.2-ba3559d`)
+- Attachments: web bundle, Linux AppImage, Windows installer + portable, macOS DMG, Android debug APK
+
+Pull request builds do not publish releases (artifacts only).
+
 ## Monorepo development
 
 In the `ignite-2` monorepo, shared types and API logic historically lived under `lib/`. The client is **mirror-standalone**: imports must not point at `../../lib/`. Shared files live under `src/api/` and `src/shared/`.
