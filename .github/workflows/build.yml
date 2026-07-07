@@ -46,10 +46,3 @@ jobs:
     with:
       project-dir: .
     secrets: inherit
-
-  ios:
-    needs: web-build
-    uses: ./.github/workflows/reusable-ios.yml
-    with:
-      project-dir: .
-    secrets: inherit
