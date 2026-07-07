@@ -52,4 +52,21 @@ export class ShopResource extends ResourceClient {
       { productIds: productId },
     );
   }
+
+  productView(categoryKey: string, productSlug: string) {
+    return this.get<Record<string, unknown>>(
+      `/api/products/${encodeURIComponent(categoryKey)}/${encodeURIComponent(productSlug)}/view`,
+    );
+  }
+
+  productTemplates(productId: string) {
+    return this.get<{ success: boolean; templates?: Array<{ templateId: number; name: string; displayName: string; cloudInitSupport: boolean; cloudInitUsername?: string }> }>(
+      "/api/products/templates",
+      { productId },
+    );
+  }
+
+  publicSettings() {
+    return this.get<{ success: boolean; settings?: Record<string, unknown> }>("/api/public-settings");
+  }
 }

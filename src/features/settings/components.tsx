@@ -36,12 +36,14 @@ export function SettingsNavRow({
   icon,
   label,
   hint,
+  badge,
   onClick,
   danger,
 }: {
   icon: React.ReactNode;
   label: string;
   hint?: string;
+  badge?: string;
   onClick: () => void;
   danger?: boolean;
 }) {
@@ -50,7 +52,14 @@ export function SettingsNavRow({
       <div className="flex items-center gap-3">
         <span className={cn("shrink-0 text-(--text-muted)", danger && "text-(--error)")}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <p className={cn("text-sm font-medium", danger ? "text-(--error)" : "text-(--text-primary)")}>{label}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className={cn("text-sm font-medium", danger ? "text-(--error)" : "text-(--text-primary)")}>{label}</p>
+            {badge && (
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-200">
+                {badge}
+              </span>
+            )}
+          </div>
           {hint && <p className="mt-0.5 text-[11px] text-(--text-muted)">{hint}</p>}
         </div>
       </div>

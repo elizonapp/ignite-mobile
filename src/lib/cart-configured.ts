@@ -1,14 +1,15 @@
 import type { CartItem } from "./cart-service";
 import type {
-  ConfiguratorProviderOptions,
+  ProductProviderOptions,
   ShopProductDetail,
   ShopUpgradeConfig,
 } from "./shop-product-detail";
 import { numSpec } from "./shop-product-detail";
+import { productUsesMbResources } from "./product-pricing";
 
 export function buildCustomizationPayload(
   product: ShopProductDetail,
-  options: Pick<ConfiguratorProviderOptions, "vcores" | "memory" | "storage">,
+  options: ProductProviderOptions,
   usesMb: boolean,
   upgradeConfig: ShopUpgradeConfig | null,
 ): Pick<CartItem, "customization" | "customizationPrices" | "configuredSpecs" | "resourceSpecsUnit"> {
@@ -27,6 +28,10 @@ export function buildCustomizationPayload(
     const rawDelta = options.storage - baseStorage;
     customization.storage = usesMb ? Math.round(rawDelta / 1024) : rawDelta;
   }
+  if (product.provider?.type?.toUpperCase() === "PROXMOX" && (options.trafficAddonTb ?? 0) > 0) {
+    customization.bandwidth = options.trafficAddonTb;
+  }
+  if ((options.speedUpgradeGbit ?? 0) > 0) customization.speedGbit = options.speedUpgradeGbit;
 
   const rp = upgradeConfig?.resourcePricing;
   const storageStep = rp?.storage?.step ?? 10;
@@ -52,14 +57,16 @@ export function buildCustomizationPayload(
 
 export function buildConfiguredCartItem(args: {
   product: ShopProductDetail;
-  options: ConfiguratorProviderOptions;
+  options: ProductProviderOptions & { billingCycle?: number; minNetworkMBs?: number };
   priceMonthly: number;
   categoryId: string;
   categoryName?: string;
   usesMb: boolean;
   upgradeConfig: ShopUpgradeConfig | null;
+  billingCycle?: number;
 }): Omit<CartItem, "lineId"> {
   const { product, options, priceMonthly, categoryId, categoryName, usesMb, upgradeConfig } = args;
+  const billingCycle = args.billingCycle ?? options.billingCycle ?? 30;
   const configured = buildCustomizationPayload(product, options, usesMb, upgradeConfig);
 
   return {
@@ -69,7 +76,7 @@ export function buildConfiguredCartItem(args: {
     categoryId,
     categoryName,
     quantity: 1,
-    billingCycle: options.billingCycle,
+    billingCycle,
     priceMonthly,
     priceYearly: product.priceYearly ?? null,
     itemType: "new",
@@ -82,4 +89,17 @@ export function buildConfiguredCartItem(args: {
     },
     ...configured,
   };
+}
+
+export function buildProductCartItem(args: {
+  product: ShopProductDetail;
+  options: ProductProviderOptions;
+  priceMonthly: number;
+  billingCycle: number;
+  categoryId: string;
+  categoryName?: string;
+  upgradeConfig: ShopUpgradeConfig | null;
+}): Omit<CartItem, "lineId"> {
+  const usesMb = productUsesMbResources(args.product);
+  return buildConfiguredCartItem({ ...args, usesMb });
 }

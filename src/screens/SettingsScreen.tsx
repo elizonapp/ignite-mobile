@@ -2,7 +2,7 @@ import { resolveApiError } from "../api/resolve-error";
 import { resolveCaughtApiError } from "../api/resolve-caught-error";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ArrowLeft, Bell, CreditCard, Globe, Key, Link2, Loader2, LogOut, MapPin, Moon, Shield, Sun, Trash2, User, Monitor, FileText, AlertTriangle, Ticket,
+  ArrowLeft, Bell, CreditCard, Globe, Key, Link2, Loader2, LogOut, MapPin, Moon, Shield, Sun, Trash2, User, Monitor, FileText, AlertTriangle, Ticket, BadgeCheck,
 } from "lucide-react";
 
 import { Button } from '../components/ui/button';
@@ -26,6 +26,7 @@ import { NotificationsSettingsView } from '../features/settings/views/notificati
 import { AddressesSettingsView } from '../features/settings/views/addresses-view';
 import { ConnectionsSettingsView } from '../features/settings/views/connections-view';
 import { PrivacySettingsView } from '../features/settings/views/privacy-view';
+import { IdVerificationSettingsView } from '../features/settings/views/id-verification-view';
 
 type SettingsView =
   | "main"
@@ -35,6 +36,7 @@ type SettingsView =
   | "sessions"
   | "notifications"
   | "addresses"
+  | "id-verification"
   | "payment-methods"
   | "apikeys"
   | "connections"
@@ -42,6 +44,16 @@ type SettingsView =
   | "delete";
 
 // ── Types ─────────────────────────────────────────────────────────────────
+
+function calculateAge(birthDate: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age -= 1;
+  }
+  return age;
+}
 
 type Session = {
   id: string;
@@ -72,6 +84,22 @@ export function SettingsScreen() {
   const [apiUrl, setApiUrl] = useState(getApiBaseUrl());
   const [view, setView] = useState<SettingsView>("main");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [idVerificationEnforcementRequired, setIdVerificationEnforcementRequired] = useState(false);
+
+  const showIdVerification =
+    Boolean(user?.dateOfBirth) &&
+    calculateAge(new Date(user!.dateOfBirth!)) >= 18;
+
+  useEffect(() => {
+    if (!showIdVerification) return;
+    let cancelled = false;
+    void api.idVerification.enforcementStatus().then((data) => {
+      if (!cancelled && data.success) {
+        setIdVerificationEnforcementRequired(Boolean(data.required));
+      }
+    }).catch(() => { /* optional */ });
+    return () => { cancelled = true; };
+  }, [showIdVerification]);
 
   useEffect(() => {
     if (!isElectron() || !window.electron?.onUpdaterStatus) return;
@@ -134,6 +162,14 @@ export function SettingsScreen() {
   if (view === "sessions") return <SessionsView onBack={() => setView("main")} />;
   if (view === "notifications") return <NotificationsSettingsView onBack={() => setView("main")} />;
   if (view === "addresses") return <AddressesSettingsView onBack={() => setView("main")} />;
+  if (view === "id-verification") {
+    return (
+      <IdVerificationSettingsView
+        onBack={() => setView("main")}
+        onOpenAddresses={() => setView("addresses")}
+      />
+    );
+  }
   if (view === "payment-methods") {
     return (
       <SettingsSubView title={t("walletTabMethods")} onBack={() => setView("main")}>
@@ -160,6 +196,15 @@ export function SettingsScreen() {
           <SettingsNavRow icon={<User className="size-4" />} label={t("settingsProfile")} onClick={() => setView("profile")} />
           <SettingsNavRow icon={<Bell className="size-4" />} label={t("settingsNotifications")} onClick={() => setView("notifications")} />
           <SettingsNavRow icon={<MapPin className="size-4" />} label={t("settingsAddresses")} hint={t("settingsAddressesDesc")} onClick={() => setView("addresses")} />
+          {showIdVerification && (
+            <SettingsNavRow
+              icon={<BadgeCheck className="size-4" />}
+              label={t("idVerificationSettingsCardTitle")}
+              hint={t("idVerificationSettingsCardDesc")}
+              badge={idVerificationEnforcementRequired ? t("idVerificationSettingsPendingBadge") : undefined}
+              onClick={() => setView("id-verification")}
+            />
+          )}
           {showPaymentMethods && (
             <SettingsNavRow icon={<CreditCard className="size-4" />} label={t("walletTabMethods")} onClick={() => setView("payment-methods")} />
           )}

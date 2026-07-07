@@ -165,12 +165,14 @@ export function ShopProductCard({
   category,
   onView,
   onAddToCart,
+  onDirectToCheckout,
   pricing,
 }: {
   product: ShopProduct;
   category: ShopCategory;
   onView: () => void;
   onAddToCart: () => void;
+  onDirectToCheckout?: () => void;
   pricing: CardPricing;
 }) {
   const { t, lang } = useI18n();
@@ -212,21 +214,38 @@ export function ShopProductCard({
         ) : (
           <span className="text-xs text-(--text-muted)">—</span>
         )}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2">
           <button
             type="button"
             onClick={onView}
-            className="btn-secondary rounded-xl px-3 py-1.5 text-xs font-semibold"
+            className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold"
           >
             {t("shopViewDetails")}
           </button>
-          <button
-            type="button"
-            onClick={onAddToCart}
-            className="btn-primary rounded-xl px-3 py-1.5 text-xs font-semibold"
-          >
-            {t("shopAddToCart")}
-          </button>
+          {!product.soldOut ? (
+            <>
+              <button
+                type="button"
+                onClick={onAddToCart}
+                className="btn-primary w-full rounded-xl px-3 py-2 text-xs font-semibold"
+              >
+                {t("shopAddToCart")}
+              </button>
+              {onDirectToCheckout ? (
+                <button
+                  type="button"
+                  onClick={onDirectToCheckout}
+                  className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold"
+                >
+                  {t("productGoToCheckout")}
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <button type="button" disabled className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold opacity-50">
+              {t("productSoldOut")}
+            </button>
+          )}
         </div>
       </div>
       <span className="sr-only">{category.name}</span>

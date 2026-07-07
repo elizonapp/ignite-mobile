@@ -22,6 +22,7 @@ import { FloatingIpsResource } from "../api/floating-ips";
 import { ByoipResource } from "../api/byoip";
 import { ElizonPlusResource } from "../api/elizon-plus";
 import { PublicResource } from "../api/public";
+import { IdVerificationResource } from "../api/id-verification";
 import { getElizonClientKind, getElizonPlatformHeader } from "./platform";
 import { clearSessionToken, getSessionToken, setSessionToken } from "./session-token";
 import { de } from "../i18n/de";
@@ -180,6 +181,7 @@ export class ApiClient {
   public readonly floatingIps = new FloatingIpsResource(this);
   public readonly publicApi = new PublicResource(this);
   public readonly settings = new SettingsResource(this);
+  public readonly idVerification = new IdVerificationResource(this);
   public readonly elizonPlus = new ElizonPlusResource(this);
 
   get<T>(path: string, query?: QueryParams) {
