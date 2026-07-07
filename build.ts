@@ -1,20 +1,11 @@
 #!/usr/bin/env bun
 import plugin from "bun-plugin-tailwind";
-import { existsSync, readFileSync } from "fs";
+import { existsSync } from "fs";
 import { rm } from "fs/promises";
 import path from "path";
+import { resolveAppVersion } from "./scripts/resolve-app-version.mjs";
 
-const pkg = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf8")) as { version?: string };
-
-function normalizeVersion(raw: string | undefined): string {
-  if (!raw?.trim()) return "";
-  return raw.trim().replace(/^v/i, "");
-}
-
-const appVersion =
-  normalizeVersion(process.env.APP_VERSION) ||
-  normalizeVersion(pkg.version) ||
-  "0.0.0";
+const appVersion = resolveAppVersion();
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`
