@@ -1,0 +1,37 @@
+# Wiederverwendbar: Monorepo (mobile-app.yml) + Standalone (build.yml)
+name: Reusable — web build
+
+on:
+  workflow_call:
+    inputs:
+      project-dir:
+        description: Pfad zum Client-Root (Monorepo mobile/ignite, Standalone .)
+        type: string
+        required: true
+      dist-artifact-name:
+        description: Name des hochgeladenen dist-Artifacts
+        type: string
+        default: web-dist
+
+jobs:
+  web-build:
+    name: Web bundle
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.project-dir }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.10"
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.dist-artifact-name }}
+          path: ${{ inputs.project-dir }}/dist
+          retention-days: 14

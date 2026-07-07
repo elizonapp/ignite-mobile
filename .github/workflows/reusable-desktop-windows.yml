@@ -1,0 +1,63 @@
+name: Reusable — desktop Windows
+
+on:
+  workflow_call:
+    inputs:
+      project-dir:
+        type: string
+        required: true
+
+jobs:
+  desktop-windows:
+    name: Desktop Windows (Installer + Portable)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.project-dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.10"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run desktop:build:win:builder
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Verify Windows desktop artifacts
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse release | Format-Table Name, Length
+          if (-not (Get-ChildItem release -Recurse -Filter '*portable*.exe' | Select-Object -First 1)) {
+            throw 'Portable executable (*portable*.exe) not found in release/'
+          }
+          if (-not (Get-ChildItem release -Recurse -Filter '*Setup*.exe' | Select-Object -First 1)) {
+            throw 'NSIS installer (*Setup*.exe) not found in release/'
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows-portable
+          path: ${{ inputs.project-dir }}/release/**/*portable*.exe
+          retention-days: 30
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows-installer
+          path: ${{ inputs.project-dir }}/release/**/*Setup*.exe
+          retention-days: 30
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows
+          path: ${{ inputs.project-dir }}/release/**
+          retention-days: 14
+          if-no-files-found: warn

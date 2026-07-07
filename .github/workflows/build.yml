@@ -1,0 +1,55 @@
+# Standalone-Repo-Einstieg (elizonapp/ignite-mobile) — ruft gemeinsame Reusable Workflows auf.
+name: Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-build:
+    uses: ./.github/workflows/reusable-web-build.yml
+    with:
+      project-dir: .
+      dist-artifact-name: web-dist
+
+  desktop-linux:
+    needs: web-build
+    uses: ./.github/workflows/reusable-desktop-linux.yml
+    with:
+      project-dir: .
+    secrets: inherit
+
+  desktop-windows:
+    needs: web-build
+    uses: ./.github/workflows/reusable-desktop-windows.yml
+    with:
+      project-dir: .
+    secrets: inherit
+
+  desktop-macos:
+    needs: web-build
+    uses: ./.github/workflows/reusable-desktop-macos.yml
+    with:
+      project-dir: .
+    secrets: inherit
+
+  android:
+    needs: web-build
+    uses: ./.github/workflows/reusable-android.yml
+    with:
+      project-dir: .
+    secrets: inherit
+
+  ios:
+    needs: web-build
+    uses: ./.github/workflows/reusable-ios.yml
+    with:
+      project-dir: .
+    secrets: inherit

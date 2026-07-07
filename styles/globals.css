@@ -1,0 +1,674 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /*
+    Tailwind-Radius-Skala app-weit kantiger gesetzt – synchron zur Web-App
+    (app/globals.css). Wirkt auf alle rounded-* Utilities, rounded-full
+    bleibt voll rund.
+  */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 5px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 12px;
+}
+
+/* =========================================================
+   THEME-TOKENS – synchron zu app/globals.css (Web)
+   Dark ist Default, Light als Variante.
+   ========================================================= */
+
+:root,
+.dark {
+  /* Fonts – System-Stack (Web: Noto Sans / Ubuntu Mono wenn /fonts verfügbar) */
+  --font-geist-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-geist-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", "Ubuntu Mono", monospace;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Semantische Radien – bewusst kantig */
+  --radius-surface: 8px;   /* Karten / Panels / .glass */
+  --radius-control: 5px;   /* Inputs / Select */
+  --radius-action: 2px;    /* Badges / .btn-cta */
+  --radius-pill: 999px;    /* nur echte Kreise */
+  --radius-button: 6px;    /* einheitlicher Button-Radius */
+
+  /* Transitions */
+  --transition-color: 120ms ease;
+  --transition-transform: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-card: 220ms ease;
+  --transition-modal: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-toast: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Glass – nur für Overlays (Navbar, Tab-Bar, Modals) */
+  --blur-navbar: 12px;
+  --blur-modal: 8px;
+
+  /* Brand – tiefes Kobalt wie die Startseite */
+  --primary: #2f6bf0;
+  --primary-alt: #1f54d6;
+  --accent: #3075ff;
+
+  /* Backgrounds */
+  --bg-base: #09090b;
+  --bg-card: #18181b;
+  --bg-card-hover: #27272a;
+  --bg-elevated: #18181b;
+  --glass-bg: rgba(9, 9, 11, 0.78);
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --surface-soft-hover: rgba(255, 255, 255, 0.08);
+  --surface-strong: rgba(255, 255, 255, 0.1);
+
+  /* Text */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  /* Borders */
+  --border: rgba(63, 63, 70, 0.5);
+  --border-hover: rgba(161, 161, 170, 0.3);
+
+  /* Elevation – knapper, präziser Schattenwurf */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 16px 38px rgba(0, 0, 0, 0.34);
+
+  /* Status */
+  --success: #22c55e;
+  --warning: #facc15;
+  --error: #ef4444;
+
+  /* Hintergrund-Glow (statisch, dezent) */
+  --blob-opacity-1: 0.08;
+
+  /* Alias – wird im Web für sekundäre Flächen genutzt */
+  --bg-secondary: var(--bg-card);
+  --elizon-primary: var(--primary);
+  --elizon-primary-alt: var(--primary-alt);
+  --elizon-accent: var(--accent);
+  --elizon-border: var(--border);
+  --elizon-border-hover: var(--border-hover);
+
+  /* shadcn token mapping */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--bg-card);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface-soft);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-soft);
+  --muted-foreground: var(--text-muted);
+  --accent-foreground: #ffffff;
+  --destructive: var(--error);
+  --input: var(--surface-strong);
+  --ring: var(--primary);
+
+  color-scheme: dark;
+}
+
+.light {
+  --primary: #2257d8;
+  --primary-alt: #1942b8;
+  --accent: #2f63ea;
+
+  --bg-base: #e6e6e6;
+  --bg-card: #f4f4f5;
+  --bg-card-hover: #ffffff;
+  --bg-elevated: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --surface-soft: rgba(15, 23, 42, 0.04);
+  --surface-soft-hover: rgba(15, 23, 42, 0.07);
+  --surface-strong: rgba(15, 23, 42, 0.1);
+
+  --text-primary: #0f172a;
+  --text-secondary: #374252;
+  --text-muted: #5c6168;
+
+  --border: rgba(148, 163, 184, 0.3);
+  --border-hover: rgba(71, 85, 105, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 34px rgba(15, 23, 42, 0.10);
+
+  --success: #16a34a;
+  --warning: #ca8a04;
+  --error: #dc2626;
+
+  --blob-opacity-1: 0.06;
+  --bg-secondary: var(--bg-card);
+
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+
+  color-scheme: light;
+}
+
+/* =========================================================
+   BASIS
+   ========================================================= */
+
+html {
+  background: var(--bg-base);
+  transition:
+    background-color var(--transition-card),
+    color var(--transition-card);
+}
+
+html.dark,
+html.light {
+  background: var(--bg-base);
+}
+
+/* Light-Mode: hardcodierte Tailwind-Opacity-Klassen auf Theme-Tokens mappen */
+.light [class*="bg-white/5"] {
+  background-color: var(--surface-soft) !important;
+}
+
+.light [class*="bg-white/10"] {
+  background-color: var(--surface-strong) !important;
+}
+
+.light [class*="bg-black/20"],
+.light [class*="bg-black/50"],
+.light [class*="bg-black/60"] {
+  background-color: rgba(15, 23, 42, 0.35) !important;
+}
+
+.light [class*="hover:bg-white/5"]:hover {
+  background-color: var(--surface-soft-hover) !important;
+}
+
+.light [class*="hover:bg-white/10"]:hover {
+  background-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+.light [class*="border-white/10"] {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+.light [class*="border-white/30"] {
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 28%, transparent);
+  color: var(--text-primary);
+}
+
+:where(a, button, input, select, textarea, [role="button"]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 78%, white 8%);
+  outline-offset: 3px;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"],
+a,
+.cursor-pointer {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+[disabled] {
+  cursor: not-allowed;
+}
+
+/* Form controls – lesbar in Dark & Light */
+select,
+input,
+textarea {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border-radius: var(--radius-control);
+}
+
+option {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* =========================================================
+   SURFACES – Content-Karten solid, Blur nur für Overlays
+   ========================================================= */
+
+/* Content card – solider Hintergrund, kein Blur */
+.glass {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.rounded-surface { border-radius: var(--radius-surface); }
+.rounded-control { border-radius: var(--radius-control); }
+.rounded-action { border-radius: var(--radius-action); }
+
+/* Glass nur für Overlays – Header, Tab-Bar, Modals, Dropdowns */
+.glass-navbar {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-navbar));
+  -webkit-backdrop-filter: blur(var(--blur-navbar));
+}
+
+.glass-overlay {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-modal));
+  -webkit-backdrop-filter: blur(var(--blur-modal));
+}
+
+.glass-hover {
+  cursor: pointer;
+}
+
+.glass-hover:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.glass,
+.glass-hover {
+  transition:
+    background-color var(--transition-card),
+    border-color var(--transition-card),
+    transform var(--transition-transform),
+    box-shadow var(--transition-card);
+}
+
+.light .glass {
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.light .glass-hover:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.light select,
+.light input,
+.light textarea {
+  border-color: rgba(148, 163, 184, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.light option,
+.light optgroup {
+  background-color: var(--glass-bg);
+  color: var(--text-primary);
+}
+
+/* Gradient text helper */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Badge / Tag */
+.badge {
+  border-radius: var(--radius-action);
+}
+
+.badge-pill {
+  border-radius: var(--radius-pill);
+}
+
+/* =========================================================
+   KOMPONENTEN – Buttons (Web-Port)
+   ========================================================= */
+
+@layer components {
+  .btn-primary {
+    background: var(--primary-alt);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-button);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--primary-alt) 55%, white 10%);
+    cursor: pointer;
+    transition:
+      background-color var(--transition-color),
+      border-color var(--transition-color),
+      transform var(--transition-transform),
+      color var(--transition-color);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .btn-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .btn-primary-lg {
+    padding: 1rem 2rem;
+  }
+
+  .btn-cta {
+    border-radius: var(--radius-action);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-button);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition:
+      background-color var(--transition-color),
+      border-color var(--transition-color),
+      color var(--transition-color);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--bg-elevated);
+    border-color: var(--border-hover);
+  }
+
+  .btn-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .btn-secondary-lg {
+    padding: 1rem 2rem;
+  }
+}
+
+/* =========================================================
+   FUNKTIONALE ANIMATIONEN
+   ========================================================= */
+
+/* Shimmer für Skeleton-Loader */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background-color: color-mix(in srgb, var(--border) 35%, transparent);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--border) 80%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes indeterminate-bar {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(450%); }
+}
+.animate-indeterminate-bar {
+  animation: indeterminate-bar 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  width: 40%;
+}
+
+/* Modal animations */
+@keyframes modalBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdropIn var(--transition-modal) ease-out;
+}
+
+.animate-modal-panel {
+  animation: modalPanelIn var(--transition-modal);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Toast animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-toast-in {
+  animation: slideIn var(--transition-toast) ease-out;
+}
+
+@keyframes shrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Legal markdown (auth / embedded policy pages) */
+.legal-prose {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.legal-prose h1,
+.legal-prose h2,
+.legal-prose h3,
+.legal-prose h4,
+.legal-prose h5,
+.legal-prose h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.legal-prose h1 {
+  font-size: 1.5rem;
+  margin-top: 0;
+}
+
+.legal-prose h2 {
+  font-size: 1.25rem;
+}
+
+.legal-prose h3 {
+  font-size: 1.125rem;
+}
+
+.legal-prose p,
+.legal-prose li,
+.legal-prose strong,
+.legal-prose em {
+  color: var(--text-primary);
+}
+
+.legal-prose p {
+  margin-bottom: 1.25em;
+}
+
+.legal-prose ul,
+.legal-prose ol {
+  margin: 1em 0 1.25em;
+  padding-left: 1.25rem;
+}
+
+.legal-prose li {
+  margin-bottom: 0.5em;
+}
+
+.legal-prose a {
+  color: var(--primary);
+}
+
+.legal-prose code {
+  color: var(--text-primary);
+  background-color: var(--surface-soft);
+  padding: 0.125rem 0.25rem;
+  border-radius: var(--radius-action);
+}
+
+.legal-prose pre {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  margin-bottom: 1.25em;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+}
+
+.legal-prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+.legal-prose blockquote {
+  border-left: 3px solid var(--primary);
+  color: var(--text-secondary);
+  margin-bottom: 1.25em;
+  padding-left: 1rem;
+}
+
+/* =========================================================
+   SAFE AREAS (iOS Notch)
+   ========================================================= */
+
+@supports (padding: max(0px)) {
+  .safe-top    { padding-top:    max(0.5rem, env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+  .safe-x {
+    padding-left:  max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* =========================================================
+   DESKTOP-CLIENT (Electron + Browser-Dev)
+   ========================================================= */
+
+.electron body {
+  overscroll-behavior-y: auto;
+}
+
+/* Breitere Content-Flächen auf Desktop */
+.electron .mx-auto.max-w-md {
+  max-width: 48rem;
+}
+
+.electron .mx-auto.max-w-3xl {
+  max-width: 72rem;
+}
+
+.desktop-dashboard .mx-auto[class*='max-w-'] {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.desktop-dashboard .page-fullwidth {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}

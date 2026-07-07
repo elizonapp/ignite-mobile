@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/svg+xml" href="./logo.svg" />
+    <title>elizon · dashboard</title>
+    <script>
+      // theme-init: gespeichertes Theme vor React-Mount anwenden (kein FOUC)
+      (function () {
+        try {
+          var stored = localStorage.getItem("elizon.theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+          var root = document.documentElement;
+          root.classList.remove("dark", "light");
+          root.classList.add(theme);
+          root.style.colorScheme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", theme === "light" ? "#e6e6e6" : "#09090b");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    <script type="module" src="./frontend.tsx" async></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

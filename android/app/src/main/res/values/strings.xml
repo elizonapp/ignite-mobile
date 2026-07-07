@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">elizon</string>
+    <string name="title_activity_main">elizon</string>
+    <string name="package_name">app.elizon.ignite.mobile</string>
+    <string name="custom_url_scheme">app.elizon.ignite.mobile</string>
+</resources>

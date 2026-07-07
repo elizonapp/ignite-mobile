@@ -1,0 +1,38 @@
+name: Reusable — iOS simulator build
+
+on:
+  workflow_call:
+    inputs:
+      project-dir:
+        type: string
+        required: true
+
+jobs:
+  ios:
+    name: iOS (simulator build)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.project-dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.10"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bunx cap sync ios
+      - name: Build for iOS Simulator (unsigned)
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
