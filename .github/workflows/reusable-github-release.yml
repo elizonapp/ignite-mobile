@@ -95,5 +95,7 @@ jobs:
             | Windows (portable) | `ignite-desktop-*-windows-portable.exe` |
             | macOS | `ignite-desktop-*-macos.dmg` |
             | Android (debug) | `ignite-mobile-*-android-debug.apk` |
+
+            Desktop auto-updates also require the original electron-builder assets on the same release: `latest.yml`, `latest-linux.yml`, `latest-mac.yml` (version check only on macOS), matching installers, and blockmaps.
           files: |
             release-upload/*

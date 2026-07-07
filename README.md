@@ -63,6 +63,19 @@ bun run desktop:build:win:builder # NSIS + portable .exe → release/
 
 Before each desktop build, `build/icon.png` is generated from `public/favicon.ico` (`bun run icons:desktop`), because electron-builder requires at least 256×256 — the bundled favicon only contains smaller sizes.
 
+### Auto-Updates
+
+Packaged desktop builds check [GitHub Releases](https://github.com/elizonapp/ignite-mobile/releases) for newer versions via `electron-updater`:
+
+- **Automatic check** ~5 seconds after startup (Windows NSIS installer, Linux AppImage)
+- **macOS:** only notifies about a new version and opens the GitHub release — manual install via DMG
+- **Manual check** in **Einstellungen → Über → Nach Updates suchen**
+- **Not supported:** Windows portable build (`PORTABLE_EXECUTABLE_DIR`)
+
+Each release includes `latest.yml` / `latest-linux.yml` / `latest-mac.yml` next to the installer artifacts (original electron-builder filenames). Bump `"version"` in `package.json` before merging to `main`, otherwise clients will not detect a newer build.
+
+Code signing is still disabled in CI; updates work, but Windows SmartScreen / macOS Gatekeeper may show warnings until signing is enabled.
+
 ## Android
 
 ```bash

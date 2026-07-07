@@ -15,6 +15,7 @@ import { useToast } from '../components/Toast';
 import { useI18n, type Lang } from '../i18n';
 import { api } from '../lib/api';
 import { APP_VERSION, getApiBaseUrl, setApiBaseUrl } from '../lib/config';
+import { isElectron } from '../lib/platform';
 import { cn } from '../lib/utils';
 import { formatUserGreetingName } from '../lib/userName';
 import { canManageSavedPaymentMethodsUser } from '../lib/saved-payment-methods';
@@ -70,6 +71,44 @@ export function SettingsScreen() {
   const { navigate } = useRouter();
   const [apiUrl, setApiUrl] = useState(getApiBaseUrl());
   const [view, setView] = useState<SettingsView>("main");
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+
+  useEffect(() => {
+    if (!isElectron() || !window.electron?.onUpdaterStatus) return;
+    return window.electron.onUpdaterStatus((status) => {
+      if (status.phase === "checking" || status.phase === "downloading") {
+        setIsCheckingUpdates(true);
+        return;
+      }
+      setIsCheckingUpdates(false);
+      if (status.phase === "not-available") {
+        show(t("settingsUpdatesUpToDate"), "info");
+      }
+      if (status.phase === "error") {
+        show(t("settingsUpdatesError"), "error");
+      }
+    });
+  }, [show, t]);
+
+  const checkForUpdates = async () => {
+    if (!window.electron?.checkForUpdates) return;
+    setIsCheckingUpdates(true);
+    try {
+      const result = await window.electron.checkForUpdates();
+      if (result.phase === "unsupported") {
+        show(t("settingsUpdatesUnsupported"), "info");
+        setIsCheckingUpdates(false);
+        return;
+      }
+      if (!result.ok) {
+        show(t("settingsUpdatesError"), "error");
+        setIsCheckingUpdates(false);
+      }
+    } catch {
+      show(t("settingsUpdatesError"), "error");
+      setIsCheckingUpdates(false);
+    }
+  };
 
   const showPaymentMethods = canManageSavedPaymentMethodsUser(user);
 
@@ -178,6 +217,25 @@ export function SettingsScreen() {
           <Row label={t("settingsVersion")}>
             <span className="text-sm text-(--text-muted)">{APP_VERSION}</span>
           </Row>
+          {isElectron() && (
+            <Row label={t("settingsUpdates")}>
+              <Button
+                type="button"
+                disabled={isCheckingUpdates}
+                onClick={() => void checkForUpdates()}
+                className="btn-secondary h-9 gap-2 rounded-xl px-3 text-sm"
+              >
+                {isCheckingUpdates ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    {t("settingsUpdatesChecking")}
+                  </>
+                ) : (
+                  t("settingsCheckUpdates")
+                )}
+              </Button>
+            </Row>
+          )}
         </SettingsSectionBlock>
 
         <button

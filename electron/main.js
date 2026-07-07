@@ -1,7 +1,8 @@
-import { app, BrowserWindow, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, nativeImage } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { startDistServer } from "./static-server.js";
+import { initAutoUpdater, isAutoUpdateSupported, runUpdateCheck } from "./updater.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,8 +38,9 @@ function createWindow() {
     title: "elizon",
     icon: appIcon.isEmpty() ? undefined : appIcon,
     backgroundColor: "#09090b",
+    autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       nodeIntegration: false,
       contextIsolation: true,
     },
@@ -54,10 +56,27 @@ function createWindow() {
     win.webContents.openDevTools({ mode: "detach" });
   }
 
+  if (app.isPackaged && isAutoUpdateSupported()) {
+    initAutoUpdater(win, (payload) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("updater:status", payload);
+      }
+    });
+  }
+
   return win;
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+
+  ipcMain.handle("updater:check", async () => {
+    if (!app.isPackaged || !isAutoUpdateSupported()) {
+      return { ok: false, phase: "unsupported" };
+    }
+    return runUpdateCheck(true);
+  });
+
   createWindow();
 });
 

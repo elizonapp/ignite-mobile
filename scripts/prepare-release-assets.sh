@@ -20,6 +20,15 @@ stage_file() {
   echo "[release] $label: $dest_name"
 }
 
+stage_updater_asset() {
+  local label="$1"
+  local src="$2"
+  local dest_name
+  dest_name="$(basename "$src")"
+  cp "$src" "$OUT/$dest_name"
+  echo "[release] $label: $dest_name"
+}
+
 find_one() {
   local dir="$1"
   shift
@@ -39,14 +48,34 @@ find_one() {
 
 if file="$(find_one "$ROOT/desktop-linux" "ignite-desktop-*.AppImage" "*.AppImage")"; then
   stage_file "Linux AppImage" "$file" "${DESKTOP_PREFIX}-linux.AppImage"
+  stage_updater_asset "Linux updater" "$file"
 else
   echo "[release] warning: Linux AppImage not found" >&2
 fi
 
+if file="$(find_one "$ROOT/desktop-linux" "latest-linux.yml" "latest-linux.yml")"; then
+  stage_updater_asset "Linux metadata" "$file"
+else
+  echo "[release] warning: latest-linux.yml not found" >&2
+fi
+
 if file="$(find_one "$ROOT/desktop-windows-installer" "ignite-desktop-setup-*.exe" "*Setup*.exe")"; then
   stage_file "Windows installer" "$file" "${DESKTOP_PREFIX}-windows-setup.exe"
+  stage_updater_asset "Windows updater" "$file"
 else
   echo "[release] warning: Windows installer not found" >&2
+fi
+
+if file="$(find_one "$ROOT/desktop-windows-installer" "latest.yml" "latest.yml")"; then
+  stage_updater_asset "Windows metadata" "$file"
+else
+  echo "[release] warning: latest.yml not found" >&2
+fi
+
+if file="$(find_one "$ROOT/desktop-windows-installer" "*.exe.blockmap" "*.blockmap")"; then
+  stage_updater_asset "Windows blockmap" "$file"
+else
+  echo "[release] warning: Windows blockmap not found" >&2
 fi
 
 if file="$(find_one "$ROOT/desktop-windows-portable" "ignite-desktop-portable-*.exe" "*portable*.exe")"; then
@@ -59,6 +88,12 @@ if file="$(find_one "$ROOT/desktop-macos" "ignite-desktop-*.dmg" "*.dmg")"; then
   stage_file "macOS DMG" "$file" "${DESKTOP_PREFIX}-macos.dmg"
 else
   echo "[release] warning: macOS DMG not found" >&2
+fi
+
+if file="$(find_one "$ROOT/desktop-macos" "latest-mac.yml" "latest-mac.yml")"; then
+  stage_updater_asset "macOS metadata" "$file"
+else
+  echo "[release] warning: latest-mac.yml not found" >&2
 fi
 
 if file="$(find_one "$ROOT/android-debug-apk" "*.apk")"; then

@@ -32,6 +32,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-linux
-          path: ${{ inputs.project-dir }}/release/ignite-desktop-*.AppImage
+          path: |
+            ${{ inputs.project-dir }}/release/ignite-desktop-*.AppImage
+            ${{ inputs.project-dir }}/release/latest-linux.yml
           retention-days: 14
           if-no-files-found: error

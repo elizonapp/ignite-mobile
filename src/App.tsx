@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { Loader2 } from "lucide-react";
 
 import { BrandFonts } from './components/BrandFonts';
+import { CartProvider } from './components/cart/CartProvider';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import { CapabilityGuard } from './capabilities/CapabilityGuard';
 import { BottomNav } from './components/shell/BottomNav';
