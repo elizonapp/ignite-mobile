@@ -1,8 +1,20 @@
 #!/usr/bin/env bun
 import plugin from "bun-plugin-tailwind";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { rm } from "fs/promises";
 import path from "path";
+
+const pkg = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf8")) as { version?: string };
+
+function normalizeVersion(raw: string | undefined): string {
+  if (!raw?.trim()) return "";
+  return raw.trim().replace(/^v/i, "");
+}
+
+const appVersion =
+  normalizeVersion(process.env.APP_VERSION) ||
+  normalizeVersion(pkg.version) ||
+  "0.0.0";
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`
@@ -131,6 +143,7 @@ const result = await Bun.build({
   sourcemap: "linked",
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
+    "process.env.APP_VERSION": JSON.stringify(appVersion),
   },
   alias: {
     "@": path.join(process.cwd(), "src"),

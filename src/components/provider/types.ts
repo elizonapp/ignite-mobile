@@ -1,10 +1,8 @@
 // ============================================
 // PROVIDER UI — MOBILE CLIENT TYPES
 // Type-only mirrors of the serialized ViewModel shapes produced by
-// lib/core/providers/modules/serialize-view.ts. Only `import type` /
-// `export type` from the module framework — no runtime imports of
-// server-only code (the paths resolve to the shared repo lib, same
-// pattern as src/api/resolve-error.ts).
+// lib/core/providers/modules/serialize-view.ts (standalone copy in
+// src/shared/provider-module-types.ts for mirror builds).
 // ============================================
 
 export type {
@@ -22,7 +20,7 @@ export type {
   ValidationRule,
   VisibilityRule,
   WidgetSlot,
-} from "../../../../../lib/core/providers/modules/types";
+} from "../../shared/provider-module-types";
 
 import type {
   LayoutBlueprint,
@@ -30,7 +28,7 @@ import type {
   SerializedAction,
   TabDef,
   WidgetSlot,
-} from "../../../../../lib/core/providers/modules/types";
+} from "../../shared/provider-module-types";
 import type { DashboardServer } from "../../lib/types";
 import type { ServiceNetwork } from "../../hooks/useServiceDetail";
 
