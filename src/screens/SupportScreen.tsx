@@ -7,7 +7,6 @@ import { ArrowLeft, BookOpen, ChevronRight, Copy, Loader2, MessageSquare, Plus, 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { useRouter } from '../components/Router';
 import { useToast } from '../components/Toast';
 import { useI18n } from '../i18n';
 import { api } from '../lib/api';
@@ -69,7 +68,6 @@ type SupportPin = {
 
 export function SupportScreen() {
   const { t, lang } = useI18n();
-  const { navigate } = useRouter();
   const { show } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -399,12 +397,7 @@ export function SupportScreen() {
   return (
     <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
       <div className="safe-x safe-top flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => navigate({ name: "dashboard" })} className="rounded-lg p-1.5 text-(--text-secondary) hover:bg-(--bg-elevated)">
-            <ArrowLeft className="size-5" />
-          </button>
-          <h1 className="text-lg font-semibold text-(--text-primary)">{t("support")}</h1>
-        </div>
+        <h1 className="text-2xl font-semibold text-(--text-primary)">{t("support")}</h1>
         <div className="flex gap-2">
           {activeTab === "tickets" && (
             <>

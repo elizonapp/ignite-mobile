@@ -23,7 +23,7 @@ export function DnsListToolbar({
         type="button"
         onClick={onAdd}
         disabled={addDisabled}
-        className="glass glass-hover flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium text-(--text-secondary) disabled:opacity-50"
+        className="btn-primary inline-flex items-center gap-1.5 rounded-xl bg-[var(--primary-alt)] px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
       >
         <Plus className="size-3.5" />
         {addLabel}

@@ -9,11 +9,8 @@ import {
   FileText,
   Building2,
   Users,
-  Cpu,
-  MemoryStick,
-  HardDrive,
   Loader2,
-  ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
 
 import { useI18n } from "../../i18n";
@@ -24,15 +21,12 @@ import type { CheckoutPaymentMethod } from "../../api/checkout";
 
 type I18nKey = keyof Dict;
 import { useCheckout, type NewAddressForm } from "./useCheckout";
-import type { BillingCycleDays } from "./types";
 
-type Props = { productId?: string };
-
-export function CheckoutScreen({ productId }: Props) {
+export function CheckoutScreen() {
   const { t, lang } = useI18n();
   const { show } = useToast();
   const { navigate } = useRouter();
-  const c = useCheckout(productId);
+  const c = useCheckout();
 
   const fmt = useMemo(
     () =>
@@ -44,10 +38,10 @@ export function CheckoutScreen({ productId }: Props) {
   );
   const formatPrice = (value: number) => fmt.format(value);
 
-  const stepLabels = [t("checkoutStepConfig"), t("checkoutStepAddress"), t("checkoutStepPayment")];
+  const stepLabels = [t("checkoutStepCart"), t("checkoutStepAddress"), t("checkoutStepPayment")];
 
   const canProceed =
-    c.step === 0 ? !!c.selectedProduct : c.step === 1 ? c.addressReady : true;
+    c.step === 0 ? c.cartItems.length > 0 : c.step === 1 ? c.addressReady : true;
 
   const goNext = async () => {
     if (c.step >= 2) return;
@@ -62,7 +56,7 @@ export function CheckoutScreen({ productId }: Props) {
   };
   const goBack = () => {
     if (c.step > 0) c.setStep((c.step - 1) as 0 | 1 | 2);
-    else navigate({ name: "shop" });
+    else navigate({ name: "cart" });
   };
 
   const handleSubmit = async () => {
@@ -118,7 +112,7 @@ export function CheckoutScreen({ productId }: Props) {
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          {c.step === 0 && <ConfigStep c={c} formatPrice={formatPrice} />}
+          {c.step === 0 && <CartStep c={c} formatPrice={formatPrice} />}
           {c.step === 1 && <AddressStep c={c} />}
           {c.step === 2 && <PaymentStep c={c} formatPrice={formatPrice} />}
         </div>
@@ -200,134 +194,57 @@ function StepIndicator({ labels, current }: { labels: string[]; current: number 
 
 type CheckoutCtx = ReturnType<typeof useCheckout>;
 
-function ConfigStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number) => string }) {
+function CartStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number) => string }) {
   const { t } = useI18n();
+  const { navigate } = useRouter();
+  const pricedItems = c.pricing?.items ?? [];
 
-  if (!c.selectedProduct) {
+  if (c.cartItems.length === 0) {
     return (
-      <section className="glass space-y-3 p-4">
-        <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutSelectProduct")}</h2>
-        {c.products.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <ShoppingBag className="size-8 text-(--text-muted)" />
-            <p className="text-sm text-(--text-muted)">{t("shopNoProducts")}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {c.products.map((product) => (
-              <button
-                key={product.id}
-                type="button"
-                onClick={() => c.setSelectedProductId(product.id)}
-                className="glass glass-hover flex flex-col gap-1 p-3 text-left"
-              >
-                <span className="text-sm font-semibold text-(--text-primary)">{product.name}</span>
-                {product.description && (
-                  <span className="line-clamp-2 text-xs text-(--text-muted)">{product.description}</span>
-                )}
-                {product.priceMonthly != null && (
-                  <span className="mt-1 text-sm font-bold text-(--elizon-primary)">
-                    {formatPrice(Number(product.priceMonthly))}
-                    <span className="text-xs font-normal text-(--text-muted)">{t("shopPerMonth")}</span>
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+      <section className="glass space-y-3 p-6 text-center">
+        <ShoppingCart className="mx-auto size-8 text-(--text-muted)" />
+        <p className="text-sm text-(--text-muted)">{t("navCartEmpty")}</p>
+        <button
+          type="button"
+          onClick={() => navigate({ name: "shop" })}
+          className="btn-primary inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold"
+        >
+          {t("tabShop")}
+        </button>
       </section>
     );
   }
 
-  const product = c.selectedProduct;
-  const cycles: BillingCycleDays[] = product.priceYearly != null ? [30, 365] : [30];
-
   return (
-    <section className="glass space-y-4 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-(--text-primary)">{product.name}</h2>
-          {product.description && (
-            <p className="mt-0.5 text-xs text-(--text-muted)">{product.description}</p>
-          )}
-        </div>
-        {c.products.length > 1 && (
-          <button
-            type="button"
-            onClick={() => c.setSelectedProductId(null)}
-            className="shrink-0 text-xs text-(--elizon-primary) hover:underline"
-          >
-            {t("checkoutChangeProduct")}
-          </button>
-        )}
+    <section className="glass space-y-3 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutStepCart")}</h2>
+        <button
+          type="button"
+          onClick={() => navigate({ name: "cart" })}
+          className="text-xs font-medium text-(--elizon-primary) hover:underline"
+        >
+          {t("cartEdit")}
+        </button>
       </div>
-
-      {(product.vcores || product.memory || product.storage) && (
-        <div className="flex flex-wrap gap-2">
-          {!!product.vcores && (
-            <Spec
-              icon={<Cpu className="size-3" />}
-              label={t("checkoutSpecVcpu").replace("{count}", String(product.vcores))}
-            />
-          )}
-          {!!product.memory && (
-            <Spec
-              icon={<MemoryStick className="size-3" />}
-              label={t("checkoutSpecMemoryGb").replace("{count}", String(product.memory))}
-            />
-          )}
-          {!!product.storage && (
-            <Spec
-              icon={<HardDrive className="size-3" />}
-              label={t("checkoutSpecStorageGb").replace("{count}", String(product.storage))}
-            />
-          )}
-        </div>
-      )}
-
       <div className="space-y-2">
-        <p className="text-xs font-medium text-(--text-secondary)">{t("checkoutBillingCycle")}</p>
-        <div className="flex flex-wrap gap-2">
-          {cycles.map((cycle) => (
-            <button
-              key={cycle}
-              type="button"
-              onClick={() => c.setBillingCycle(cycle)}
-              className={`rounded-xl border px-4 py-2 text-sm ${
-                c.billingCycle === cycle
-                  ? "border-(--elizon-primary) bg-(--elizon-primary)/10 text-(--text-primary)"
-                  : "border-(--border) text-(--text-muted) hover:border-(--elizon-primary)/50"
-              }`}
-            >
-              {cycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-(--text-secondary)">{t("checkoutQuantity")}</p>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => c.setQuantity(Math.max(1, c.quantity - 1))}
-            className="glass glass-hover size-9 rounded-lg text-lg leading-none text-(--text-primary)"
-            aria-label={t("checkoutQuantityDecrease")}
-          >
-            −
-          </button>
-          <span className="min-w-8 text-center text-sm font-semibold text-(--text-primary)">
-            {c.quantity}
-          </span>
-          <button
-            type="button"
-            onClick={() => c.setQuantity(Math.min(20, c.quantity + 1))}
-            className="glass glass-hover size-9 rounded-lg text-lg leading-none text-(--text-primary)"
-            aria-label={t("checkoutQuantityIncrease")}
-          >
-            +
-          </button>
-        </div>
+        {c.cartItems.map((item) => {
+          const priced = pricedItems.find((entry) => entry.productId === item.productId);
+          return (
+            <div key={item.lineId} className="flex items-start justify-between gap-3 rounded-xl border border-(--border) p-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-(--text-primary)">{item.productName}</p>
+                <p className="text-xs text-(--text-muted)">
+                  {item.quantity} ×{" "}
+                  {item.billingCycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-(--elizon-primary)">
+                {c.pricingLoading ? "…" : formatPrice(priced?.total ?? item.priceMonthly * item.quantity)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -587,15 +504,19 @@ function OrderSummary({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: num
     <section className="glass space-y-3 p-4">
       <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutSummary")}</h2>
 
-      {c.selectedProduct ? (
-        <div className="flex items-start justify-between gap-2 text-sm">
-          <span className="min-w-0 text-(--text-secondary)">
-            {c.selectedProduct.name}
-            <span className="block text-xs text-(--text-muted)">
-              {c.quantity} ×{" "}
-              {c.billingCycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
-            </span>
-          </span>
+      {c.cartItems.length > 0 ? (
+        <div className="space-y-2 text-sm">
+          {c.cartItems.map((item) => (
+            <div key={item.lineId} className="flex items-start justify-between gap-2">
+              <span className="min-w-0 text-(--text-secondary)">
+                {item.productName}
+                <span className="block text-xs text-(--text-muted)">
+                  {item.quantity} ×{" "}
+                  {item.billingCycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
+                </span>
+              </span>
+            </div>
+          ))}
         </div>
       ) : (
         <p className="text-xs text-(--text-muted)">{t("checkoutNoProduct")}</p>
@@ -630,14 +551,5 @@ function SummaryRow({ label, value, muted }: { label: string; value: string; mut
       <span className={muted ? "text-(--text-muted)" : "text-(--text-secondary)"}>{label}</span>
       <span className="text-(--text-secondary)">{value}</span>
     </div>
-  );
-}
-
-function Spec({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="flex items-center gap-1 rounded-md bg-(--surface-soft) px-2 py-0.5 text-[10px] text-(--text-muted)">
-      {icon}
-      {label}
-    </span>
   );
 }

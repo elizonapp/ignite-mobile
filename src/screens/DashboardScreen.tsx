@@ -26,6 +26,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import { useBatchedServiceStatus } from '../hooks/useBatchedServiceStatus';
 import { useI18n } from '../i18n';
 import { isDesktopClient, isMobileNative } from '../lib/platform';
+import { showElizonPlusFeatures, shouldShowTrafficPoolingUi } from '../lib/elizon-plus';
 import { mergeLiveStatus } from '../lib/normalize';
 import { api } from '../lib/api';
 
@@ -72,6 +73,27 @@ export function DashboardScreen() {
     ? Math.max(...monthlyOffers.map((o) => o.discountPercent), 0)
     : 0;
 
+  const showPlusFeatures = showElizonPlusFeatures(user);
+  const showTrafficUi = shouldShowTrafficPoolingUi(user);
+
+  const managementItems = ([
+    showPlusFeatures ? { name: "storage" as const, icon: <IconStorage className="h-4 w-4" />, label: t("storageTitle") } : null,
+    { name: "subdomains" as const, icon: <IconDomain className="h-4 w-4" />, label: t("subdomainTitle") },
+    { name: "domains" as const, icon: <IconDomain className="h-4 w-4" />, label: t("domainsTitle") },
+    { name: "ip-manager" as const, icon: <IconIpManager className="h-4 w-4" />, label: t("ipManagerTitle") },
+    { name: "ssh-keys" as const, icon: <IconKey className="h-4 w-4" />, label: t("sshKeys") },
+    { name: "family" as const, icon: <IconFamily className="h-4 w-4" />, label: t("familyTitle") },
+    showPlusFeatures ? { name: "vroute" as const, icon: <IconVroute className="h-4 w-4" />, label: t("vrouteTitle") } : null,
+    isAffiliate ? { name: "affiliate" as const, icon: <IconAffiliate className="h-4 w-4" />, label: t("affiliateTitle") } : null,
+    { name: "feedback" as const, icon: <IconFeedback className="h-4 w-4" />, label: t("feedbackTitle") },
+    (['business', 'BUSINESS'].includes(user?.accountType ?? '') ? { name: "business" as const, icon: <IconBusiness className="h-4 w-4" />, label: t("businessTitle") } : null),
+    { name: "support" as const, icon: <IconSupport className="h-4 w-4" />, label: t("tabSupport") },
+  ].filter(Boolean)) as Array<{
+    name: "storage" | "subdomains" | "domains" | "ip-manager" | "family" | "vroute" | "affiliate" | "feedback" | "business" | "support" | "ssh-keys";
+    icon: React.ReactNode;
+    label: string;
+  }>;
+
   return (
     <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
       <main className="safe-x flex-1 space-y-5 pb-24 pt-2">
@@ -111,7 +133,7 @@ export function DashboardScreen() {
           </section>
         )}
 
-        {trafficSourceSummary && (
+        {showTrafficUi && trafficSourceSummary && (
           <section className="glass p-4 space-y-2">
             <h2 className="text-sm font-semibold text-(--text-primary)">{t("trafficSourceSummaryTitle")}</h2>
             <div className="grid grid-cols-2 gap-2 text-xs text-(--text-muted) sm:grid-cols-3">
@@ -131,23 +153,11 @@ export function DashboardScreen() {
           </section>
         )}
 
-        {isMobileNative() && (
+        {isMobileNative() && managementItems.length > 0 && (
           <section className="space-y-2">
             <SectionTitle title={t("management")} />
             <div className="grid grid-cols-2 gap-2">
-              {([
-                { name: "storage" as const, icon: <IconStorage className="h-4 w-4" />, label: t("storageTitle") },
-                { name: "subdomains" as const, icon: <IconDomain className="h-4 w-4" />, label: t("subdomainTitle") },
-                { name: "domains" as const, icon: <IconDomain className="h-4 w-4" />, label: t("domainsTitle") },
-                { name: "ip-manager" as const, icon: <IconIpManager className="h-4 w-4" />, label: t("ipManagerTitle") },
-                { name: "ssh-keys" as const, icon: <IconKey className="h-4 w-4" />, label: t("sshKeys") },
-                { name: "family" as const, icon: <IconFamily className="h-4 w-4" />, label: t("familyTitle") },
-                { name: "vroute" as const, icon: <IconVroute className="h-4 w-4" />, label: t("vrouteTitle") },
-                isAffiliate ? { name: "affiliate" as const, icon: <IconAffiliate className="h-4 w-4" />, label: t("affiliateTitle") } : null,
-                { name: "feedback" as const, icon: <IconFeedback className="h-4 w-4" />, label: t("feedbackTitle") },
-                (['business', 'BUSINESS'].includes(user?.accountType ?? '') ? { name: "business" as const, icon: <IconBusiness className="h-4 w-4" />, label: t("businessTitle") } : null),
-                { name: "support" as const, icon: <IconSupport className="h-4 w-4" />, label: t("tabSupport") },
-              ].filter(Boolean) as { name: "storage" | "subdomains" | "domains" | "ip-manager" | "family" | "vroute" | "affiliate" | "feedback" | "business" | "support" | "ssh-keys"; icon: React.ReactNode; label: string }[]).map(({ name, icon, label }) => (
+              {managementItems.map(({ name, icon, label }) => (
                 <button
                   key={name}
                   type="button"

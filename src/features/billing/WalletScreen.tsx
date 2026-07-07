@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 
 import { useAuth } from "../../components/AuthProvider";
-import { useAuth } from "../../components/AuthProvider";
 import { useI18n } from "../../i18n";
 import { cn } from "../../lib/utils";
+import { canPurchase } from "../../lib/platform";
 import { canManageSavedPaymentMethodsUser } from "../../lib/saved-payment-methods";
 import { AutoTopupTab } from "./tabs/AutoTopupTab";
 import { BusinessFundTab } from "./tabs/BusinessFundTab";
@@ -32,8 +32,10 @@ export function WalletScreen() {
     if (showPaymentMethodsTab) {
       base.push({ key: "methods", labelKey: "walletTabMethods" });
     }
-    base.push({ key: "funding", labelKey: "walletTabFunding" });
-    if (isBusiness) base.push({ key: "fund", labelKey: "walletTabFund" });
+    if (canPurchase()) {
+      base.push({ key: "funding", labelKey: "walletTabFunding" });
+      if (isBusiness) base.push({ key: "fund", labelKey: "walletTabFund" });
+    }
     return base;
   }, [isBusiness, showPaymentMethodsTab]);
 

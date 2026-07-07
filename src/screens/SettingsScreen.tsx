@@ -112,16 +112,10 @@ export function SettingsScreen() {
 
       <main className="safe-x flex-1 space-y-4 pb-24 pt-2">
         <SettingsSectionBlock title={t("settingsAccount")}>
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
-              <p className="text-xs text-(--text-muted)">{t("settingsSession")}</p>
-              <p className="truncate text-sm font-medium text-(--text-primary)">{displayName}</p>
-              <p className="truncate text-xs text-(--text-muted)">{user?.email ?? "—"}</p>
-            </div>
-            <Button variant="ghost" onClick={() => void onLogout()} className="rounded-xl text-(--error) hover:bg-(--error)/10">
-              <LogOut className="mr-1 size-4" />
-              {t("signOut")}
-            </Button>
+          <div className="min-w-0">
+            <p className="text-xs text-(--text-muted)">{t("settingsSession")}</p>
+            <p className="truncate text-sm font-medium text-(--text-primary)">{displayName}</p>
+            <p className="truncate text-xs text-(--text-muted)">{user?.email ?? "—"}</p>
           </div>
 
           <SettingsNavRow icon={<User className="size-4" />} label={t("settingsProfile")} onClick={() => setView("profile")} />
@@ -185,6 +179,15 @@ export function SettingsScreen() {
             <span className="text-sm text-(--text-muted)">{APP_VERSION}</span>
           </Row>
         </SettingsSectionBlock>
+
+        <button
+          type="button"
+          onClick={() => void onLogout()}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-(--error)/30 bg-(--bg-elevated) px-4 py-3 text-sm font-semibold text-(--error) transition-colors hover:bg-(--error)/10"
+        >
+          <LogOut className="size-4" />
+          {t("signOut")}
+        </button>
       </main>
     </div>
   );

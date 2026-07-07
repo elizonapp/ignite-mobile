@@ -2,9 +2,13 @@ import { resolveCaughtApiError } from "../api/resolve-caught-error";
 import { useCallback, useEffect, useState } from "react";
 import { HardDrive, RefreshCw, Unlink } from "lucide-react";
 
+import { CustomerFeatureUnavailable } from "../components/CustomerFeatureUnavailable";
+import { useAuth } from "../components/AuthProvider";
+import { useRouter } from "../components/Router";
 import { useToast } from '../components/Toast';
 import { useI18n } from '../i18n';
 import { api } from '../lib/api';
+import { hideElizonPlusUi, showElizonPlusFeatures } from "../lib/elizon-plus";
 import { cn } from '../lib/utils';
 
 type Volume = {
@@ -36,6 +40,8 @@ const statusTone: Record<string, string> = {
 export function StorageScreen() {
   const { t, lang } = useI18n();
   const { show } = useToast();
+  const { user, isLoading: authLoading } = useAuth();
+  const { navigate } = useRouter();
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +63,15 @@ export function StorageScreen() {
     }
   }, [t]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (authLoading) return;
+    if (hideElizonPlusUi(user)) return;
+    if (!showElizonPlusFeatures(user)) {
+      navigate({ name: "dashboard" });
+      return;
+    }
+    void load();
+  }, [authLoading, load, navigate, user]);
 
   const detach = async (id: string) => {
     try {
@@ -78,6 +92,14 @@ export function StorageScreen() {
       maximumFractionDigits: 2,
     }).format(cents / 100);
   };
+
+  if (!authLoading && hideElizonPlusUi(user)) {
+    return <CustomerFeatureUnavailable />;
+  }
+
+  if (!authLoading && !showElizonPlusFeatures(user)) {
+    return null;
+  }
 
   return (
     <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">

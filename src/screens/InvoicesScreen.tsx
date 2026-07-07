@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { ArrowLeft, Download, ExternalLink, Loader2, RefreshCw } from "lucide-react";
-
-import { canManageBilling } from '../lib/platform';
+import { ArrowLeft, Download, Loader2, RefreshCw } from "lucide-react";
 
 import { useRouter } from '../components/Router';
 import { useToast } from '../components/Toast';
@@ -150,29 +148,29 @@ export function InvoicesScreen() {
           <div className="flex flex-col gap-2">
             <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
               {selectedInvoice.pdfUrl && (
-                <a
-                  href={selectedInvoice.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate({
+                      name: "hosted-flow",
+                      url: selectedInvoice.pdfUrl!,
+                      title: t("invoiceDownload"),
+                    })
+                  }
                   className="glass glass-hover flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium text-(--text-primary)"
                 >
                   <Download className="size-4" />
                   {t("invoiceDownload")}
-                </a>
+                </button>
               )}
-              {canManageBilling() && selectedInvoice.status === "pending" ? (
+              {selectedInvoice.status === "pending" ? (
                 <button
                   type="button"
                   onClick={() => navigate({ name: "invoice-pay", id: selectedInvoice.id })}
                   className="btn-primary flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium"
                 >
-                  <ExternalLink className="size-4" />
                   {t("invoicePay")}
                 </button>
-              ) : selectedInvoice.status === "pending" ? (
-                <div className="glass border border-(--warning)/30 rounded-xl p-4 text-sm text-(--text-muted)">
-                  {t("invoicePayDesktopOnly")}
-                </div>
               ) : null}
             </div>
           </div>

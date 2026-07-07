@@ -61,12 +61,28 @@ export function getClientHeaders(): Record<string, string> {
   return getElizonClientHeaders();
 }
 
+/** Desktop macOS (Electron or browser on Mac). Not iOS/Android native apps. */
+export function isMacOSDesktop(): boolean {
+  if (isMobileNative()) return false;
+  return getDesktopOS() === "darwin";
+}
+
+/** Floating IPs are unavailable on mobile native (iOS/Android) and macOS. */
+export function canAccessFloatingIps(): boolean {
+  if (isMobileNative()) {
+    const os = getMobileOS();
+    return os !== "ios" && os !== "android";
+  }
+  return getDesktopOS() !== "darwin";
+}
+
+/** Purchases are unavailable on macOS desktop; available on other platforms. */
 export function canPurchase(): boolean {
-  return isDesktopClient();
+  return !isMacOSDesktop();
 }
 
 export function canManageBilling(): boolean {
-  return isDesktopClient();
+  return true;
 }
 
 /** Wallet overview (balance, subscriptions, payment methods) is available on all clients. */

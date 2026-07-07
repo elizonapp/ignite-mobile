@@ -4,6 +4,9 @@ node_modules
 release
 dist-test
 build/icon.png
+public/apple-touch-icon.png
+android/app/src/main/res/mipmap-*/ic_launcher*.png
+ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
 
 # output
 out

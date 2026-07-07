@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, nativeImage } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { startDistServer } from "./static-server.js";
@@ -10,6 +10,8 @@ app.setAppUserModelId("app.elizon.ignite.desktop");
 app.name = "elizon";
 
 const distDir = path.join(__dirname, "..", "dist");
+const appIconPath = path.join(__dirname, "..", "build", "icon.png");
+const appIcon = nativeImage.createFromPath(appIconPath);
 const devUrl =
   process.env.ELECTRON_DEV_URL ||
   process.env.START_URL ||
@@ -33,6 +35,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: "elizon",
+    icon: appIcon.isEmpty() ? undefined : appIcon,
     backgroundColor: "#09090b",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -53,35 +56,6 @@ function createWindow() {
 
   return win;
 }
-
-function createProgramWindow(url) {
-  const win = new BrowserWindow({
-    width: 1100,
-    height: 820,
-    title: "elizon",
-    backgroundColor: "#09090b",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
-  });
-
-  win.loadURL(url);
-  return win;
-}
-
-ipcMain.on("open-window", (_event, url) => {
-  if (typeof url === "string" && /^https?:\/\//.test(url)) {
-    createProgramWindow(url);
-  }
-});
-
-ipcMain.on("open-external", (_event, url) => {
-  if (typeof url === "string" && /^https?:\/\//.test(url)) {
-    shell.openExternal(url);
-  }
-});
 
 app.whenReady().then(() => {
   createWindow();

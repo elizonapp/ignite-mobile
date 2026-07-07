@@ -1,12 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, Cpu, Plus, Server, Wifi } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { CustomerFeatureUnavailable } from "../components/CustomerFeatureUnavailable";
+import { useAuth } from "../components/AuthProvider";
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useRouter } from '../components/Router';
 import { useI18n } from '../i18n';
+import { hideElizonPlusUi, showElizonPlusFeatures } from "../lib/elizon-plus";
 
 const COLORS = ["#38bdf8", "#a78bfa", "#f472b6", "#34d399", "#facc15"];
 
@@ -31,7 +34,8 @@ type VrouteVm = {
 
 export function VrouteScreen() {
   const { t } = useI18n();
-  const { back } = useRouter();
+  const { back, navigate } = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [networks, setNetworks] = useState<VrouteNetwork[]>([
     { id: "net-1", name: "Web VLAN", color: getColor(0), cidr: "10.0.1.0/24", host: "host-1" },
     { id: "net-2", name: "DB VLAN", color: getColor(1), cidr: "10.0.2.0/24", host: "host-2" },
@@ -45,11 +49,27 @@ export function VrouteScreen() {
   const [newVmName, setNewVmName] = useState("");
   const [selectedNetwork, setSelectedNetwork] = useState<VrouteNetwork | null>(null);
 
+  useEffect(() => {
+    if (authLoading) return;
+    if (hideElizonPlusUi(user)) return;
+    if (!showElizonPlusFeatures(user)) {
+      navigate({ name: "dashboard" });
+    }
+  }, [authLoading, navigate, user]);
+
   const networkSummary = useMemo(() => ({
     totalNets: networks.length,
     totalVms: vms.length,
     totalCpu: vms.reduce((sum, vm) => sum + vm.cpu, 0),
   }), [networks, vms]);
+
+  if (!authLoading && hideElizonPlusUi(user)) {
+    return <CustomerFeatureUnavailable />;
+  }
+
+  if (!authLoading && !showElizonPlusFeatures(user)) {
+    return null;
+  }
 
   const addNetwork = () => {
     if (!newNetworkName.trim() || !newNetworkCidr.trim()) return;

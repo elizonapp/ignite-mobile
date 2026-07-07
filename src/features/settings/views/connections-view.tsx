@@ -8,8 +8,6 @@ import { useI18n } from "../../../i18n";
 import { resolveApiError } from "../../../api/resolve-error";
 import { resolveCaughtApiError } from "../../../api/resolve-caught-error";
 import { api } from "../../../lib/api";
-import { getApiBaseUrl } from "../../../lib/config";
-import { openExternalUrl } from "../../billing/lib";
 import { SettingsSection, SettingsSubView, SettingsToggleRow } from "../components";
 
 export function ConnectionsSettingsView({ onBack }: { onBack: () => void }) {
@@ -86,10 +84,6 @@ export function ConnectionsSettingsView({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const openSsoManage = () => {
-    openExternalUrl(`${getApiBaseUrl().replace(/\/+$/, "")}/dashboard/settings?tab=connections`);
-  };
-
   return (
     <SettingsSubView title={t("settingsConnections")} onBack={onBack}>
       {loading ? (
@@ -144,9 +138,6 @@ export function ConnectionsSettingsView({ onBack }: { onBack: () => void }) {
                 </div>
               ))
             )}
-            <Button variant="ghost" onClick={openSsoManage} className="w-full rounded-xl text-sm">
-              {t("connectionsSsoManageInBrowser")}
-            </Button>
           </SettingsSection>
         </>
       )}

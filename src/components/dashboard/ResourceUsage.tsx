@@ -24,10 +24,7 @@ export function ResourceUsage({ servers }: { servers: DashboardServer[] }) {
 
   return (
     <section className="glass p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-(--text-primary)">{t("resourceUsage")}</h3>
-        <span className="text-sm text-(--text-muted)">{sample.length} · live</span>
-      </div>
+      <h3 className="text-base font-semibold text-(--text-primary)">{t("resourceUsage")}</h3>
 
       <div className="mt-3 space-y-3">
         <Row label={t("serverCpu")} value={hasData ? `${cpu}%` : t("na")} pct={cpu} tone="primary" />

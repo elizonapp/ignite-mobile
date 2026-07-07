@@ -101,6 +101,21 @@ export class BusinessResource extends ResourceClient {
     return this.get<BusinessBillingResponse>("/api/business/billing");
   }
 
+  enableInvoiceBilling(anchorDay: number) {
+    return this.post<{ success: boolean; error?: string }>("/api/business/billing", { anchorDay });
+  }
+
+  disableInvoiceBilling() {
+    return this.delete<{ success: boolean; error?: string }>("/api/business/billing");
+  }
+
+  rejectFund(offerId: string) {
+    return this.post<{ success: boolean; error?: string }>(
+      `/api/business/fund/${encodeURIComponent(offerId)}/reject`,
+      {},
+    );
+  }
+
   submitVerification(formData: FormData) {
     return this.post<{ success: boolean }>("/api/business/verification", formData);
   }

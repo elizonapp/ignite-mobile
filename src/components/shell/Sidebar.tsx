@@ -9,16 +9,20 @@ import {
   Server,
   Settings,
   ShoppingBag,
+  Sparkles,
   Star,
+  LogOut,
   Users,
   Globe,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+import { BrandLogoLink } from "../BrandLogo";
 import { useAuth } from "../AuthProvider";
 import { useI18n } from "../../i18n";
 import { api } from "../../lib/api";
-import { canAccessWallet, canPurchase } from "../../lib/platform";
+import { hideElizonPlusUi, isRouteVisibleInStealth } from "../../lib/elizon-plus";
+import { canAccessFloatingIps, canAccessWallet, canPurchase } from "../../lib/platform";
 import { cn } from "../../lib/utils";
 import { formatUserGreetingName } from "../../lib/userName";
 import type { Route } from "../Router";
@@ -62,6 +66,7 @@ const labelMap: Partial<Record<SidebarRouteName, string>> = {
   dashboard: "tabHome",
   servers: "tabServers",
   billing: "tabBilling",
+  "elizon-plus": "dashboardElizonPlus",
   invoices: "tabBilling",
   support: "tabSupport",
   settings: "tabSettings",
@@ -94,7 +99,7 @@ function normalizeRouteName(route: Route["name"]): Route["name"] {
 export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; navigate: (route: Route) => void }) {
   const { t } = useI18n();
   const tAny = t as (key: string) => string;
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isAffiliate, setIsAffiliate] = useState(false);
   const activeRoute = normalizeRouteName(routeName);
 
@@ -105,10 +110,18 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
       .catch(() => setIsAffiliate(false));
   }, []);
 
-  const mainItems: NavItem[] = mainNav.map((item) => ({
-    ...item,
-    label: getLabel(item.route, tAny),
-  }));
+  const hideUi = hideElizonPlusUi(user);
+
+  const mainItems: NavItem[] = mainNav
+    .filter(
+      (item) =>
+        isRouteVisibleInStealth(item.route, user) &&
+        (item.route !== "floating-ips" || canAccessFloatingIps()),
+    )
+    .map((item) => ({
+      ...item,
+      label: getLabel(item.route, tAny),
+    }));
 
   const secondaryItems: NavItem[] = secondaryNav
     .filter(
@@ -121,6 +134,15 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
       ...item,
       label: getLabel(item.route, tAny),
     }));
+
+  if (!hideUi) {
+    const billingIndex = secondaryItems.findIndex((item) => item.route === "billing");
+    secondaryItems.splice(billingIndex === -1 ? 0 : billingIndex + 1, 0, {
+      route: "elizon-plus",
+      icon: Sparkles,
+      label: getLabel("elizon-plus", tAny),
+    });
+  }
 
   if (isAffiliate && !secondaryItems.some((item) => item.route === "affiliate")) {
     // Wie im Web: Affiliate direkt vor "Einstellungen" einsortieren
@@ -135,16 +157,14 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-(--border) lg:bg-(--bg-base)">
       <div className="flex h-full flex-col">
-        <div className="glass-navbar border-b border-(--border) p-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-[var(--radius-surface)] bg-(--primary) text-white shadow-sm">
-              <span className="text-lg font-semibold">E</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-(--text-primary)">elizon</p>
-              <p className="text-xs uppercase tracking-[0.18em] text-(--text-muted)">{t("appDashboardLabel")}</p>
-            </div>
-          </div>
+        <div className="flex items-center justify-center border-b border-(--border) px-4 pb-4 pt-6">
+          <BrandLogoLink
+            width={128}
+            height={96}
+            alt="elizon"
+            onClick={() => navigate({ name: "dashboard" })}
+            className="h-20 w-28"
+          />
         </div>
 
         <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
@@ -196,7 +216,7 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
           })}
         </nav>
 
-        <div className="border-t border-(--border) p-4">
+        <div className="border-t border-(--border) p-4 space-y-2">
           <div className="glass flex items-center gap-3 p-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-surface)] bg-(--primary)/10 text-(--primary)">
               <Users className="h-5 w-5" />
@@ -213,6 +233,14 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
               </div>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-control)] border border-(--border) px-3 py-2.5 text-sm font-medium text-(--error) transition-colors hover:bg-(--error)/10"
+          >
+            <LogOut className="h-4 w-4" />
+            {t("signOut")}
+          </button>
         </div>
       </div>
     </aside>

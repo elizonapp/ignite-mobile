@@ -3,7 +3,9 @@ import { resolveCaughtApiError } from "../api/resolve-caught-error";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Globe, Loader2, Server, Trash2 } from "lucide-react";
 
+import { CustomerFeatureUnavailable } from "../components/CustomerFeatureUnavailable";
 import { useAuth } from "../components/AuthProvider";
+import { useRouter } from "../components/Router";
 import { DnsListToolbar } from "../components/dns/dns-list-toolbar";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -14,6 +16,7 @@ import { formatResourceStatus } from "../i18n/format-status";
 import type { ByoipDdosMarketing, ByoipNetwork } from "../api/byoip";
 import { formatDate, formatMoney, openExternalUrl } from "../features/billing/lib";
 import { api } from "../lib/api";
+import { hideElizonPlusUi, isElizonPlusCustomerUiVisible, showElizonPlusFeatures } from "../lib/elizon-plus";
 import { canPurchase, isDesktopClient } from "../lib/platform";
 import { cn } from "../lib/utils";
 
@@ -48,6 +51,7 @@ export function ByoipScreen() {
   const { t, lang } = useI18n();
   const { show } = useToast();
   const { user, isLoading: authLoading } = useAuth();
+  const { navigate } = useRouter();
   const desktop = isDesktopClient();
 
   const [networks, setNetworks] = useState<ByoipNetwork[]>([]);
@@ -83,7 +87,8 @@ export function ByoipScreen() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [walletTopupTb, setWalletTopupTb] = useState("1");
 
-  const isElizonPlus = user?.elizonPlusActive === true;
+  const elizonPlusUiVisible = isElizonPlusCustomerUiVisible(user);
+  const isElizonPlus = showElizonPlusFeatures(user);
   const premiumName = ddosMarketing.premiumDisplayName || ddosMarketing.premiumProviderKey;
 
   const load = useCallback(async () => {
@@ -118,8 +123,9 @@ export function ByoipScreen() {
   }, [t]);
 
   useEffect(() => {
-    if (!authLoading) void load();
-  }, [authLoading, load]);
+    if (authLoading || hideElizonPlusUi(user)) return;
+    void load();
+  }, [authLoading, load, user]);
 
   useEffect(() => {
     if (showApply && !applyLocationId && allowedLocationIds[0]) {
@@ -317,6 +323,10 @@ export function ByoipScreen() {
     }
   };
 
+  if (!authLoading && !elizonPlusUiVisible) {
+    return <CustomerFeatureUnavailable />;
+  }
+
   if (authLoading || isLoading) {
     return (
       <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
@@ -333,6 +343,13 @@ export function ByoipScreen() {
         <div className="glass p-8 text-center">
           <h2 className="text-lg font-semibold text-(--text-primary)">{t("byoipElizonPlusRequired")}</h2>
           <p className="mt-2 text-sm text-(--text-muted)">{t("byoipElizonPlusRequiredDesc")}</p>
+          <button
+            type="button"
+            className="btn-primary mt-4 inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold"
+            onClick={() => navigate({ name: "elizon-plus" })}
+          >
+            {t("byoipGetElizonPlus")}
+          </button>
         </div>
       </div>
     );
@@ -800,13 +817,14 @@ function ApplyFormPanel(props: ApplyFormPanelProps) {
       </div>
       <div className="flex gap-2">
         <Button variant="ghost" onClick={onCancel} className="flex-1 rounded-xl">{t("cancel")}</Button>
-        <Button
+        <button
+          type="button"
           onClick={onSubmit}
           disabled={applying || !canSubmit}
-          className="btn-primary flex-1 justify-center rounded-xl"
+          className="btn-primary flex flex-1 items-center justify-center rounded-xl bg-[var(--primary-alt)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {applying ? t("byoipApplying") : t("byoipApplySubmit")}
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -882,13 +900,14 @@ function AssignFormPanel({
       </label>
       <div className="flex gap-2">
         <Button variant="ghost" onClick={onCancel} className="flex-1 rounded-xl">{t("cancel")}</Button>
-        <Button
+        <button
+          type="button"
           onClick={onSubmit}
           disabled={assigning || !assignPrefix.trim() || !assignServiceId}
-          className="btn-primary flex-1 justify-center rounded-xl"
+          className="btn-primary flex flex-1 items-center justify-center rounded-xl bg-[var(--primary-alt)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {assigning ? t("byoipAssigning") : t("byoipAssignSubmit")}
-        </Button>
+        </button>
       </div>
     </div>
   );

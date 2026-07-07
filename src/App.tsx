@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Loader2 } from "lucide-react";
 
+import { BrandFonts } from './components/BrandFonts';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import { CapabilityGuard } from './capabilities/CapabilityGuard';
 import { BottomNav } from './components/shell/BottomNav';
@@ -11,6 +12,8 @@ import { RouterProvider, useRouter, useTab } from './components/Router';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/Toast';
 import { I18nProvider } from './i18n';
+import { ElizonPlusStealthGuard } from './components/ElizonPlusStealthGuard';
+import { HostedFlowBridge } from './components/HostedFlowBridge';
 import { AffiliateScreen } from './screens/AffiliateScreen';
 import { ByoipScreen } from './screens/ByoipScreen';
 import { FloatingIpsScreen } from './screens/FloatingIpsScreen';
@@ -18,6 +21,8 @@ import { WalletScreen, InvoicePayScreen } from './features/billing';
 import { BusinessScreen } from './screens/BusinessScreen';
 import { ConsoleScreen } from './screens/ConsoleScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
+import { ElizonPlusScreen } from './screens/ElizonPlusScreen';
+import { HostedFlowScreen } from './screens/HostedFlowScreen';
 import { SSHKeysScreen } from './screens/SSHKeysScreen';
 import { SubdomainsScreen } from './screens/SubdomainsScreen';
 import { DomainsScreen } from './screens/DomainsScreen';
@@ -31,6 +36,7 @@ import { ServerDetailScreen } from './screens/ServerDetailScreen';
 import { ServersScreen } from './screens/ServersScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { ShopScreen } from './screens/ShopScreen';
+import { CartScreen } from './screens/CartScreen';
 import { CheckoutScreen } from './features/checkout';
 import { StorageScreen } from './screens/StorageScreen';
 import { SupportScreen } from './screens/SupportScreen';
@@ -62,12 +68,16 @@ export function App() {
 
   return (
     <ThemeProvider>
+      <BrandFonts />
       <I18nProvider>
         <ToastProvider>
           <AuthProvider>
-            <RouterProvider>
-              <Shell />
-            </RouterProvider>
+            <CartProvider>
+              <RouterProvider>
+                <HostedFlowBridge />
+                <Shell />
+              </RouterProvider>
+            </CartProvider>
           </AuthProvider>
         </ToastProvider>
       </I18nProvider>
@@ -77,6 +87,11 @@ export function App() {
 
 function Shell() {
   const { isLoading, isAuthenticated } = useAuth();
+  const { route } = useRouter();
+
+  if (route.name === "hosted-flow") {
+    return <HostedFlowScreen url={route.url} title={route.title} />;
+  }
 
   return (
     <>
@@ -142,6 +157,11 @@ function AuthenticatedShell() {
                   <WalletScreen />
                 </CapabilityGuard>
               )}
+              {route.name === "elizon-plus" && (
+                <ElizonPlusStealthGuard routeName="elizon-plus">
+                  <ElizonPlusScreen />
+                </ElizonPlusStealthGuard>
+              )}
               {route.name === "invoices" && (
                 <CapabilityGuard capability="billing">
                   <InvoicesScreen />
@@ -160,23 +180,44 @@ function AuthenticatedShell() {
                   <ShopScreen />
                 </CapabilityGuard>
               )}
-              {route.name === "checkout" && (
+              {route.name === "cart" && (
                 <CapabilityGuard capability="purchase">
-                  <CheckoutScreen productId={route.productId} />
+                  <CartScreen />
                 </CapabilityGuard>
               )}
-              {route.name === "storage" && <StorageScreen />}
+              {route.name === "checkout" && (
+                <CapabilityGuard capability="purchase">
+                  <CheckoutScreen />
+                </CapabilityGuard>
+              )}
+              {route.name === "storage" && (
+                <ElizonPlusStealthGuard routeName="storage">
+                  <StorageScreen />
+                </ElizonPlusStealthGuard>
+              )}
               {route.name === "subdomains" && <SubdomainsScreen />}
               {route.name === "domains" && <DomainsScreen />}
               {route.name === "ip-manager" && <IpManagerScreen />}
-              {route.name === "byoip" && <ByoipScreen />}
-              {route.name === "floating-ips" && <FloatingIpsScreen />}
+              {route.name === "byoip" && (
+                <ElizonPlusStealthGuard routeName="byoip">
+                  <ByoipScreen />
+                </ElizonPlusStealthGuard>
+              )}
+              {route.name === "floating-ips" && (
+                <CapabilityGuard capability="floatingIps">
+                  <FloatingIpsScreen />
+                </CapabilityGuard>
+              )}
               {route.name === "ssh-keys" && <SSHKeysScreen />}
               {route.name === "affiliate" && <AffiliateScreen />}
               {route.name === "feedback" && <FeedbackScreen />}
               {route.name === "business" && <BusinessScreen />}
               {route.name === "family" && <FamilyScreen />}
-              {route.name === "vroute" && <VrouteScreen />}
+              {route.name === "vroute" && (
+                <ElizonPlusStealthGuard routeName="vroute">
+                  <VrouteScreen />
+                </ElizonPlusStealthGuard>
+              )}
               {route.name === "console" && <ConsoleScreen id={route.id} />}
           </div>
           {mobileNative && <BottomNav active={tab} onChange={setTab} />}

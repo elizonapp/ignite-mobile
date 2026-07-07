@@ -2,20 +2,22 @@ import type { ReactNode } from "react";
 import { Monitor } from "lucide-react";
 
 import { useI18n } from "../i18n";
-import { canAccessWallet, canManageBilling, canPurchase } from "../lib/platform";
+import { canAccessFloatingIps, canAccessWallet, canManageBilling, canPurchase } from "../lib/platform";
 
-export type Capability = "purchase" | "billing" | "wallet";
+export type Capability = "purchase" | "billing" | "wallet" | "floatingIps";
 
 function capabilityAllowed(capability: Capability): boolean {
   if (capability === "purchase") return canPurchase();
+  if (capability === "floatingIps") return canAccessFloatingIps();
   if (capability === "wallet") return canAccessWallet();
   return canManageBilling();
 }
 
 function capabilityHintKey(
   capability: Capability,
-): "capabilityPurchaseDesktopOnly" | "capabilityBillingDesktopOnly" {
+): "capabilityPurchaseDesktopOnly" | "capabilityBillingDesktopOnly" | "capabilityFloatingIpsUnavailable" {
   if (capability === "purchase") return "capabilityPurchaseDesktopOnly";
+  if (capability === "floatingIps") return "capabilityFloatingIpsUnavailable";
   return "capabilityBillingDesktopOnly";
 }
 

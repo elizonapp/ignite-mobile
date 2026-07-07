@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { resolveApiError } from "../api/resolve-error";
 import { resolveCaughtApiError } from "../api/resolve-caught-error";
+import { useAuth } from "../components/AuthProvider";
 import { mobileTranslate } from "../i18n/mobile-translate";
 import { api } from "../lib/api";
+import { shouldShowTrafficPoolingUi } from "../lib/elizon-plus";
 import { mapBaseServer, normalizeStatus } from "../lib/normalize";
 import type { DashboardServer, DashboardStats, MaintenanceNote } from "../lib/types";
 
@@ -44,22 +46,20 @@ const emptyState: State = {
   monthlyOffers: [],
 };
 
-function mobileTranslate(key: string): string {
-  return key;
-}
-
 export function useDashboardData() {
   const [state, setState] = useState<State>(emptyState);
+  const { user } = useAuth();
 
   const load = useCallback(async (background = false) => {
     if (!background) setState((s) => ({ ...s, isLoading: true, error: null }));
     try {
+      const showTrafficUi = shouldShowTrafficPoolingUi(user);
       const [serversData, ticketsData, bandwidthData, maintenanceData, trafficData, offersData] = await Promise.all([
         api.dashboard.services(SERVICE_LIMIT),
         api.dashboard.tickets("open", 1).catch(() => null),
         api.dashboard.totalBandwidth().catch(() => null),
         api.dashboard.maintenanceNotifications().catch(() => null),
-        api.dashboard.trafficSources().catch(() => null),
+        showTrafficUi ? api.dashboard.trafficSources().catch(() => null) : Promise.resolve(null),
         api.dashboard.monthlyOffers().catch(() => null),
       ]);
 
@@ -87,7 +87,7 @@ export function useDashboardData() {
           : [];
 
       const trafficSourceSummary =
-        trafficData?.success && trafficData.summary
+        showTrafficUi && trafficData?.success && trafficData.summary
           ? (trafficData.summary as TrafficSourceSummary)
           : null;
 
@@ -121,7 +121,7 @@ export function useDashboardData() {
         error: resolveCaughtApiError(err, mobileTranslate, "dashboardLoadError"),
       }));
     }
-  }, []);
+  }, [user?.elizonPlusCustomerUiVisible]);
 
   useEffect(() => {
     void load(false);

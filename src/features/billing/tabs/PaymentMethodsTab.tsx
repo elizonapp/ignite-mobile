@@ -7,9 +7,7 @@ import { ConfirmModal } from "../../../components/ui/ConfirmModal";
 import { useI18n } from "../../../i18n";
 import { resolveApiError } from "../../../api/resolve-error";
 import { resolveCaughtApiError } from "../../../api/resolve-caught-error";
-import { ApiError, api } from "../../../lib/api";
-import { getApiBaseUrl } from "../../../lib/config";
-import { isMobileNative } from "../../../lib/platform";
+import { api } from "../../../lib/api";
 import { canManageSavedPaymentMethodsUser } from "../../../lib/saved-payment-methods";
 import { cn } from "../../../lib/utils";
 import { openExternalUrl } from "../lib";
@@ -17,11 +15,6 @@ import type { SavedPaymentMethod } from "../../../api/billing";
 
 function paymentMethodDisplayLabel(m: SavedPaymentMethod, fallback: string): string {
   return m.userLabel?.trim() || m.label?.trim() || m.brand?.trim() || m.method?.trim() || fallback;
-}
-
-function paymentMethodsManageUrl(): string {
-  const base = getApiBaseUrl().replace(/\/+$/, "");
-  return `${base}/dashboard/settings?tab=payment-methods`;
 }
 
 export function PaymentMethodsTab() {
@@ -65,27 +58,18 @@ export function PaymentMethodsTab() {
     void load();
   }, [load]);
 
-  const openAddInBrowser = () => {
-    openExternalUrl(paymentMethodsManageUrl());
-    show(t("paymentMethodAddRedirect"), "info");
-  };
-
   const addMethod = async () => {
     setIsAdding(true);
     try {
       const res = await api.billing.addPaymentMethod();
       if (res.success && res.checkoutUrl) {
-        openExternalUrl(res.checkoutUrl);
+        openExternalUrl(res.checkoutUrl, { title: t("paymentMethodAdd") });
         show(t("paymentMethodAddRedirect"), "info");
       } else {
         show(resolveApiError(res, t, { fallbackKey: "unknownError" }), "error");
       }
     } catch (err) {
-      if (err instanceof ApiError && err.code === "clientPlatformNotAllowed") {
-        openAddInBrowser();
-      } else {
-        show(resolveCaughtApiError(err, t), "error");
-      }
+      show(resolveCaughtApiError(err, t), "error");
     } finally {
       setIsAdding(false);
     }
@@ -164,10 +148,6 @@ export function PaymentMethodsTab() {
 
   return (
     <div className="space-y-3">
-      {isMobileNative() && (
-        <p className="text-xs text-(--text-muted)">{t("paymentMethodMobileAddHint")}</p>
-      )}
-
       {methods.length === 0 ? (
         <div className="glass p-6 text-center text-sm text-(--text-muted)">{t("paymentMethodsEmpty")}</div>
       ) : (

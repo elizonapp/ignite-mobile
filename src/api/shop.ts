@@ -1,3 +1,4 @@
+import type { ShopProductDetail, ShopUpgradeConfig } from "../lib/shop-product-detail";
 import { ResourceClient } from "./resource-client";
 
 export class ShopResource extends ResourceClient {
@@ -10,5 +11,25 @@ export class ShopResource extends ResourceClient {
       success: boolean;
       countries: Array<{ countryCode: string; countryName: string; isDefault?: boolean }>;
     }>("/api/public/countries");
+  }
+
+  upgradeConfig(categoryId: string) {
+    return this.get<{ success: boolean; config?: ShopUpgradeConfig | null }>(
+      `/api/categories/${encodeURIComponent(categoryId)}/upgrade-config`,
+    );
+  }
+
+  productDetail(categoryKey: string, productSlug: string, lang?: string) {
+    return this.get<{ success: boolean; product?: ShopProductDetail }>(
+      `/api/products/${encodeURIComponent(categoryKey)}/${encodeURIComponent(productSlug)}`,
+      { lang },
+    );
+  }
+
+  productLocations(productId: string) {
+    return this.get<{ success: boolean; locations?: Array<{ id: string; name: string; city?: string; country?: string }> }>(
+      "/api/products/locations",
+      { productIds: productId },
+    );
   }
 }

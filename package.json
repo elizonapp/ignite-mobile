@@ -14,7 +14,7 @@
     "dev": "bun --hot src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "build": "bun run build.ts",
-    "icons:desktop": "bun scripts/prepare-desktop-icons.mjs",
+    "icons:desktop": "bun scripts/prepare-app-icons.mjs",
     "desktop:dev": "bun run build && electron .",
     "desktop:run": "bun run build && electron .",
     "desktop:build": "bun run build && bun run icons:desktop && electron-builder",
@@ -65,7 +65,7 @@
         { "target": "nsis", "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
       ],
-      "icon": "build/icon.png",
+      "icon": "public/favicon.ico",
       "sign": false
     },
     "directories": {

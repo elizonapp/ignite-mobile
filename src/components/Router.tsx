@@ -6,12 +6,14 @@ export type Route =
   | { name: "servers" }
   | { name: "server"; id: string }
   | { name: "billing" }
+  | { name: "elizon-plus" }
   | { name: "invoices" }
   | { name: "invoice-pay"; id: string }
   | { name: "permission-accept"; permissionId: string }
   | { name: "support" }
   | { name: "settings" }
   | { name: "shop" }
+  | { name: "cart" }
   | { name: "checkout"; productId?: string }
   | { name: "storage" }
   | { name: "subdomains" }
@@ -25,7 +27,8 @@ export type Route =
   | { name: "business" }
   | { name: "family" }
   | { name: "vroute" }
-  | { name: "console"; id: string };
+  | { name: "console"; id: string }
+  | { name: "hosted-flow"; url: string; title?: string };
 
 type RouterContextValue = {
   route: Route;

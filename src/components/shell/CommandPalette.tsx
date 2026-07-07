@@ -3,19 +3,24 @@ import { IconSearch, IconClose } from "../dashboard/dashboard-icons";
 
 import { useI18n } from "../../i18n";
 import { getDesktopOS } from "../../lib/platform";
+import { hideElizonPlusUi, showElizonPlusFeatures } from "../../lib/elizon-plus";
+import { useAuth } from "../AuthProvider";
 import { useRouter } from "../Router";
 import type { Route } from "../Router";
 import { Input } from "../ui/input";
 
 /* Navigationsziele – gleiche Reihenfolge wie Sidebar (Jakobsches Gesetz) */
-const entries: { route: Route; labelKey: string }[] = [
+const entries: { route: Route; labelKey: string; requiresElizonPlus?: boolean; hiddenInStealth?: boolean }[] = [
   { route: { name: "dashboard" }, labelKey: "tabHome" },
   { route: { name: "servers" }, labelKey: "tabServers" },
   { route: { name: "subdomains" }, labelKey: "subdomainTitle" },
   { route: { name: "domains" }, labelKey: "domainsTitle" },
   { route: { name: "ip-manager" }, labelKey: "ipManagerTitle" },
   { route: { name: "ssh-keys" }, labelKey: "sshKeys" },
-  { route: { name: "storage" }, labelKey: "storageTitle" },
+  { route: { name: "storage" }, labelKey: "storageTitle", requiresElizonPlus: true },
+  { route: { name: "vroute" }, labelKey: "vrouteTitle", requiresElizonPlus: true },
+  { route: { name: "byoip" }, labelKey: "byoipTitle", hiddenInStealth: true },
+  { route: { name: "elizon-plus" }, labelKey: "dashboardElizonPlus", hiddenInStealth: true },
   { route: { name: "billing" }, labelKey: "tabBilling" },
   { route: { name: "support" }, labelKey: "tabSupport" },
   { route: { name: "feedback" }, labelKey: "feedbackTitle" },
@@ -26,7 +31,20 @@ const entries: { route: Route; labelKey: string }[] = [
 export function CommandPaletteTrigger({ className }: { className?: string }) {
   const { t } = useI18n();
   const tAny = t as (key: string) => string;
+  const { user } = useAuth();
   const { navigate } = useRouter();
+  const hideUi = hideElizonPlusUi(user);
+  const showPlus = showElizonPlusFeatures(user);
+
+  const visibleEntries = useMemo(
+    () =>
+      entries.filter((entry) => {
+        if (entry.hiddenInStealth && hideUi) return false;
+        if (entry.requiresElizonPlus && !showPlus) return false;
+        return true;
+      }),
+    [hideUi, showPlus],
+  );
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -34,10 +52,10 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const labelled = entries.map((entry) => ({ ...entry, label: tAny(entry.labelKey) }));
+    const labelled = visibleEntries.map((entry) => ({ ...entry, label: tAny(entry.labelKey) }));
     if (!q) return labelled;
     return labelled.filter((entry) => entry.label.toLowerCase().includes(q));
-  }, [query, tAny]);
+  }, [query, tAny, visibleEntries]);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -93,7 +111,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`flex w-full min-w-0 items-center gap-2.5 rounded-control border border-(--border) bg-(--bg-elevated) px-3 py-2 text-left text-sm text-(--text-muted) transition-colors hover:border-(--primary)/40 hover:text-(--text-secondary) ${className ?? ""}`}
+        className={`flex h-10 w-full min-w-0 items-center gap-2.5 rounded-control border border-(--border) bg-(--bg-elevated) px-3 text-left text-sm text-(--text-muted) transition-colors hover:border-(--primary)/40 hover:text-(--text-secondary) ${className ?? ""}`}
         title={`${t("search")} (${shortcutLabel})`}
       >
         <IconSearch className="size-4 shrink-0" />

@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { useI18n } from "../../i18n";
+import { openHostedFlow } from "../../lib/hosted-flow";
 import { fetchLegalMarkdown, type LegalSlug } from "../../lib/legal-content";
 
 export function LegalMarkdownView({ slug }: { slug: LegalSlug }) {
@@ -49,11 +50,25 @@ export function LegalMarkdownView({ slug }: { slug: LegalSlug }) {
     <div className="legal-prose mx-auto max-w-3xl">
       <ReactMarkdown
         components={{
-          a: ({ href, children }) => (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="text-(--primary) hover:underline">
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            if (!href) return <span>{children}</span>;
+            if (/^https?:\/\//i.test(href)) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => openHostedFlow(href)}
+                  className="cursor-pointer text-(--primary) hover:underline"
+                >
+                  {children}
+                </button>
+              );
+            }
+            return (
+              <a href={href} className="text-(--primary) hover:underline">
+                {children}
+              </a>
+            );
+          },
         }}
       >
         {content}

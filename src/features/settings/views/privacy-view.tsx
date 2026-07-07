@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Download, FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 
-import { useAuth } from "../../../components/AuthProvider";
-import { useToast } from "../../../components/Toast";
 import { useI18n } from "../../../i18n";
 import { api } from "../../../lib/api";
-import { getApiBaseUrl } from "../../../lib/config";
-import { openExternalUrl } from "../../billing/lib";
 import { SettingsNavRow, SettingsSection, SettingsSubView } from "../components";
 
 type AuditEntry = {
@@ -26,14 +22,9 @@ export function PrivacySettingsView({
   onDeleteAccount: () => void;
 }) {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
-  const { show } = useToast();
 
-  const isBusiness = (user?.accountType ?? "").toUpperCase() === "BUSINESS";
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
-  const [dpaActive, setDpaActive] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   const loadAudit = useCallback(async () => {
     setAuditLoading(true);
@@ -47,63 +38,10 @@ export function PrivacySettingsView({
 
   useEffect(() => {
     void loadAudit();
-    if (isBusiness) {
-      void api.settings.dpaOverview().then((res) => {
-        if (res.success) setDpaActive(Boolean(res.active));
-      });
-    }
-  }, [isBusiness, loadAudit]);
-
-  const downloadExport = (format: "pdf" | "txt") => {
-    setExporting(true);
-    const base = getApiBaseUrl().replace(/\/+$/, "");
-    openExternalUrl(`${base}/api/user/gdpr-export?format=${format}`);
-    show(t("settingsGdprExportStarted"), "info");
-    setTimeout(() => setExporting(false), 800);
-  };
-
-  const openDpaInBrowser = () => {
-    openExternalUrl(`${getApiBaseUrl().replace(/\/+$/, "")}/dashboard/settings?tab=privacy`);
-  };
+  }, [loadAudit]);
 
   return (
     <SettingsSubView title={t("settingsPrivacy")} onBack={onBack}>
-      <SettingsSection title={t("settingsDataExport")}>
-        <p className="text-xs text-(--text-muted)">{t("settingsDataExportDesc")}</p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => downloadExport("pdf")}
-            disabled={exporting}
-            className="btn-primary flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm disabled:opacity-50"
-          >
-            <Download className="size-4" />
-            {t("settingsDownloadPDF")}
-          </button>
-          <button
-            type="button"
-            onClick={() => downloadExport("txt")}
-            disabled={exporting}
-            className="glass glass-hover flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm disabled:opacity-50"
-          >
-            <FileText className="size-4" />
-            {t("settingsDownloadTXT")}
-          </button>
-        </div>
-      </SettingsSection>
-
-      {isBusiness && (
-        <SettingsSection title={t("settingsDpaTitle")}>
-          <p className="text-xs text-(--text-muted)">{t("settingsDpaDesc")}</p>
-          <p className="text-sm font-medium text-(--text-primary)">
-            {dpaActive ? t("settingsDpaActive") : t("settingsDpaInactive")}
-          </p>
-          <button type="button" onClick={openDpaInBrowser} className="btn-secondary w-full rounded-xl py-2.5 text-sm">
-            {t("settingsDpaManageInBrowser")}
-          </button>
-        </SettingsSection>
-      )}
-
       <SettingsSection title={t("settingsAuditLog")}>
         <p className="text-xs text-(--text-muted)">{t("settingsAuditLogDesc")}</p>
         {auditLoading ? (

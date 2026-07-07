@@ -1,7 +1,5 @@
-import logoDark from "../../../public/logo-dark.webp";
-import logoLight from "../../../public/logo-light.webp";
+import { BrandLogo } from "../BrandLogo";
 import { useI18n } from "../../i18n";
-import { useTheme } from "../ThemeProvider";
 
 const FEATURES = [
   {
@@ -34,22 +32,6 @@ type AuthBrandPanelProps = {
   compact?: boolean;
   variant?: "login" | "register";
 };
-
-function BrandLogo({ width, height }: { width: number; height: number }) {
-  const { theme } = useTheme();
-  const src = theme === "dark" ? logoDark : logoLight;
-
-  return (
-    <img
-      src={src}
-      alt="elizon"
-      width={width}
-      height={height}
-      className="object-contain"
-      style={{ width, height: "auto", maxHeight: height }}
-    />
-  );
-}
 
 export function AuthBrandPanel({ compact = false, variant = "login" }: AuthBrandPanelProps) {
   const { t } = useI18n();

@@ -110,6 +110,20 @@ const formatFileSize = (bytes: number): string => {
 
 console.log("\n🚀 Starting build process...\n");
 
+const iconScript = path.join(process.cwd(), "scripts/prepare-app-icons.mjs");
+if (existsSync(iconScript)) {
+  console.log("🎨 Preparing app icons from public/favicon.ico...\n");
+  const iconProc = Bun.spawn(["bun", iconScript], {
+    cwd: process.cwd(),
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  await iconProc.exited;
+  if (iconProc.exitCode !== 0) {
+    process.exit(iconProc.exitCode ?? 1);
+  }
+}
+
 const cliConfig = parseArgs();
 const outdir = cliConfig.outdir || path.join(process.cwd(), "dist");
 
@@ -156,9 +170,21 @@ const buildTime = (end - start).toFixed(2);
 // crossorigin breaks ES-module loading via file:// in Electron; not needed for same-origin http serve.
 const indexPath = path.join(outdir, "index.html");
 const indexHtml = await Bun.file(indexPath).text();
-const sanitizedHtml = indexHtml.replace(/\s+crossorigin/g, "");
+const withIcons = indexHtml.replace(
+  "<title>",
+  '<link rel="icon" href="./favicon.ico" sizes="any" />\n    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />\n    <title>',
+);
+const sanitizedHtml = withIcons.replace(/\s+crossorigin/g, "");
 if (sanitizedHtml !== indexHtml) {
   await Bun.write(indexPath, sanitizedHtml);
+}
+
+const publicAssets = ["favicon.ico", "apple-touch-icon.png"];
+for (const asset of publicAssets) {
+  const src = path.join(process.cwd(), "public", asset);
+  if (existsSync(src)) {
+    await Bun.write(path.join(outdir, asset), Bun.file(src));
+  }
 }
 
 console.log(`\n✅ Build completed in ${buildTime}ms\n`);

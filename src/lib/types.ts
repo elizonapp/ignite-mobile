@@ -69,4 +69,8 @@ export type AuthUser = {
   elizonPlusActive?: boolean;
   elizonPlusPoolingEnabled?: boolean;
   elizonPlusPoolingMode?: "THROTTLE" | null;
+  /** false, wenn Kunden-Stealth aktiv ist (keine elizon+-UI) */
+  elizonPlusCustomerUiVisible?: boolean;
+  elizonPlusSlots?: number;
+  elizonPlusExpiresAt?: string | null;
 };

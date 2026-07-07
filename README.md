@@ -44,6 +44,8 @@ bun start        # Serve dist/ statically
 
 Default API base URL: `https://www.elizon.app`. A different base URL can be set in settings or at login (stored in `localStorage`).
 
+Brand assets (logos, fonts, icons) are loaded from the configured website origin at runtime — not duplicated in this repo. Only the app launcher icon (`public/favicon.ico`) ships with the client.
+
 ## Desktop (Electron)
 
 ```bash
@@ -59,7 +61,7 @@ bun run desktop:build:mac         # DMG → release/
 bun run desktop:build:win:builder # NSIS + portable .exe → release/
 ```
 
-Before each desktop build, `build/icon.png` is generated from `public/logo-dark.webp` (`bun run icons:desktop`), because electron-builder does not accept WebP as an app icon.
+Before each desktop build, `build/icon.png` is generated from `public/favicon.ico` (`bun run icons:desktop`), because electron-builder does not accept WebP as an app icon. Windows uses `public/favicon.ico` directly.
 
 ## Android
 

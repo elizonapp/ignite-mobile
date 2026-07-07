@@ -2,6 +2,7 @@ import { Sparkles, Wallet } from "lucide-react";
 
 import { useAuth } from "../../../components/AuthProvider";
 import { useI18n } from "../../../i18n";
+import { canPurchase } from "../../../lib/platform";
 import { cn } from "../../../lib/utils";
 import { formatMoney } from "../lib";
 
@@ -26,13 +27,15 @@ export function OverviewTab({ onNavigate, showPaymentMethods = true }: OverviewT
             {t("billingBalance")}
           </div>
           <div className="text-2xl font-semibold text-(--text-primary)">{formatMoney(balance, lang)}</div>
-          <button
-            type="button"
-            onClick={() => onNavigate("funding")}
-            className="text-xs font-medium text-(--elizon-primary) hover:underline"
-          >
-            {t("overviewTopUp")}
-          </button>
+          {canPurchase() && (
+            <button
+              type="button"
+              onClick={() => onNavigate("funding")}
+              className="text-xs font-medium text-(--elizon-primary) hover:underline"
+            >
+              {t("overviewTopUp")}
+            </button>
+          )}
         </div>
 
         <div className="glass space-y-1 p-5">

@@ -1,4 +1,5 @@
 import type { Lang } from "../../i18n";
+import { openHostedFlow } from "../../lib/hosted-flow";
 
 /**
  * Money helpers. All monetary values coming from the billing/invoice/subscription
@@ -24,23 +25,10 @@ export function formatDate(iso: string | null | undefined, lang: Lang): string {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString(lang === "de" ? "de-DE" : "en-US");
 }
 
-type ElectronBridge = {
-  openExternal?: (url: string) => void;
-  openWindow?: (url: string) => void;
-};
-
-/**
- * Opens an external payment URL (Mollie). On Electron we use the native bridge
- * (openExternal) instead of an embedded WebView, per the security plan.
- */
-export function openExternalUrl(href: string): void {
+/** Opens a payment or document URL inside the app shell. */
+export function openExternalUrl(href: string, options?: { title?: string }): void {
   if (typeof window === "undefined") return;
-  const electron = (window as Window & { electron?: ElectronBridge }).electron;
-  if (electron?.openExternal) {
-    electron.openExternal(href);
-    return;
-  }
-  window.open(href, "_blank", "noopener,noreferrer");
+  openHostedFlow(href, options);
 }
 
 const INVOICE_STATUS_TONE: Record<string, "success" | "warning" | "danger" | "muted"> = {

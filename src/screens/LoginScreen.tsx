@@ -5,7 +5,7 @@ import { AuthField } from "../components/auth/auth-field";
 import { AuthShell } from "../components/auth/auth-shell";
 import { useAuth } from "../components/AuthProvider";
 import { useToast } from "../components/Toast";
-import { openExternalUrl } from "../features/billing/lib";
+import { useRouter } from "../components/Router";
 import { useI18n } from "../i18n";
 import { getApiBaseUrl } from "../lib/config";
 
@@ -17,6 +17,7 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
   const { t } = useI18n();
   const { login } = useAuth();
   const { show } = useToast();
+  const { navigate } = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,7 +55,11 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
   };
 
   const openForgotPassword = () => {
-    openExternalUrl(`${getApiBaseUrl()}/auth/forgot-password`);
+    navigate({
+      name: "hosted-flow",
+      url: `${getApiBaseUrl()}/auth/forgot-password`,
+      title: t("authForgotPassword"),
+    });
   };
 
   return (

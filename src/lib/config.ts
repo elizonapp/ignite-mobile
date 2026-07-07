@@ -17,6 +17,7 @@ export function setApiBaseUrl(url: string): string {
   if (!trimmed) throw new Error("API base URL cannot be empty");
   if (typeof window !== "undefined") {
     window.localStorage.setItem(STORAGE_KEY, trimmed);
+    window.dispatchEvent(new CustomEvent("elizon:api-base-changed"));
   }
   return trimmed;
 }

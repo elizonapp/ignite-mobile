@@ -1,13 +1,12 @@
 import { resolveApiError } from "../api/resolve-error";
 import { resolveCaughtApiError } from "../api/resolve-caught-error";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, RefreshCcw, User, UserPlus, Users } from "lucide-react";
+import { Plus, RefreshCcw, User, UserPlus, Users } from "lucide-react";
 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../components/Toast';
-import { useRouter } from '../components/Router';
 import { useI18n } from '../i18n';
 import { formatResourceStatus } from "../i18n/format-status";
 import { api } from '../lib/api';
@@ -32,7 +31,6 @@ type FamilyGroup = {
 
 export function FamilyScreen() {
   const { t, lang } = useI18n();
-  const { back } = useRouter();
   const { show } = useToast();
   const [group, setGroup] = useState<FamilyGroup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,11 +158,9 @@ export function FamilyScreen() {
     <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
 
       <main className="safe-x flex-1 space-y-4 pb-24 pt-2">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={back} aria-label={t("back")}> 
-            <ArrowLeft className="size-5" />
-          </Button>
-          <h2 className="text-base font-semibold text-(--text-primary)">{t("familyCenter")}</h2>
+        <div>
+          <h1 className="text-2xl font-semibold text-(--text-primary)">{t("familyCenter")}</h1>
+          <p className="text-sm text-(--text-muted)">{t("familySubtitle")}</p>
         </div>
 
         {isLoading ? (
