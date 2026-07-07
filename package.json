@@ -65,7 +65,7 @@
         { "target": "nsis", "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
       ],
-      "icon": "public/favicon.ico",
+      "icon": "build/icon.png",
       "sign": false
     },
     "directories": {

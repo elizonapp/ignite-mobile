@@ -61,7 +61,7 @@ bun run desktop:build:mac         # DMG → release/
 bun run desktop:build:win:builder # NSIS + portable .exe → release/
 ```
 
-Before each desktop build, `build/icon.png` is generated from `public/favicon.ico` (`bun run icons:desktop`), because electron-builder does not accept WebP as an app icon. Windows uses `public/favicon.ico` directly.
+Before each desktop build, `build/icon.png` is generated from `public/favicon.ico` (`bun run icons:desktop`), because electron-builder requires at least 256×256 — the bundled favicon only contains smaller sizes.
 
 ## Android
 
