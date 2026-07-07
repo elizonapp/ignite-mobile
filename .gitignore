@@ -3,6 +3,7 @@ node_modules
 
 release
 dist-test
+build/icon.png
 
 # output
 out
