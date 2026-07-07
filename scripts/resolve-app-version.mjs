@@ -62,3 +62,7 @@ export function resolveReleaseTag() {
   const sha = resolveBuildSha();
   return sha ? `v${semver}-${sha}` : `v${semver}`;
 }
+
+export function resolveReleaseTitle(prefix = "ignite-mobile") {
+  return `${prefix} ${resolveAppVersion()}`;
+}

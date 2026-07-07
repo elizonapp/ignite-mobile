@@ -33,6 +33,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-macos
-          path: ${{ inputs.project-dir }}/release/*.dmg
+          path: ${{ inputs.project-dir }}/release/ignite-mobile-*.dmg
           retention-days: 14
           if-no-files-found: error

@@ -27,7 +27,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           TAG=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log(m.resolveReleaseTag()))")
-          TITLE=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log('elizon ' + m.resolveAppVersion()))")
+          TITLE=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log(m.resolveReleaseTitle('ignite-mobile')))")
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
 
@@ -83,17 +83,17 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: false
           body: |
-            Automated elizon client build from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+            Automated **ignite-mobile** build from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
 
             ### Downloads
 
-            | Platform | File |
+            | Platform | File pattern |
             |---|---|
-            | Web | `elizon-web-dist.zip` |
-            | Linux | `elizon-*.AppImage` |
-            | Windows (installer) | `elizon Setup *.exe` |
-            | Windows (portable) | `elizon-portable-*.exe` |
-            | macOS | `elizon-*.dmg` |
-            | Android (debug) | `app-debug.apk` |
+            | Web | `ignite-mobile-*-web.zip` |
+            | Linux | `ignite-mobile-*-linux.AppImage` |
+            | Windows (installer) | `ignite-mobile-*-windows-setup.exe` |
+            | Windows (portable) | `ignite-mobile-*-windows-portable.exe` |
+            | macOS | `ignite-mobile-*-macos.dmg` |
+            | Android (debug) | `ignite-mobile-*-android-debug.apk` |
           files: |
             release-upload/*

@@ -58,6 +58,7 @@
   "build": {
     "appId": "app.elizon.ignite.mobile",
     "productName": "elizon",
+    "artifactName": "ignite-mobile-${version}.${ext}",
     "forceCodeSigning": false,
     "win": {
       "target": [
@@ -86,10 +87,11 @@
     "nsis": {
       "oneClick": false,
       "perMachine": true,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "ignite-mobile-setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "elizon-portable-${version}.exe"
+      "artifactName": "ignite-mobile-portable-${version}.${ext}"
     }
   }
 }
