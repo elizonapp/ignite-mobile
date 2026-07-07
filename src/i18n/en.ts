@@ -432,6 +432,8 @@ export const en = {
   supportPinHint: "Share this PIN with our support team to verify your identity.",
   supportPinExpires: "Expires in",
   supportPinCooldown: "Available again in",
+  supportPinGenerated: "Support PIN has been generated.",
+  supportPinRateLimit: "Please wait before requesting a new PIN.",
   supportKb: "Knowledge Base",
   supportKbNoArticles: "No articles found.",
 

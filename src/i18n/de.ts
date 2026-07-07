@@ -426,6 +426,8 @@ export const de: Dict = {
   supportPinHint: "Teile diesen PIN mit unserem Support-Team zur Identitätsverifizierung.",
   supportPinExpires: "Läuft ab in",
   supportPinCooldown: "Wieder verfügbar in",
+  supportPinGenerated: "Support-PIN wurde erstellt.",
+  supportPinRateLimit: "Bitte warten Sie, bevor Sie eine neue PIN anfordern.",
   supportKb: "Wissensdatenbank",
   supportKbNoArticles: "Keine Artikel gefunden.",
 

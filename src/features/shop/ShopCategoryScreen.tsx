@@ -12,7 +12,7 @@ import { resolveCaughtApiError } from "../../api/resolve-caught-error";
 import { api } from "../../lib/api";
 import {
   categoryShowsConfigurator,
-  filterCategoryTree,
+  filterCategoryVisibility,
   isBusinessAccount,
   type ShopBusinessPricing,
   type ShopCategory,
@@ -52,8 +52,8 @@ export function ShopCategoryScreen({ categoryKey }: { categoryKey: string }) {
         if (cancelled) return;
         if (data?.success && data.category) {
           const loaded = data.category as ShopCategory;
-          const filtered = filterCategoryTree([loaded], isBusiness)[0] ?? null;
-          setCategory(filtered);
+          const filtered = filterCategoryVisibility(loaded, isBusiness);
+          setCategory(filtered ?? loaded);
           setBusinessPricing((data.businessPricing as ShopBusinessPricing | null) ?? null);
           setDefaultTaxName(data.defaultTaxName ?? "MwSt.");
         } else {

@@ -1,5 +1,32 @@
 import { ResourceClient } from "./resource-client";
 
+export type SupportPinState = {
+  supportPin: string | null;
+  pinExpiresAt: string | null;
+  pinTimeLeft: number | null;
+  pinCooldown: number | null;
+};
+
+type SupportPinApiResponse = {
+  success?: boolean;
+  pin?: string | null;
+  expiresAt?: string | null;
+};
+
+function mapSupportPinResponse(data: SupportPinApiResponse): SupportPinState {
+  const pinExpiresAt = typeof data.expiresAt === "string" ? data.expiresAt : null;
+  const pinTimeLeft = pinExpiresAt
+    ? Math.max(0, Math.floor((new Date(pinExpiresAt).getTime() - Date.now()) / 1000))
+    : null;
+
+  return {
+    supportPin: typeof data.pin === "string" ? data.pin : null,
+    pinExpiresAt,
+    pinTimeLeft: pinTimeLeft && pinTimeLeft > 0 ? pinTimeLeft : null,
+    pinCooldown: null,
+  };
+}
+
 export class UserResource extends ResourceClient {
   auditLog(limit = 50) {
     return this.get<{ success: boolean; logs: unknown[] }>("/api/user/audit-log", { limit });
@@ -26,20 +53,10 @@ export class UserResource extends ResourceClient {
   }
 
   supportPin() {
-    return this.get<{
-      supportPin: string | null;
-      pinExpiresAt: string | null;
-      pinTimeLeft: number | null;
-      pinCooldown: number | null;
-    }>("/api/user/support-pin");
+    return this.get<SupportPinApiResponse>("/api/user/support-pin").then(mapSupportPinResponse);
   }
 
   generateSupportPin() {
-    return this.post<{
-      supportPin: string | null;
-      pinExpiresAt: string | null;
-      pinTimeLeft: number | null;
-      pinCooldown: number | null;
-    }>("/api/user/support-pin");
+    return this.post<SupportPinApiResponse>("/api/user/support-pin").then(mapSupportPinResponse);
   }
 }

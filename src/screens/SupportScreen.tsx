@@ -185,8 +185,9 @@ export function SupportScreen() {
       const data = await api.user.generateSupportPin();
       setPinData(data);
       if (data.pinTimeLeft) setPinTimeLeft(data.pinTimeLeft);
+      if (data.supportPin) show(t("supportPinGenerated"), "success");
     } catch (err) {
-      show(resolveCaughtApiError(err, t), "error");
+      show(resolveCaughtApiError(err, t, "supportPinRateLimit"), "error");
     } finally {
       setPinLoading(false);
     }

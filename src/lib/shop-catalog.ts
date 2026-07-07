@@ -77,17 +77,29 @@ export function isCategoryVisibleForAccount(category: ShopCategory, isBusiness: 
 
 export function filterCategoryTree(categories: ShopCategory[], isBusiness: boolean): ShopCategory[] {
   return categories
-    .filter((category) => isCategoryVisibleForAccount(category, isBusiness))
-    .map((category) => ({
-      ...category,
-      products: (category.products ?? []).filter((product) => !product.soldOut),
-      children: filterCategoryTree(category.children ?? [], isBusiness),
-    }))
+    .map((category) => filterCategoryVisibility(category, isBusiness))
+    .filter((category): category is ShopCategory => category !== null)
     .filter(
       (category) =>
         category.products.length > 0 ||
         (category.children?.length ?? 0) > 0,
     );
+}
+
+/** Keeps navigation-only subcategories (e.g. advisor parents without direct plans). */
+export function filterCategoryVisibility(
+  category: ShopCategory,
+  isBusiness: boolean,
+): ShopCategory | null {
+  if (!isCategoryVisibleForAccount(category, isBusiness)) return null;
+
+  return {
+    ...category,
+    products: (category.products ?? []).filter((product) => !product.soldOut),
+    children: (category.children ?? [])
+      .map((child) => filterCategoryVisibility(child, isBusiness))
+      .filter((child): child is ShopCategory => child !== null),
+  };
 }
 
 export function findLowestMonthlyPrice(node: PriceNode | null | undefined): number | null {
