@@ -1,5 +1,8 @@
 import { dialog, shell } from "electron";
-import { autoUpdater } from "electron-updater";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const { autoUpdater } = require("electron-updater");
 
 const RELEASE_URL = "https://github.com/elizonapp/ignite-mobile/releases/latest";
 
