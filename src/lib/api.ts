@@ -27,7 +27,7 @@ import { clearSessionToken, getSessionToken, setSessionToken } from "./session-t
 import { de } from "../i18n/de";
 import { en } from "../i18n/en";
 
-export { clearSessionToken, getSessionToken, initSessionToken, setSessionToken } from "./session-token";
+export { clearSessionToken, getSessionToken, hasStoredSessionToken, initSessionToken, isPersistedSession, setSessionToken } from "./session-token";
 
 function mobileTranslate(key: string): string {
   if (typeof window === "undefined") return de[key as keyof typeof de] ?? key;

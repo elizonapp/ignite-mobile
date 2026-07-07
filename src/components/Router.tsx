@@ -13,6 +13,8 @@ export type Route =
   | { name: "support" }
   | { name: "settings" }
   | { name: "shop" }
+  | { name: "shop-category"; categoryKey: string }
+  | { name: "shop-product"; categoryKey: string; productSlug: string }
   | { name: "cart" }
   | { name: "checkout"; productId?: string }
   | { name: "storage" }

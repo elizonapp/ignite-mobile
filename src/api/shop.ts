@@ -3,7 +3,21 @@ import { ResourceClient } from "./resource-client";
 
 export class ShopResource extends ResourceClient {
   products(lang?: string) {
-    return this.get<{ success: boolean; categories?: unknown[] }>("/api/products", { lang });
+    return this.get<{
+      success: boolean;
+      categories?: unknown[];
+      businessPricing?: { upchargePercent: number; taxRatePercent: number } | null;
+      defaultTaxName?: string;
+    }>("/api/products", { lang });
+  }
+
+  category(categoryKey: string, lang?: string) {
+    return this.get<{
+      success: boolean;
+      category?: unknown;
+      businessPricing?: { upchargePercent: number; taxRatePercent: number } | null;
+      defaultTaxName?: string;
+    }>(`/api/products/${encodeURIComponent(categoryKey)}`, { lang });
   }
 
   countries() {
@@ -20,7 +34,13 @@ export class ShopResource extends ResourceClient {
   }
 
   productDetail(categoryKey: string, productSlug: string, lang?: string) {
-    return this.get<{ success: boolean; product?: ShopProductDetail }>(
+    return this.get<{
+      success: boolean;
+      product?: ShopProductDetail & { category?: unknown };
+      category?: unknown;
+      businessPricing?: { upchargePercent: number; taxRatePercent: number } | null;
+      defaultTaxName?: string;
+    }>(
       `/api/products/${encodeURIComponent(categoryKey)}/${encodeURIComponent(productSlug)}`,
       { lang },
     );

@@ -23,12 +23,22 @@ type UpdaterCheckResult = {
   message?: string;
 };
 
+type ElectronStoredSession = {
+  token: string | null;
+  persist: boolean;
+};
+
 declare global {
   interface Window {
     electron?: {
       platform?: string;
       checkForUpdates?: () => Promise<UpdaterCheckResult>;
       onUpdaterStatus?: (callback: (status: UpdaterStatus) => void) => () => void;
+      session?: {
+        get: () => Promise<ElectronStoredSession>;
+        set: (token: string, persist?: boolean) => Promise<{ ok: boolean }>;
+        clear: () => Promise<{ ok: boolean }>;
+      };
     };
   }
 }

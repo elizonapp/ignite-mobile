@@ -14,12 +14,19 @@ const MIME_TYPES = {
   ".map": "application/json; charset=utf-8",
 };
 
+/** Stable origin in packaged Electron builds — localStorage is per-origin. */
+export const PACKAGED_DIST_PORT = 17642;
+
 /**
  * Serves the built dist folder over http://127.0.0.1.
  * Required because ES-module bundles with crossorigin fail under file:// in Electron.
+ *
+ * @param {string} distDir
+ * @param {{ port?: number }} [options]
  */
-export function startDistServer(distDir) {
+export function startDistServer(distDir, options = {}) {
   const root = path.resolve(distDir);
+  const preferredPort = options.port ?? 0;
 
   return new Promise((resolve, reject) => {
     const server = http.createServer(async (req, res) => {
@@ -48,8 +55,15 @@ export function startDistServer(distDir) {
       }
     });
 
-    server.on("error", reject);
-    server.listen(0, "127.0.0.1", () => {
+    server.on("error", (error) => {
+      if (error?.code === "EADDRINUSE" && preferredPort > 0) {
+        server.listen(0, "127.0.0.1", onListening);
+        return;
+      }
+      reject(error);
+    });
+
+    function onListening() {
       const address = server.address();
       const port = typeof address === "object" && address ? address.port : 0;
       resolve({
@@ -60,6 +74,8 @@ export function startDistServer(distDir) {
             server.close((err) => (err ? closeReject(err) : closeResolve()));
           }),
       });
-    });
+    }
+
+    server.listen(preferredPort > 0 ? preferredPort : 0, "127.0.0.1", onListening);
   });
 }

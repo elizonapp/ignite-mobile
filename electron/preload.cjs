@@ -8,4 +8,9 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("updater:status", handler);
     return () => ipcRenderer.removeListener("updater:status", handler);
   },
+  session: {
+    get: () => ipcRenderer.invoke("session:get"),
+    set: (token, persist) => ipcRenderer.invoke("session:set", token, persist),
+    clear: () => ipcRenderer.invoke("session:clear"),
+  },
 });

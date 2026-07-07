@@ -55,10 +55,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const p = (async () => {
       try {
         const data = await api.auth.me();
-        setUser(data?.success && data.user ? (data.user as AuthUser) : null);
-      } catch {
-        // Token is invalid/expired — clear it
-        clearSessionToken();
+        if (data?.success && data.user) {
+          setUser(data.user as AuthUser);
+        } else {
+          clearSessionToken();
+          setUser(null);
+        }
+      } catch (err) {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          clearSessionToken();
+        }
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -96,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await api.auth.login({ email, password, twoFactorCode, rememberMe: !!rememberMe });
 
         if (data?.success && data.token && data.user) {
-          setSessionToken(data.token);
+          setSessionToken(data.token, { persist: rememberMe !== false });
           await refresh();
           return { success: true, user: data.user as AuthUser };
         }
@@ -125,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await api.auth.register(data);
       if (result?.success) {
         if (result.token) {
-          setSessionToken(result.token);
+          setSessionToken(result.token, { persist: true });
           await refresh();
         }
         return {

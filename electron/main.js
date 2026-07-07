@@ -1,8 +1,9 @@
 import { app, BrowserWindow, ipcMain, Menu, nativeImage } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
-import { startDistServer } from "./static-server.js";
+import { startDistServer, PACKAGED_DIST_PORT } from "./static-server.js";
 import { initAutoUpdater, isAutoUpdateSupported, runUpdateCheck } from "./updater.js";
+import { clearSession, readSession, writeSession } from "./session-store.cjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +26,9 @@ async function resolveAppUrl() {
   if (!app.isPackaged && devUrl) {
     return devUrl;
   }
-  distServer = await startDistServer(distDir);
+  distServer = await startDistServer(distDir, {
+    port: app.isPackaged ? PACKAGED_DIST_PORT : 0,
+  });
   return `${distServer.url}/index.html`;
 }
 
@@ -43,6 +46,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.cjs"),
       nodeIntegration: false,
       contextIsolation: true,
+      partition: "persist:elizon",
     },
   });
 
@@ -75,6 +79,22 @@ app.whenReady().then(() => {
       return { ok: false, phase: "unsupported" };
     }
     return runUpdateCheck(true);
+  });
+
+  ipcMain.handle("session:get", () => readSession());
+
+  ipcMain.handle("session:set", (_event, token, persist) => {
+    if (typeof token !== "string" || !token.trim()) {
+      clearSession();
+      return { ok: true };
+    }
+    writeSession(token.trim(), persist !== false);
+    return { ok: true };
+  });
+
+  ipcMain.handle("session:clear", () => {
+    clearSession();
+    return { ok: true };
   });
 
   createWindow();

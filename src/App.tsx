@@ -36,7 +36,9 @@ import { PermissionAcceptScreen } from './screens/PermissionAcceptScreen';
 import { ServerDetailScreen } from './screens/ServerDetailScreen';
 import { ServersScreen } from './screens/ServersScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
-import { ShopScreen } from './screens/ShopScreen';
+import { ShopOverviewScreen } from './features/shop/ShopOverviewScreen';
+import { ShopCategoryScreen } from './features/shop/ShopCategoryScreen';
+import { ShopProductScreen } from './features/shop/ShopProductScreen';
 import { CartScreen } from './screens/CartScreen';
 import { CheckoutScreen } from './features/checkout';
 import { StorageScreen } from './screens/StorageScreen';
@@ -178,7 +180,17 @@ function AuthenticatedShell() {
               {route.name === "settings" && <SettingsScreen />}
               {route.name === "shop" && (
                 <CapabilityGuard capability="purchase">
-                  <ShopScreen />
+                  <ShopOverviewScreen />
+                </CapabilityGuard>
+              )}
+              {route.name === "shop-category" && (
+                <CapabilityGuard capability="purchase">
+                  <ShopCategoryScreen categoryKey={route.categoryKey} />
+                </CapabilityGuard>
+              )}
+              {route.name === "shop-product" && (
+                <CapabilityGuard capability="purchase">
+                  <ShopProductScreen categoryKey={route.categoryKey} productSlug={route.productSlug} />
                 </CapabilityGuard>
               )}
               {route.name === "cart" && (

@@ -159,10 +159,12 @@ export function ShopAdvisorWizard({ category, onClose, onSelectCategory }: ShopA
   );
 }
 
-export function categoryShowsAdvisor(category: ShopCategory): boolean {
-  return categoryHasAdvisor(category);
-}
-
 export function categoryShowsConfigurator(category: ShopCategory): boolean {
-  return Boolean(category.configuratorEnabled && category.products.length > 0);
+  const providerType = category.provider?.type?.toUpperCase();
+  return Boolean(
+    category.configuratorEnabled &&
+      category.id &&
+      category.products.length > 0 &&
+      (providerType === "PROXMOX" || providerType === "PTERODACTYL"),
+  );
 }
