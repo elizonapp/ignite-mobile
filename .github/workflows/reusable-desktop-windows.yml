@@ -58,6 +58,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-windows
-          path: ${{ inputs.project-dir }}/release/**
+          path: |
+            ${{ inputs.project-dir }}/release/**/*Setup*.exe
+            ${{ inputs.project-dir }}/release/**/*portable*.exe
           retention-days: 14
           if-no-files-found: warn

@@ -31,15 +31,47 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
 
-      - name: Download build artifacts
+      - name: Download web bundle
         uses: actions/download-artifact@v4
         with:
-          path: release-files
-          pattern: "*"
-          merge-multiple: false
+          name: web-dist
+          path: artifacts/web-dist
 
-      - name: List release files
-        run: find release-files -type f | sort
+      - name: Download Linux AppImage
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-linux
+          path: artifacts/desktop-linux
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-windows-installer
+          path: artifacts/desktop-windows-installer
+
+      - name: Download Windows portable
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-windows-portable
+          path: artifacts/desktop-windows-portable
+
+      - name: Download macOS DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-macos
+          path: artifacts/desktop-macos
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-debug-apk
+          path: artifacts/android-debug-apk
+
+      - name: Prepare distributable release files
+        working-directory: ${{ inputs.project-dir }}
+        run: |
+          chmod +x scripts/prepare-release-assets.sh
+          scripts/prepare-release-assets.sh "$GITHUB_WORKSPACE/artifacts" "$GITHUB_WORKSPACE/release-upload"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -48,19 +80,20 @@ jobs:
           name: ${{ steps.meta.outputs.title }}
           generate_release_notes: true
           make_latest: true
-          overwrite: true
+          overwrite_files: true
+          fail_on_unmatched_files: false
           body: |
             Automated elizon client build from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
 
-            ### Artifacts
+            ### Downloads
 
-            | Platform | Folder |
+            | Platform | File |
             |---|---|
-            | Web bundle | `web-dist/` |
-            | Linux (AppImage) | `desktop-linux/` |
-            | Windows installer | `desktop-windows-installer/` |
-            | Windows portable | `desktop-windows-portable/` |
-            | macOS (DMG) | `desktop-macos/` |
-            | Android (debug APK) | `android-debug-apk/` |
+            | Web | `elizon-web-dist.zip` |
+            | Linux | `elizon-*.AppImage` |
+            | Windows (installer) | `elizon Setup *.exe` |
+            | Windows (portable) | `elizon-portable-*.exe` |
+            | macOS | `elizon-*.dmg` |
+            | Android (debug) | `app-debug.apk` |
           files: |
-            release-files/**/*
+            release-upload/*

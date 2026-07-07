@@ -120,7 +120,7 @@ Artifacts are available for 14–30 days under **Actions → Run → Artifacts**
 On every push to `main`, the **Build** workflow creates a [GitHub Release](https://github.com/elizonapp/ignite-mobile/releases) after all platform jobs succeed:
 
 - Tag format: `v{semver}-{short-sha}` (e.g. `v0.8.2-ba3559d`)
-- Attachments: web bundle, Linux AppImage, Windows installer + portable, macOS DMG, Android debug APK
+- Attachments: `elizon-web-dist.zip`, Linux AppImage, Windows installer + portable, macOS DMG, Android debug APK
 
 Pull request builds do not publish releases (artifacts only).
 

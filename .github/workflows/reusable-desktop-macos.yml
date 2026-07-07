@@ -33,6 +33,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-macos
-          path: ${{ inputs.project-dir }}/release/**
+          path: ${{ inputs.project-dir }}/release/*.dmg
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error
