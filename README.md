@@ -1,6 +1,6 @@
-# elizon Client
+# Ignite Client
 
-Official **elizon** client for web, desktop (Electron), and Android (Capacitor). One codebase, multiple targets — connected to the elizon hosting API at [elizon.app](https://www.elizon.app).
+Official **Ignite** client for web, desktop (Electron), and Android (Capacitor). One codebase, multiple targets — connected to the elizon hosting API at [elizon.app](https://www.elizon.app).
 
 ## Repository
 
@@ -120,8 +120,9 @@ Artifacts are available for 14–30 days under **Actions → Run → Artifacts**
 On every push to `main`, the **Build** workflow creates a [GitHub Release](https://github.com/elizonapp/ignite-mobile/releases) after all platform jobs succeed:
 
 - Tag format: `v{semver}-{short-sha}` (e.g. `v0.8.2-ba3559d`)
-- Release title: `ignite-mobile {semver} ({sha})`
-- Attachments: `ignite-mobile-{version}-*.AppImage`, `-windows-setup.exe`, `-windows-portable.exe`, `-macos.dmg`, `-android-debug.apk`, `-web.zip`
+- Release title: `ignite {semver} ({sha})`
+- **Desktop:** `ignite-desktop-{version}-linux.AppImage`, `-windows-setup.exe`, `-windows-portable.exe`, `-macos.dmg`
+- **Mobile:** `ignite-mobile-{version}-android-debug.apk`, `-web.zip`
 
 Pull request builds do not publish releases (artifacts only).
 

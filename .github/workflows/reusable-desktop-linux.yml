@@ -21,7 +21,7 @@ jobs:
           bun-version: "1.2.10"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - run: bun install --frozen-lockfile
       - run: bun run build
@@ -32,6 +32,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-linux
-          path: ${{ inputs.project-dir }}/release/ignite-mobile-*.AppImage
+          path: ${{ inputs.project-dir }}/release/ignite-desktop-*.AppImage
           retention-days: 14
           if-no-files-found: error

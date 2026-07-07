@@ -21,7 +21,7 @@ jobs:
           bun-version: "1.2.10"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - run: bun install --frozen-lockfile
       - run: bun run build
@@ -34,24 +34,24 @@ jobs:
         shell: pwsh
         run: |
           Get-ChildItem -Recurse release | Format-Table Name, Length
-          if (-not (Get-ChildItem release -Recurse -Filter 'ignite-mobile-portable-*.exe' | Select-Object -First 1)) {
-            throw 'Portable executable (ignite-mobile-portable-*.exe) not found in release/'
+          if (-not (Get-ChildItem release -Recurse -Filter 'ignite-desktop-portable-*.exe' | Select-Object -First 1)) {
+            throw 'Portable executable (ignite-desktop-portable-*.exe) not found in release/'
           }
-          if (-not (Get-ChildItem release -Recurse -Filter 'ignite-mobile-setup-*.exe' | Select-Object -First 1)) {
-            throw 'NSIS installer (ignite-mobile-setup-*.exe) not found in release/'
+          if (-not (Get-ChildItem release -Recurse -Filter 'ignite-desktop-setup-*.exe' | Select-Object -First 1)) {
+            throw 'NSIS installer (ignite-desktop-setup-*.exe) not found in release/'
           }
 
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-windows-portable
-          path: ${{ inputs.project-dir }}/release/ignite-mobile-*-portable*.exe
+          path: ${{ inputs.project-dir }}/release/ignite-desktop-portable-*.exe
           retention-days: 30
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-windows-installer
-          path: ${{ inputs.project-dir }}/release/ignite-mobile-*-setup*.exe
+          path: ${{ inputs.project-dir }}/release/ignite-desktop-setup-*.exe
           retention-days: 30
           if-no-files-found: error
 
@@ -59,7 +59,7 @@ jobs:
         with:
           name: desktop-windows
           path: |
-            ${{ inputs.project-dir }}/release/ignite-mobile-*-setup*.exe
-            ${{ inputs.project-dir }}/release/ignite-mobile-*-portable*.exe
+            ${{ inputs.project-dir }}/release/ignite-desktop-setup-*.exe
+            ${{ inputs.project-dir }}/release/ignite-desktop-portable-*.exe
           retention-days: 14
           if-no-files-found: warn

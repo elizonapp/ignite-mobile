@@ -18,7 +18,7 @@ import type { LucideIcon } from "lucide-react";
 import { useAuth } from "../AuthProvider";
 import { useI18n } from "../../i18n";
 import { api } from "../../lib/api";
-import { canAccessWallet, canManageBilling } from "../../lib/platform";
+import { canAccessWallet, canPurchase } from "../../lib/platform";
 import { cn } from "../../lib/utils";
 import { formatUserGreetingName } from "../../lib/userName";
 import type { Route } from "../Router";

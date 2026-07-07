@@ -27,7 +27,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           TAG=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log(m.resolveReleaseTag()))")
-          TITLE=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log(m.resolveReleaseTitle('ignite-mobile')))")
+          TITLE=$(bun -e "import('./scripts/resolve-app-version.mjs').then(m => console.log(m.resolveReleaseTitle('ignite')))")
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
 
@@ -83,17 +83,17 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: false
           body: |
-            Automated **ignite-mobile** build from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+            Automated **ignite** build from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
 
             ### Downloads
 
             | Platform | File pattern |
             |---|---|
             | Web | `ignite-mobile-*-web.zip` |
-            | Linux | `ignite-mobile-*-linux.AppImage` |
-            | Windows (installer) | `ignite-mobile-*-windows-setup.exe` |
-            | Windows (portable) | `ignite-mobile-*-windows-portable.exe` |
-            | macOS | `ignite-mobile-*-macos.dmg` |
+            | Linux | `ignite-desktop-*-linux.AppImage` |
+            | Windows (installer) | `ignite-desktop-*-windows-setup.exe` |
+            | Windows (portable) | `ignite-desktop-*-windows-portable.exe` |
+            | macOS | `ignite-desktop-*-macos.dmg` |
             | Android (debug) | `ignite-mobile-*-android-debug.apk` |
           files: |
             release-upload/*
