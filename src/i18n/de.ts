@@ -1178,6 +1178,12 @@ export const de: Dict = {
   businessAnchorDay: "Rechnungsstichtag",
   businessNoData: "Keine Geschäftsdaten verfügbar.",
   // API error messages (synced from web)
+  apiErrorDisputeReasonRequired: "Bitte geben Sie eine Begründung für Ihren Rechnungswiderspruch an.",
+  apiErrorDisputeReasonTooShort: "Die Begründung ist zu kurz. Bitte beschreiben Sie Ihren Widerspruch etwas ausführlicher.",
+  apiErrorDisputeReasonTooLong: "Die Begründung ist zu lang.",
+  apiErrorDisputeWindowExpired: "Die Widerspruchsfrist von 60 Tagen ab Rechnungsdatum ist abgelaufen.",
+  apiErrorDisputeNotLexwareInvoice: "Für diese Zahlungsanforderung ist kein Widerspruch möglich. Nur Lexware-Rechnungen können widersprochen werden.",
+  apiErrorDisputeNotAllowed: "Ein Widerspruch für diese Rechnung ist derzeit nicht möglich.",
   apiErrorDateOfBirthMissingInProfile: "Geburtsdatum fehlt im Profil.",
   apiErrorIdentVerificationMinAge18: "Identitätsverifikation ist erst ab 18 Jahren möglich.",
   apiErrorIdentAlreadyVerified: "Ihre Identität ist bereits verifiziert.",

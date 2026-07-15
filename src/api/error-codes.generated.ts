@@ -892,6 +892,7 @@ export const ApiErrorCodes = {
   invalidVmConfiguration: "invalidVmConfiguration",
   invalidVmId: "invalidVmId",
   invoiceAlreadyPaid2: "invoiceAlreadyPaid2",
+  invoiceHandedToCollection: "invoiceHandedToCollection",
   invoiceHasNoLinkedLexwareDocument: "invoiceHasNoLinkedLexwareDocument",
   invoiceNotFound2: "invoiceNotFound2",
   invoiceWasVoidedAndCannotBePaid: "invoiceWasVoidedAndCannotBePaid",
