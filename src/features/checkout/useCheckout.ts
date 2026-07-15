@@ -131,6 +131,8 @@ function buildCalculateItem(item: CartItem): Record<string, unknown> {
     ...(item.resourceSpecsUnit ? { resourceSpecsUnit: item.resourceSpecsUnit } : {}),
     ...(item.billingOptions ? { billingOptions: item.billingOptions } : {}),
     ...(item.setupFee != null ? { setupFee: item.setupFee } : {}),
+    ...(item.billingMode ? { billingMode: item.billingMode } : {}),
+    ...(item.contractTermMonths != null ? { contractTermMonths: item.contractTermMonths } : {}),
   };
 }
 
@@ -588,21 +590,7 @@ export function useCheckout() {
 
       const res = await api.checkout.submit({
 
-        items: cartLines.map((line) => ({
-
-          lineId: line.lineId,
-
-          productId: line.productId,
-
-          productName: line.productName,
-
-          quantity: line.quantity,
-
-          billingCycle: line.billingCycle,
-
-          itemType: "new",
-
-        })),
+        items: cartItems.map(buildCalculateItem),
 
         paymentMethod,
 

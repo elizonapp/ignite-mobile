@@ -60,6 +60,8 @@ export type CheckoutCartLine = {
   quantity: number;
   billingCycle: number;
   itemType: "new";
+  billingMode?: "PREPAID" | "CONTRACT";
+  contractTermMonths?: number;
   customization?: { vcores?: number; memory?: number; storage?: number };
   locationId?: string;
 };

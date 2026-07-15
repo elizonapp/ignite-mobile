@@ -30,6 +30,7 @@ type ShopProductOrderFormProps = {
   isBusiness: boolean;
   businessPricing?: ShopBusinessPricing | null;
   defaultTaxName?: string;
+  hideBillingCycle?: boolean;
 };
 
 function isResourceEditable(
@@ -62,6 +63,7 @@ export function ShopProductOrderForm({
   isBusiness,
   businessPricing,
   defaultTaxName,
+  hideBillingCycle = false,
 }: ShopProductOrderFormProps) {
   const { t, lang } = useI18n();
   const providerType = product.provider?.type?.toUpperCase() ?? "CUSTOM";
@@ -293,6 +295,7 @@ export function ShopProductOrderForm({
         </section>
       ) : null}
 
+      {!hideBillingCycle ? (
       <section className="glass space-y-2 p-4">
         <label className="text-sm font-medium text-(--text-primary)">{t("productBillingInterval")}</label>
         <select
@@ -314,6 +317,7 @@ export function ShopProductOrderForm({
           </p>
         </div>
       </section>
+      ) : null}
     </div>
   );
 }

@@ -20,6 +20,7 @@ type ShopProductPanelProps = {
   isBusiness: boolean;
   businessPricing?: ShopBusinessPricing | null;
   defaultTaxName?: string;
+  hideBillingCycle?: boolean;
 };
 
 export function ShopProductPanel(props: ShopProductPanelProps) {
@@ -51,7 +52,10 @@ export function ShopProductPanel(props: ShopProductPanelProps) {
         </section>
       ) : null}
 
-      <ShopProductOrderForm {...props} />
+      <ShopProductOrderForm
+        {...props}
+        onChange={props.onOptionsChange}
+      />
     </div>
   );
 }

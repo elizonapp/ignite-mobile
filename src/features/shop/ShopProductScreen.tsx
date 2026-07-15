@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Loader2, ShoppingCart } from "lucide-react";
 
 import { ShopProductPanel } from "../../components/shop/ShopProductPanel";
+import { ContractBillingSection } from "../../components/shop/ContractBillingSection";
 import { AddToCartModal } from "../../components/shop/AddToCartModal";
 import { FairUseAcceptLabel, useFairUseAcceptCopy } from "../../components/ui/fair-use-accept-label";
 import { useCart } from "../../components/cart/CartProvider";
@@ -15,6 +16,9 @@ import { buildProductCartItem } from "../../lib/cart-configured";
 import {
   computeProductPriceBreakdown,
   defaultBillingCycle,
+  defaultContractBillingInterval,
+  filterContractBillingIntervals,
+  getBillingOptions,
   initialProductProviderOptions,
 } from "../../lib/product-pricing";
 import { isBusinessAccount, type ShopBusinessPricing, type ShopCategory } from "../../lib/shop-catalog";
@@ -44,6 +48,8 @@ export function ShopProductScreen({
   const [ipv6Pricing, setIpv6Pricing] = useState<Record<string, number> | null>(null);
   const [providerOptions, setProviderOptions] = useState(initialProductProviderOptions({} as ShopProductDetail));
   const [billingCycle, setBillingCycle] = useState(30);
+  const [billingMode, setBillingMode] = useState<"PREPAID" | "CONTRACT">("PREPAID");
+  const [contractTermMonths, setContractTermMonths] = useState(12);
   const [fairUseAccepted, setFairUseAccepted] = useState(false);
   const [showAddToCartModal, setShowAddToCartModal] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -64,6 +70,11 @@ export function ShopProductScreen({
           setProduct(loaded);
           setProviderOptions(initialProductProviderOptions(loaded));
           setBillingCycle(defaultBillingCycle(loaded));
+          const terms = loaded.contractTerms ?? [];
+          if (terms.length > 0) {
+            setContractTermMonths(terms[0].termMonths);
+          }
+          setBillingMode("PREPAID");
           setCategory(
             (data.category as ShopCategory | undefined) ??
               (loaded.category as unknown as ShopCategory | undefined) ??
@@ -103,6 +114,12 @@ export function ShopProductScreen({
     });
   }, []);
 
+  const contractDiscountPercent = useMemo(() => {
+    if (!product || billingMode !== "CONTRACT") return undefined;
+    const term = (product.contractTerms ?? []).find((row) => row.termMonths === contractTermMonths);
+    return term?.discountPercent ?? 0;
+  }, [product, billingMode, contractTermMonths]);
+
   const pricing = useMemo(() => {
     if (!product) return null;
     return computeProductPriceBreakdown({
@@ -111,8 +128,23 @@ export function ShopProductScreen({
       upgradeConfig,
       ipv6Pricing,
       billingCycle,
+      billingMode,
+      contractDiscountPercent,
     });
-  }, [product, providerOptions, upgradeConfig, ipv6Pricing, billingCycle]);
+  }, [product, providerOptions, upgradeConfig, ipv6Pricing, billingCycle, billingMode, contractDiscountPercent]);
+
+  const showContractBilling =
+    (product?.billingModeAvailability ?? "PREPAID").toUpperCase() !== "PREPAID" &&
+    (product?.contractTerms?.length ?? 0) > 0;
+
+  const handleBillingModeChange = (mode: "PREPAID" | "CONTRACT") => {
+    setBillingMode(mode);
+    if (mode === "CONTRACT" && product) {
+      setBillingCycle(defaultContractBillingInterval(product));
+    } else if (product) {
+      setBillingCycle(defaultBillingCycle(product));
+    }
+  };
 
   const chipLabel = productChipLabel(product?.chip);
 
@@ -131,6 +163,9 @@ export function ShopProductScreen({
           categoryId: category.id ?? category.key,
           categoryName: category.name,
           upgradeConfig,
+          ...(billingMode === "CONTRACT"
+            ? { billingMode: "CONTRACT" as const, contractTermMonths }
+            : {}),
         }),
       );
       show(t("productAddedToCart"), "success");
@@ -225,6 +260,29 @@ export function ShopProductScreen({
 
             {!product.soldOut ? (
               <>
+                {showContractBilling ? (
+                  <ContractBillingSection
+                    billingMode={billingMode}
+                    onBillingModeChange={handleBillingModeChange}
+                    contractTermMonths={contractTermMonths}
+                    onContractTermMonthsChange={setContractTermMonths}
+                    billingCycleDays={billingCycle}
+                    onBillingCycleDaysChange={setBillingCycle}
+                    priceMonthly={pricing.priceMonthly}
+                    billingModeAvailability={product.billingModeAvailability ?? "PREPAID"}
+                    contractTerms={product.contractTerms ?? []}
+                    contractBillingIntervals={filterContractBillingIntervals(product)}
+                    earlyTerminationFeePercent={product.earlyTerminationFeePercent ?? 50}
+                    contractNoticeDays={product.contractNoticeDays ?? 14}
+                    contractEligibility={product.contractEligibility}
+                    billingOpts={getBillingOptions(product)}
+                    lang={lang}
+                    isBusiness={isBusiness}
+                    businessPricing={businessPricing}
+                    t={t}
+                  />
+                ) : null}
+
                 <ShopProductPanel
                   categoryKey={categoryKey}
                   product={product}
@@ -238,6 +296,7 @@ export function ShopProductScreen({
                   isBusiness={isBusiness}
                   businessPricing={businessPricing}
                   defaultTaxName={defaultTaxName}
+                  hideBillingCycle={billingMode === "CONTRACT"}
                 />
 
                 <FairUseAcceptLabel

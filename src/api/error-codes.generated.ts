@@ -1833,6 +1833,16 @@ export const ApiErrorCodes = {
   ipFlowMetricsInvalidIpv4: "ipFlowMetricsInvalidIpv4",
   ipFlowMetricsInvalidOctet: "ipFlowMetricsInvalidOctet",
   insufficientNetPoints: "insufficientNetPoints",
+  checkoutContractKycRequired: "checkoutContractKycRequired",
+  checkoutContractMinAge18: "checkoutContractMinAge18",
+  checkoutContractTermInvalid: "checkoutContractTermInvalid",
+  checkoutContractIntervalInvalid: "checkoutContractIntervalInvalid",
+  checkoutContractBillingModeUnavailable: "checkoutContractBillingModeUnavailable",
+  subscriptionCancelNoticeNotMet: "subscriptionCancelNoticeNotMet",
+  subscriptionSpecialTerminationReasonInvalid: "subscriptionSpecialTerminationReasonInvalid",
+  subscriptionSpecialTerminationPending: "subscriptionSpecialTerminationPending",
+  subscriptionBuyoutNotAvailable: "subscriptionBuyoutNotAvailable",
+  subscriptionFeePercentCanOnlyBeLowered: "subscriptionFeePercentCanOnlyBeLowered",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCodes)[keyof typeof ApiErrorCodes];

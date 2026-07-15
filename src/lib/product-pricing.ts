@@ -154,6 +154,36 @@ export function computeProductPeriodPrice(
   return Math.max(0, computePeriodPrice(priceMonthly, billingCycle, billingOptions));
 }
 
+export function computeContractMonthlyPrice(
+  priceMonthly: number,
+  contractDiscountPercent: number,
+): number {
+  const discount = Math.max(0, Math.min(100, contractDiscountPercent));
+  return Math.round(priceMonthly * (1 - discount / 100) * 100) / 100;
+}
+
+export function computeContractPeriodPrice(
+  priceMonthly: number,
+  contractDiscountPercent: number,
+  billingCycleDays: number,
+  billingOptions?: BillingPeriodOptions,
+): number {
+  const monthly = computeContractMonthlyPrice(priceMonthly, contractDiscountPercent);
+  return Math.max(0, computePeriodPrice(monthly, billingCycleDays, billingOptions));
+}
+
+export function filterContractBillingIntervals(product: ShopProductDetail): number[] {
+  const intervals = (product.contractBillingIntervals ?? [30]).filter((d) =>
+    [30, 90, 180].includes(d),
+  );
+  return intervals.length > 0 ? [...intervals].sort((a, b) => a - b) : [30];
+}
+
+export function defaultContractBillingInterval(product: ShopProductDetail): number {
+  const intervals = filterContractBillingIntervals(product);
+  return intervals.includes(30) ? 30 : intervals[0] ?? 30;
+}
+
 export function filterAllowedBillingCycles(product: ShopProductDetail): number[] {
   const cycles = (product.allowedBillingCycles ?? [30]).filter((d) =>
     [7, 14, 30, 60, 90, 120, 180, 365].includes(d),
@@ -182,20 +212,31 @@ export function computeProductPriceBreakdown(args: {
   upgradeConfig: ShopUpgradeConfig | null;
   ipv6Pricing: Record<string, number> | null;
   billingCycle: number;
+  billingMode?: "PREPAID" | "CONTRACT";
+  contractDiscountPercent?: number;
 }): ProductPriceBreakdown {
-  const { product, options, upgradeConfig, ipv6Pricing, billingCycle } = args;
+  const { product, options, upgradeConfig, ipv6Pricing, billingCycle, billingMode, contractDiscountPercent } = args;
   const usesMb = productUsesMbResources(product);
   const basePriceMonthly = computeBasePriceMonthly(product, options, upgradeConfig, usesMb);
   const ipPriceMonthly = computeIpPriceMonthly(product, options, upgradeConfig, ipv6Pricing);
   const ipv4OptOutDiscount = computeIpv4OptOutDiscount(product, options, upgradeConfig);
   const priceMonthly = Math.max(0, basePriceMonthly + ipPriceMonthly - ipv4OptOutDiscount);
   const billingOptions = getBillingOptions(product);
-  const periodPrice = Math.max(
-    0,
-    computePeriodPrice(basePriceMonthly, billingCycle, billingOptions) +
-      computePeriodPrice(ipPriceMonthly, billingCycle, billingOptions) -
-      computePeriodPrice(ipv4OptOutDiscount, billingCycle, billingOptions),
-  );
+
+  const isContract = billingMode === "CONTRACT" && contractDiscountPercent != null;
+  const periodPrice = isContract
+    ? Math.max(
+        0,
+        computeContractPeriodPrice(basePriceMonthly, contractDiscountPercent, billingCycle, billingOptions) +
+          computeContractPeriodPrice(ipPriceMonthly, contractDiscountPercent, billingCycle, billingOptions) -
+          computeContractPeriodPrice(ipv4OptOutDiscount, contractDiscountPercent, billingCycle, billingOptions),
+      )
+    : Math.max(
+        0,
+        computePeriodPrice(basePriceMonthly, billingCycle, billingOptions) +
+          computePeriodPrice(ipPriceMonthly, billingCycle, billingOptions) -
+          computePeriodPrice(ipv4OptOutDiscount, billingCycle, billingOptions),
+      );
   const equivalentMonthlyPrice = billingCycle > 0 ? (periodPrice / billingCycle) * 30 : periodPrice;
 
   return {

@@ -74,6 +74,12 @@ export type ShopProductDetail = {
   pterodactylProductNestId?: number;
   pterodactylAllowDockerImageSwitch?: boolean;
   schemaCardFields?: Array<{ key: string; label?: string; value?: string }>;
+  billingModeAvailability?: string;
+  contractTerms?: Array<{ termMonths: number; discountPercent: number }>;
+  contractBillingIntervals?: number[];
+  earlyTerminationFeePercent?: number;
+  contractNoticeDays?: number;
+  contractEligibility?: { eligible: boolean; reason?: string };
 };
 
 export type ShopUpgradeConfig = {

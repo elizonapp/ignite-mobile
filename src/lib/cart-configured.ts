@@ -64,6 +64,8 @@ export function buildConfiguredCartItem(args: {
   usesMb: boolean;
   upgradeConfig: ShopUpgradeConfig | null;
   billingCycle?: number;
+  billingMode?: "PREPAID" | "CONTRACT";
+  contractTermMonths?: number;
 }): Omit<CartItem, "lineId"> {
   const { product, options, priceMonthly, categoryId, categoryName, usesMb, upgradeConfig } = args;
   const billingCycle = args.billingCycle ?? options.billingCycle ?? 30;
@@ -81,6 +83,8 @@ export function buildConfiguredCartItem(args: {
     priceYearly: product.priceYearly ?? null,
     itemType: "new",
     setupFee: product.setupFee,
+    ...(args.billingMode ? { billingMode: args.billingMode } : {}),
+    ...(args.contractTermMonths != null ? { contractTermMonths: args.contractTermMonths } : {}),
     ...(options.selectedLocationId ? { locationId: options.selectedLocationId } : {}),
     billingOptions: {
       billingDiscountPerMonth: product.billingDiscountPerMonth,
@@ -99,6 +103,8 @@ export function buildProductCartItem(args: {
   categoryId: string;
   categoryName?: string;
   upgradeConfig: ShopUpgradeConfig | null;
+  billingMode?: "PREPAID" | "CONTRACT";
+  contractTermMonths?: number;
 }): Omit<CartItem, "lineId"> {
   const usesMb = productUsesMbResources(args.product);
   return buildConfiguredCartItem({ ...args, usesMb });

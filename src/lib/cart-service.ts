@@ -29,6 +29,8 @@ export type CartItem = {
     billingSurcharge14d?: number;
   };
   setupFee?: number;
+  billingMode?: "PREPAID" | "CONTRACT";
+  contractTermMonths?: number;
 };
 
 function itemMergeKey(item: Omit<CartItem, "lineId">): string {
@@ -37,6 +39,8 @@ function itemMergeKey(item: Omit<CartItem, "lineId">): string {
     billingCycle: item.billingCycle,
     locationId: item.locationId ?? null,
     customization: item.customization ?? null,
+    billingMode: item.billingMode ?? "PREPAID",
+    contractTermMonths: item.contractTermMonths ?? null,
   });
 }
 
