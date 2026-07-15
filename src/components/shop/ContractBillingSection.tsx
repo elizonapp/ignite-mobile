@@ -60,6 +60,7 @@ export function ContractBillingSection({
   const needsKyc = contractEligibility?.reason === "kyc_required";
   const under18 =
     contractEligibility?.reason === "under_18" || contractEligibility?.reason === "missing_dob";
+  const adminDisabled = contractEligibility?.reason === "admin_disabled";
 
   const selectedTerm =
     contractTerms.find((term) => term.termMonths === contractTermMonths) ?? contractTerms[0];
@@ -89,7 +90,7 @@ export function ContractBillingSection({
             {t("productBillingModePrepaid")}
           </button>
         ) : null}
-        {showContract && !under18 ? (
+        {showContract && !under18 && !adminDisabled ? (
           <button
             type="button"
             disabled={!canSelectContract && !needsKyc}
@@ -107,7 +108,11 @@ export function ContractBillingSection({
         <p className="text-sm text-(--text-muted)">{t("productContractUnder18Hint")}</p>
       ) : null}
 
-      {needsKyc && showContract ? (
+      {adminDisabled && showContract ? (
+        <p className="text-sm text-(--text-muted)">{t("productContractAdminDisabledHint")}</p>
+      ) : null}
+
+      {needsKyc && showContract && !adminDisabled ? (
         <p className="text-sm text-(--text-secondary)">{t("productContractKycHint")}</p>
       ) : null}
 

@@ -1838,6 +1838,7 @@ export const ApiErrorCodes = {
   checkoutContractTermInvalid: "checkoutContractTermInvalid",
   checkoutContractIntervalInvalid: "checkoutContractIntervalInvalid",
   checkoutContractBillingModeUnavailable: "checkoutContractBillingModeUnavailable",
+  checkoutContractDisabledByAdmin: "checkoutContractDisabledByAdmin",
   subscriptionCancelNoticeNotMet: "subscriptionCancelNoticeNotMet",
   subscriptionSpecialTerminationReasonInvalid: "subscriptionSpecialTerminationReasonInvalid",
   subscriptionSpecialTerminationPending: "subscriptionSpecialTerminationPending",
