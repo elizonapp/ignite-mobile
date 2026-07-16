@@ -72,11 +72,38 @@ export function mapBaseServer(raw: Record<string, unknown>): DashboardServer {
     suspendReason: (raw.suspendReason as string | null) ?? null,
     terminationPending: Boolean(raw.terminationPending),
     reinstallPending: Boolean(raw.reinstallPending),
+    providerAddress: (raw.providerAddress as string | null) ?? null,
+    ploiStats:
+      typeof raw.ploiStats === "object" && raw.ploiStats !== null
+        ? {
+            domain: String((raw.ploiStats as Record<string, unknown>).domain ?? ""),
+            storageUsedBytes: Number((raw.ploiStats as Record<string, unknown>).storageUsedBytes) || 0,
+            storageLimitBytes: Number((raw.ploiStats as Record<string, unknown>).storageLimitBytes) || 0,
+            storageStatus: String((raw.ploiStats as Record<string, unknown>).storageStatus ?? "unknown"),
+            storageStale: Boolean((raw.ploiStats as Record<string, unknown>).storageStale),
+            dnsStatus: String((raw.ploiStats as Record<string, unknown>).dnsStatus ?? "unknown"),
+            locationLabel: String((raw.ploiStats as Record<string, unknown>).locationLabel ?? ""),
+          }
+        : undefined,
   };
 }
 
 export function mergeLiveStatus(server: DashboardServer, status: Record<string, unknown> | null | undefined): DashboardServer {
   if (!status) return server;
+  const isPloi = (server.providerType || "").toUpperCase() === "PLOI";
+  if (isPloi) {
+    const disk = status.disk as { used?: unknown; total?: unknown } | undefined;
+    const usedBytes = Number(disk?.used) || server.ploiStats?.storageUsedBytes || 0;
+    const limitBytes = Number(disk?.total) || server.ploiStats?.storageLimitBytes || 0;
+    const usedGb = usedBytes > 0 ? +(usedBytes / 1024 ** 3).toFixed(1) : 0;
+    const limitGb = limitBytes > 0 ? +(limitBytes / 1024 ** 3).toFixed(1) : 0;
+    return {
+      ...server,
+      status: normalizeStatus((status as { status?: unknown }).status ?? server.status),
+      disk: { used: usedGb, total: limitGb },
+      ip: server.ploiStats?.domain || server.providerAddress || server.ip,
+    };
+  }
   const cpuPct = normalizeCpuUsageToPercent((status.cpu as { usage?: unknown } | undefined)?.usage);
   const totalRam =
     normalizeResourceToGb((status.memory as { total?: unknown } | undefined)?.total, server.ram.total) ||

@@ -8,6 +8,11 @@ export type CartCustomization = {
   maxMailboxesPerDomain?: number;
   storagePerMailboxGb?: number;
   maxAliasesPerDomain?: number;
+  domain?: string;
+  location?: string;
+  appType?: string;
+  domainMode?: "owned" | "external";
+  storageGb?: number;
 };
 
 export type CartItemType = "new" | "renewal" | "upgrade";

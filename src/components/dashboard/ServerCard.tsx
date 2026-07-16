@@ -29,6 +29,10 @@ export function ServerCard({
   maintenance?: boolean;
 }) {
   const { t } = useI18n();
+  const isPloi = (server.providerType || "").toUpperCase() === "PLOI";
+  const displayIp = isPloi
+    ? server.ploiStats?.domain || server.providerAddress || server.ip
+    : server.ip;
   const ramPct = server.ram.total > 0 ? Math.round((server.ram.used / server.ram.total) * 100) : 0;
   const diskPct = server.disk.total > 0 ? Math.round((server.disk.used / server.disk.total) * 100) : 0;
   const cpuPct = Math.min(100, Math.max(0, +server.cpu.used.toFixed(1)));
@@ -36,6 +40,9 @@ export function ServerCard({
   const diskLabel = server.disk.total > 0
     ? server.disk.used > 0 ? `${server.disk.used.toFixed(1)} / ${server.disk.total.toFixed(1)} GB` : `${server.disk.total.toFixed(1)} GB`
     : "—";
+  const storageStatus = server.ploiStats?.storageStatus ?? "unknown";
+  const storageTone =
+    storageStatus === "exceeded" ? "danger" : storageStatus === "warning" ? "warning" : "success";
 
   const statusLabel: Record<ServerStatus, string> = {
     online: t("serverOnline"),
@@ -67,7 +74,7 @@ export function ServerCard({
               <IconMapPin className="h-4 w-4 shrink-0" /> {server.location}
             </span>
             <span className="inline-flex items-center gap-1">
-              <IconGlobe className="h-4 w-4 shrink-0" /> {server.ip}
+              <IconGlobe className="h-4 w-4 shrink-0" /> {displayIp}
             </span>
           </div>
         </div>
@@ -77,17 +84,48 @@ export function ServerCard({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Metric label={t("serverCpu")} value={`${cpuPct}%`} pct={cpuPct} tone="primary" />
-        <Metric label={t("serverRam")} value={ramLabel} pct={ramPct} tone="primary" />
-        <Metric label={t("serverDisk")} value={diskLabel} pct={diskPct} tone="success" />
-      </div>
+      {(storageStatus === "exceeded" || storageStatus === "warning") && isPloi && (
+        <div
+          className={cn(
+            "mt-3 rounded-lg border px-3 py-2 text-xs",
+            storageStatus === "exceeded"
+              ? "border-red-500/30 bg-red-500/10 text-red-300"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-200"
+          )}
+        >
+          {storageStatus === "exceeded" ? t("ploiStorageExceededBanner") : t("ploiStorageWarningBanner")}
+        </div>
+      )}
+
+      {isPloi && server.ploiStats?.dnsStatus === "missing" && (
+        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          {t("ploiDnsMissingBanner")}
+        </div>
+      )}
+
+      {isPloi ? (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-(--text-muted)">{t("ploiStorage")}</span>
+            <span className="font-medium text-(--text-primary)">{diskLabel}</span>
+          </div>
+          <Progress className="mt-1 h-1.5" value={diskPct} tone={storageTone} />
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Metric label={t("serverCpu")} value={`${cpuPct}%`} pct={cpuPct} tone="primary" />
+          <Metric label={t("serverRam")} value={ramLabel} pct={ramPct} tone="primary" />
+          <Metric label={t("serverDisk")} value={diskLabel} pct={diskPct} tone="success" />
+        </div>
+      )}
 
       <div className="mt-3 flex items-center justify-between text-sm text-(--text-muted)">
-        <span className="truncate pr-2">{server.os}</span>
-        <span className="whitespace-nowrap">
-          {t("serverUptime")} · {server.uptime}
-        </span>
+        <span className="truncate pr-2">{isPloi ? (server.ploiStats?.locationLabel || server.location) : server.os}</span>
+        {!isPloi && (
+          <span className="whitespace-nowrap">
+            {t("serverUptime")} · {server.uptime}
+          </span>
+        )}
       </div>
     </button>
   );
@@ -102,7 +140,7 @@ function Metric({
   label: string;
   value: string;
   pct: number;
-  tone: "primary" | "accent" | "success";
+  tone: "primary" | "accent" | "success" | "warning" | "danger";
 }) {
   return (
     <div>

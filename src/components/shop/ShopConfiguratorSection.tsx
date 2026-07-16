@@ -122,7 +122,7 @@ export function ShopConfiguratorSection({ category, pricing, className = "" }: S
   const steps = useMemo<ConfiguratorStep[]>(() => {
     const list: ConfiguratorStep[] = [];
     if (networkTiers.length > 1) list.push("filter");
-    list.push("performance");
+    if (providerType !== "PLOI" && providerType !== "MAILCOW") list.push("performance");
     if (providerType === "PROXMOX") list.push("networkUpgrades");
     if (providerType === "PTERODACTYL" || providerType === "PROXMOX") list.push("system");
     list.push("access", "checkout");
@@ -649,6 +649,32 @@ export function ShopConfiguratorSection({ category, pricing, className = "" }: S
 
           {step === "access" ? (
             <div className="space-y-3">
+              {providerType === "PLOI" ? (
+                <div className="space-y-3 rounded-xl border border-(--border) bg-(--bg-base) p-3">
+                  <p className="text-sm font-medium text-(--text-primary)">{t("ploiShopTitle")}</p>
+                  <label className="block space-y-1">
+                    <span className="text-xs text-(--text-muted)">{t("ploiDomain")}</span>
+                    <input
+                      className="w-full rounded-lg border border-(--border) bg-(--surface) px-3 py-2 text-sm"
+                      value={options.domain ?? ""}
+                      placeholder="example.com"
+                      onChange={(event) =>
+                        setOptions((prev) => (prev ? { ...prev, domain: event.target.value } : prev))
+                      }
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {(["owned", "external"] as const).map((mode) => (
+                      <WizardOption
+                        key={mode}
+                        label={mode === "owned" ? t("ploiDomainModeOwned") : t("ploiDomainModeExternal")}
+                        selected={(options.domainMode ?? "external") === mode}
+                        onSelect={() => setOptions((prev) => (prev ? { ...prev, domainMode: mode } : prev))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {locations.length > 0 ? (
                 <select
                   value={options.selectedLocationId ?? ""}

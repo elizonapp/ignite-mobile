@@ -25,6 +25,16 @@ export type DashboardServer = {
   suspendReason?: string | null;
   terminationPending?: boolean;
   reinstallPending?: boolean;
+  providerAddress?: string | null;
+  ploiStats?: {
+    domain: string;
+    storageUsedBytes: number;
+    storageLimitBytes: number;
+    storageStatus: string;
+    storageStale?: boolean;
+    dnsStatus: string;
+    locationLabel?: string;
+  };
 };
 
 export type DashboardStats = {

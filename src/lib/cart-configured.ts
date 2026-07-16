@@ -49,6 +49,13 @@ export function buildCustomizationPayload(
     customization.maxAliasesPerDomain =
       (options.maxAliasesPerDomain ?? 0) - (product.maxAliasesPerDomain ?? 0);
   }
+  if (options.domain?.trim()) customization.domain = options.domain.trim();
+  if (options.selectedLocationId) customization.location = options.selectedLocationId;
+  if (options.appType?.trim()) customization.appType = options.appType.trim();
+  if (options.domainMode) customization.domainMode = options.domainMode;
+  if (typeof options.storageGb === "number" && options.storageGb > 0) {
+    customization.storageGb = options.storageGb;
+  }
 
   const rp = upgradeConfig?.resourcePricing;
   const storageStep = rp?.storage?.step ?? 10;

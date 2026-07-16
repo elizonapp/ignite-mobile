@@ -167,6 +167,11 @@ export type ProductProviderOptions = {
   dockerImage?: string;
   environment?: Record<string, string>;
   providerVariables?: Record<string, string>;
+  /** Ploi site hosting */
+  domain?: string;
+  appType?: string;
+  domainMode?: "owned" | "external";
+  storageGb?: number;
 };
 
 export type ConfiguratorProviderOptions = ProductProviderOptions & {

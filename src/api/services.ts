@@ -105,6 +105,20 @@ export class ServicesResource extends ResourceClient {
     );
   }
 
+  /** GET /api/services/:id/ploi/storage-history */
+  storageHistory(id: string, hours = 72) {
+    return this.get<{ serviceId: string; points: Array<{ at: string; bytes: string; gb: number }> }>(
+      `/api/services/${encodeURIComponent(id)}/ploi/storage-history`,
+      { hours },
+    );
+  }
+
+  /** GET/POST /api/services/:id/ploi/dns */
+  ploiDns(id: string, body?: Record<string, unknown>) {
+    const path = `/api/services/${encodeURIComponent(id)}/ploi/dns`;
+    return body ? this.post<Record<string, unknown>>(path, body) : this.get<Record<string, unknown>>(path);
+  }
+
   /** GET /api/services/:id/subscription */
   subscriptionGet(id: string) {
     return this.get<{ success: boolean; subscription?: ServiceSubscriptionSummary }>(
