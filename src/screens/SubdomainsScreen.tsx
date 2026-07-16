@@ -220,7 +220,7 @@ export function SubdomainsScreen() {
 
   const handleDelete = async (id: string) => {
     try {
-      await api.subdomains.delete(id);
+      await api.subdomains.remove(id);
       show(t("subdomainDeleted"), "success");
       setDeleteTarget(null);
       await load();

@@ -28,8 +28,20 @@ export type SubdomainRecordItem = {
 };
 
 export const SRV_PRESETS = [
-  { id: "minecraft", labelKey: "subdomainSrvPresetMinecraft", port: 25565, service: "minecraft", protocol: "tcp" as const },
-  { id: "ts3", labelKey: "subdomainSrvPresetTs3", port: 9987, service: "ts3", protocol: "udp" as const },
+  {
+    id: "minecraft",
+    labelKey: "subdomainSrvPresetMinecraft" as const,
+    port: 25565,
+    service: "minecraft",
+    protocol: "tcp" as const,
+  },
+  {
+    id: "ts3",
+    labelKey: "subdomainSrvPresetTs3" as const,
+    port: 9987,
+    service: "ts3",
+    protocol: "udp" as const,
+  },
 ];
 
 export function isPterodactyl(service: SubdomainServiceItem | undefined): boolean {

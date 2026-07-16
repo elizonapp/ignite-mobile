@@ -34,6 +34,11 @@ export function initialProductProviderOptions(product: ShopProductDetail): Produ
       typeof product.maxAliasesPerDomain === "number" ? product.maxAliasesPerDomain : undefined,
     eggId: product.pterodactylProductEggId ?? product.pterodactylEggs?.[0]?.eggId,
     nestId: product.pterodactylProductNestId ?? product.pterodactylEggs?.[0]?.nestId,
+    dockerImage:
+      product.pterodactylEggs?.[0]?.defaultDockerImage ||
+      product.pterodactylEggs?.[0]?.dockerImages?.[0],
+    environment: {},
+    providerVariables: {},
   };
 }
 

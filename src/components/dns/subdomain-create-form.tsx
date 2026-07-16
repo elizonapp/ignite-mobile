@@ -54,7 +54,10 @@ const TYPE_COLORS: Record<string, string> = {
 
 type AllowedDomain = { id: string; domain: string };
 
-function recordTypeLabel(type: RecordType, t: (key: string) => string): string {
+function recordTypeLabel(
+  type: RecordType,
+  t: (key: keyof import("../../i18n/en").Dict) => string,
+): string {
   if (type === "A") return t("subdomainRecordTypeA");
   if (type === "AAAA") return t("subdomainRecordTypeAAAA");
   if (type === "CNAME") return t("subdomainRecordTypeCNAME");

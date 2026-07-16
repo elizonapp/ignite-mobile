@@ -67,11 +67,13 @@ function resolveCodeFromLegacyFields(record: Record<string, unknown>): string | 
  */
 export function resolveApiError(
   data: unknown,
-  t: (key: string) => string,
+  // Compatible with Dict-keyed `t` from useI18n (parameter is contravariant).
+  t: (key: never) => string,
   options?: ResolveApiErrorOptions
 ): string {
+  const translate = t as (key: string) => string;
   const fallbackKey = options?.fallbackKey ?? "apiErrorUnknown";
-  const fallback = () => options?.fallbackText ?? t(fallbackKey);
+  const fallback = () => options?.fallbackText ?? translate(fallbackKey);
 
   if (!isRecord(data)) {
     return fallback();
@@ -87,13 +89,13 @@ export function resolveApiError(
     ? (data.errorParams as Record<string, string | number>)
     : undefined;
 
-  const translated = t(i18nKey);
+  const translated = translate(i18nKey);
   if (translated !== i18nKey) {
     return interpolateApiError(translated, params);
   }
 
   // Flat key fallback (some routes used bare keys before apiError prefix)
-  const flat = t(code);
+  const flat = translate(code);
   if (flat !== code) {
     return interpolateApiError(flat, params);
   }

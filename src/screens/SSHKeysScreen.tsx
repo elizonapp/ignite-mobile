@@ -61,7 +61,7 @@ export function SSHKeysScreen() {
 
   const deleteKey = async (id: string) => {
     try {
-      await api.sshKeys.delete(id);
+      await api.sshKeys.remove(id);
       setKeys((k) => k.filter((x) => x.id !== id));
       show(t("sshKeyDeleted"), "success");
     } catch (err) {

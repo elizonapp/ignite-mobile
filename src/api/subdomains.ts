@@ -13,7 +13,7 @@ export class SubdomainsResource extends ResourceClient {
     return this.post<{ success: boolean; error?: string }>("/api/subdomains", body);
   }
 
-  delete(id: string) {
+  remove(id: string) {
     return this.delete<{ success: boolean }>(`/api/subdomains/${id}`);
   }
 }

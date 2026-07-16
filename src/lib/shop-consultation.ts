@@ -17,7 +17,7 @@ export function localizeShopText(
 export function getAdvisorQuestions(category: ShopCategory): AdvisorQuestion[] {
   const flow = category.consultationFlow;
   if (flow?.enabled && (flow.questions?.length ?? 0) > 0) {
-    return flow.questions.map((question) => ({
+    return (flow.questions ?? []).map((question) => ({
       id: question.id,
       text: question.text,
       options: (question.options ?? []).map((option) => ({

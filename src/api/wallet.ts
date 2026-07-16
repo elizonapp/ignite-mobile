@@ -30,9 +30,15 @@ export type WalletVoucher = {
   redeemedAt?: string | null;
 };
 
+export type WalletBonusEvent = {
+  name: string;
+  percentExtra: number;
+  applyAt: string;
+};
+
 export class WalletResource extends ResourceClient {
   bonusEvent() {
-    return this.get<{ success: boolean }>("/api/wallet/bonus-event");
+    return this.get<{ success: boolean; event: WalletBonusEvent | null }>("/api/wallet/bonus-event");
   }
 
   autoTopupList() {

@@ -49,7 +49,7 @@ export function DomainsScreen() {
     try {
       const data = await api.domains.list();
       if (data.success) {
-        setDomains(data.data ?? []);
+        setDomains((data.data ?? []) as Domain[]);
         setError(null);
       }
     } catch (err) {
@@ -182,7 +182,7 @@ function DomainRecordsView({ domain, onBack }: { domain: Domain; onBack: () => v
   const load = useCallback(async () => {
     try {
       const data = await api.domains.records(domain.id);
-      if (data.success) setRecords(data.data ?? []);
+      if (data.success) setRecords((data.data ?? []) as ZoneRecord[]);
     } catch {
       // silent
     } finally {

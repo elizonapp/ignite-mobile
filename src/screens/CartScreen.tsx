@@ -6,7 +6,29 @@ import { useRouter } from "../components/Router";
 import { useI18n } from "../i18n";
 import { api } from "../lib/api";
 import type { CartCalculateResponse } from "../api/checkout";
+import { cartItemToApiPayload } from "../lib/cart-configured";
+import type { CartItem } from "../lib/cart-service";
 import { cn } from "../lib/utils";
+
+function configSummary(item: CartItem, t: (k: string) => string): string[] {
+  const lines: string[] = [];
+  if (item.locationId) lines.push(t("checkoutConfigLocation"));
+  if (item.templateId != null) lines.push(t("checkoutConfigOs"));
+  if (item.eggId != null) lines.push(t("checkoutConfigEgg"));
+  if (item.additionalIPv4) lines.push(`+${item.additionalIPv4} IPv4`);
+  if (item.additionalIPv6) lines.push(`+${item.additionalIPv6} IPv6`);
+  if (item.includeIPv4 === false) lines.push(t("checkoutConfigNoIpv4"));
+  if (item.customization?.vcores) lines.push(`+${item.customization.vcores} vCPU`);
+  if (item.customization?.memory) lines.push(`+${item.customization.memory} ${item.resourceSpecsUnit === "mb" ? "MB" : "GB"} RAM`);
+  if (item.customization?.storage) lines.push(`+${item.customization.storage} ${item.resourceSpecsUnit === "mb" ? "MB" : "GB"} ${t("shopStorage")}`);
+  if (item.customization?.bandwidth) lines.push(`+${item.customization.bandwidth} TB`);
+  if (item.customization?.speedGbit) lines.push(`${item.customization.speedGbit} Gbit/s`);
+  if (item.billingMode === "CONTRACT" && item.contractTermMonths) {
+    lines.push(`${item.contractTermMonths} ${t("months")}`);
+  }
+  if (item.sshKeyIds?.length) lines.push(`${item.sshKeyIds.length} SSH`);
+  return lines;
+}
 
 export function CartScreen() {
   const { t, lang } = useI18n();
@@ -33,14 +55,7 @@ export function CartScreen() {
     setPricingLoading(true);
     try {
       const res = await api.checkout.calculate({
-        items: cart.items.map((item) => ({
-          lineId: item.lineId,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          billingCycle: item.billingCycle,
-          itemType: "new",
-        })),
+        items: cart.items.map((item) => cartItemToApiPayload(item)),
         lang,
       });
       setPricing(res?.success ? res : null);
@@ -88,17 +103,25 @@ export function CartScreen() {
           <>
             <div className="space-y-2">
               {cart.items.map((item) => {
-                const priced = pricedItems.find((entry) => entry.productId === item.productId);
-                const cycles: number[] = item.priceYearly != null ? [30, 365] : [30];
+                const priced =
+                  pricedItems.find((entry) => (entry as { lineId?: string }).lineId === item.lineId) ??
+                  pricedItems.find((entry) => entry.productId === item.productId);
+                const cycles: number[] = [7, 14, 30, 60, 90, 120, 180, 365];
+                const summary = configSummary(item, t as (k: string) => string);
 
                 return (
                   <div key={item.lineId} className="glass space-y-3 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-(--text-primary)">{item.productName}</p>
-                        {item.categoryName && (
+                        {item.categoryName ? (
                           <p className="text-xs text-(--text-muted)">{item.categoryName}</p>
-                        )}
+                        ) : null}
+                        {summary.length > 0 ? (
+                          <p className="mt-1 text-[11px] leading-relaxed text-(--text-muted)">
+                            {summary.join(" · ")}
+                          </p>
+                        ) : null}
                       </div>
                       <button
                         type="button"
@@ -143,13 +166,15 @@ export function CartScreen() {
                       >
                         {cycles.map((cycle) => (
                           <option key={cycle} value={cycle}>
-                            {cycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
+                            {cycle} {t("days")}
                           </option>
                         ))}
                       </select>
 
                       <span className="ml-auto text-sm font-semibold text-(--elizon-primary)">
-                        {pricingLoading ? "…" : formatPrice(priced?.total ?? item.priceMonthly * item.quantity)}
+                        {pricingLoading
+                          ? "…"
+                          : formatPrice(priced?.total ?? item.priceMonthly * item.quantity)}
                       </span>
                     </div>
                   </div>

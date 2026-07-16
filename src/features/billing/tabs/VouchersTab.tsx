@@ -9,15 +9,17 @@ import { resolveCaughtApiError } from "../../../api/resolve-caught-error";
 import { api } from "../../../lib/api";
 import { cn } from "../../../lib/utils";
 import { formatResourceStatus } from "../../../i18n/format-status";
-import { formatDate, formatMoney } from "../lib";
+import { formatDate, formatMoney, looseTranslate } from "../lib";
 import type { WalletVoucher } from "../../../api/wallet";
 
 export function VouchersTab() {
   const { t, lang } = useI18n();
+  const translate = looseTranslate(t);
   const { show } = useToast();
   const { refresh } = useAuth();
 
   const [vouchers, setVouchers] = useState<WalletVoucher[]>([]);
+  const [promo, setPromo] = useState<{ name: string; percentExtra: number; applyAt: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
@@ -31,10 +33,10 @@ export function VouchersTab() {
         setVouchers(res.vouchers ?? []);
         setError(null);
       } else {
-        setError(resolveApiError(res, t, { fallbackKey: "unknownError" }));
+        setError(resolveApiError(res, translate, { fallbackKey: "unknownError" }));
       }
     } catch (err) {
-      setError(resolveCaughtApiError(err, t));
+      setError(resolveCaughtApiError(err, translate));
     } finally {
       setIsLoading(false);
     }
@@ -42,6 +44,14 @@ export function VouchersTab() {
 
   useEffect(() => {
     void load();
+    void (async () => {
+      try {
+        const res = await api.wallet.bonusEvent();
+        if (res.success && res.event) setPromo(res.event);
+      } catch {
+        // Promo is optional; ignore load errors.
+      }
+    })();
   }, [load]);
 
   const redeem = async () => {
@@ -61,10 +71,10 @@ export function VouchersTab() {
         void refresh();
         await load();
       } else {
-        show(resolveApiError(res, t, { fallbackKey: "unknownError" }), "error");
+        show(resolveApiError(res, translate, { fallbackKey: "unknownError" }), "error");
       }
     } catch (err) {
-      show(resolveCaughtApiError(err, t), "error");
+      show(resolveCaughtApiError(err, translate), "error");
     } finally {
       setIsRedeeming(false);
     }
@@ -76,6 +86,18 @@ export function VouchersTab() {
         <Gift className="size-4 text-(--elizon-primary)" />
         {t("vouchersTitle")}
       </h2>
+
+      {promo && (
+        <div className="rounded-[var(--radius-surface)] border border-(--primary)/30 bg-(--primary)/10 p-3 text-sm text-(--text-primary)">
+          {t("walletPromoBanner")
+            .replace("{name}", promo.name)
+            .replace("{percent}", String(promo.percentExtra))
+            .replace(
+              "{apply}",
+              promo.applyAt === "ON_ISSUE" ? t("walletPromoOnIssue") : t("walletPromoOnRedeem"),
+            )}
+        </div>
+      )}
 
       <div className="flex gap-2">
         <input
@@ -127,7 +149,7 @@ export function VouchersTab() {
                     : "bg-(--surface-soft) text-(--text-muted)",
                 )}
               >
-                {formatResourceStatus(v.status ?? "", t)}
+                {formatResourceStatus(v.status ?? "", translate)}
               </span>
             </div>
           ))}

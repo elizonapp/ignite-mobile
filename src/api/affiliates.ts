@@ -5,6 +5,13 @@ export class AffiliatesResource extends ResourceClient {
     return this.get<{ success: boolean }>("/api/affiliates/me");
   }
 
+  validate(code: string) {
+    return this.post<{ success: boolean; affiliate?: { code: string; name: string } }>(
+      "/api/affiliates/validate",
+      { code },
+    );
+  }
+
   commissions(limit = 50) {
     return this.get<{ success: boolean; commissions?: unknown[] }>("/api/affiliates/me/commissions", { limit });
   }

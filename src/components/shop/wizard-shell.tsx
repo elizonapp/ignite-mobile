@@ -129,6 +129,7 @@ export function SpecStepper({
   max,
   step,
   disabled,
+  invalid,
   onChange,
 }: {
   label: string;
@@ -138,13 +139,18 @@ export function SpecStepper({
   max: number;
   step: number;
   disabled?: boolean;
+  invalid?: boolean;
   onChange: (value: number) => void;
 }) {
   const decrease = () => onChange(Math.max(min, value - step));
   const increase = () => onChange(Math.min(max, value + step));
 
   return (
-    <div className="rounded-xl border border-(--border) p-4">
+    <div
+      className={`rounded-xl border p-4 ${
+        invalid ? "border-(--error)/60 bg-(--error)/5" : "border-(--border)"
+      }`}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-(--text-primary)">{label}</p>

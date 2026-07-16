@@ -16,10 +16,11 @@ import { ToastProvider } from './components/Toast';
 import { I18nProvider } from './i18n';
 import { ElizonPlusStealthGuard } from './components/ElizonPlusStealthGuard';
 import { HostedFlowBridge } from './components/HostedFlowBridge';
+import { IdVerificationEnforcementGate } from './components/dashboard/IdVerificationEnforcementGate';
 import { AffiliateScreen } from './screens/AffiliateScreen';
 import { ByoipScreen } from './screens/ByoipScreen';
 import { FloatingIpsScreen } from './screens/FloatingIpsScreen';
-import { WalletScreen, InvoicePayScreen } from './features/billing';
+import { WalletScreen, InvoicePayScreen, InvoiceDetailScreen } from './features/billing';
 import { BusinessScreen } from './screens/BusinessScreen';
 import { ConsoleScreen } from './screens/ConsoleScreen';
 import { DashboardScreen } from './screens/DashboardScreen';
@@ -32,6 +33,7 @@ import { FamilyScreen } from './screens/FamilyScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 import { IpManagerScreen } from './screens/IpManagerScreen';
+import { MonthlyOffersScreen } from './screens/MonthlyOffersScreen';
 import { AuthGateScreen } from './screens/AuthGateScreen';
 import { PermissionAcceptScreen } from './screens/PermissionAcceptScreen';
 import { ServerDetailScreen } from './screens/ServerDetailScreen';
@@ -40,6 +42,8 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { ShopOverviewScreen } from './features/shop/ShopOverviewScreen';
 import { ShopCategoryScreen } from './features/shop/ShopCategoryScreen';
 import { ShopProductScreen } from './features/shop/ShopProductScreen';
+import { ShopAudienceProvider } from './components/shop/ShopAudienceProvider';
+import { ShopTaxCountryProvider } from './components/shop/ShopTaxCountryProvider';
 import { CartScreen } from './screens/CartScreen';
 import { CheckoutScreen } from './features/checkout';
 import { StorageScreen } from './screens/StorageScreen';
@@ -173,6 +177,11 @@ function AuthenticatedShell() {
                   <InvoicesScreen />
                 </CapabilityGuard>
               )}
+              {route.name === "invoice-detail" && (
+                <CapabilityGuard capability="billing">
+                  <InvoiceDetailScreen id={route.id} />
+                </CapabilityGuard>
+              )}
               {route.name === "invoice-pay" && (
                 <CapabilityGuard capability="billing">
                   <InvoicePayScreen id={route.id} />
@@ -183,17 +192,29 @@ function AuthenticatedShell() {
               {route.name === "settings" && <SettingsScreen />}
               {route.name === "shop" && (
                 <CapabilityGuard capability="purchase">
-                  <ShopOverviewScreen />
+                  <ShopAudienceProvider>
+                    <ShopTaxCountryProvider>
+                      <ShopOverviewScreen />
+                    </ShopTaxCountryProvider>
+                  </ShopAudienceProvider>
                 </CapabilityGuard>
               )}
               {route.name === "shop-category" && (
                 <CapabilityGuard capability="purchase">
-                  <ShopCategoryScreen categoryKey={route.categoryKey} />
+                  <ShopAudienceProvider>
+                    <ShopTaxCountryProvider>
+                      <ShopCategoryScreen categoryKey={route.categoryKey} />
+                    </ShopTaxCountryProvider>
+                  </ShopAudienceProvider>
                 </CapabilityGuard>
               )}
               {route.name === "shop-product" && (
                 <CapabilityGuard capability="purchase">
-                  <ShopProductScreen categoryKey={route.categoryKey} productSlug={route.productSlug} />
+                  <ShopAudienceProvider>
+                    <ShopTaxCountryProvider>
+                      <ShopProductScreen categoryKey={route.categoryKey} productSlug={route.productSlug} />
+                    </ShopTaxCountryProvider>
+                  </ShopAudienceProvider>
                 </CapabilityGuard>
               )}
               {route.name === "cart" && (
@@ -234,11 +255,13 @@ function AuthenticatedShell() {
                   <VrouteScreen />
                 </ElizonPlusStealthGuard>
               )}
+              {route.name === "monthly-offers" && <MonthlyOffersScreen />}
               {route.name === "console" && <ConsoleScreen id={route.id} />}
           </div>
           {mobileNative && <BottomNav active={tab} onChange={setTab} />}
         </div>
       </div>
+      <IdVerificationEnforcementGate />
       {mobileNative && <BackButtonHandler />}
     </>
   );

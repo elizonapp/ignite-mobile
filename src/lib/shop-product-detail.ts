@@ -4,11 +4,35 @@ export type ShopProviderInfo = {
   name: string;
 } | null;
 
+export type ShopEggVariable = {
+  envVariable: string;
+  name?: string;
+  description?: string;
+  defaultValue?: string;
+  userViewable?: boolean;
+  userEditable?: boolean;
+  rules?: string;
+};
+
+export type ShopProviderVariableSpec = {
+  name: string;
+  labels?: Record<string, string>;
+  type: "text" | "select";
+  required?: boolean;
+  options?: Array<{ value: string; label: string }>;
+  placeholderKey?: string;
+};
+
 export type ShopPterodactylEgg = {
   eggId: number;
   nestId?: number;
   name?: string;
   displayName?: string;
+  description?: string;
+  variables?: ShopEggVariable[];
+  dockerImages?: string[];
+  defaultDockerImage?: string;
+  providerVariables?: ShopProviderVariableSpec[];
 };
 
 export type ShopProductDetail = {
@@ -80,10 +104,17 @@ export type ShopProductDetail = {
   earlyTerminationFeePercent?: number;
   contractNoticeDays?: number;
   contractEligibility?: { eligible: boolean; reason?: string };
+  customerAnticipating?: {
+    shortCycleSurchargeHint?: string;
+    upsellLongerCycleHint?: string;
+    savingsHint?: string;
+  } | null;
+  locationCount?: number;
 };
 
 export type ShopUpgradeConfig = {
   allowPrePurchaseUpgrade?: boolean;
+  configuratorEnabled?: boolean;
   resourcePricing?: Record<
     string,
     {
@@ -91,6 +122,7 @@ export type ShopUpgradeConfig = {
       allowDowngrade?: boolean;
       max?: number;
       step?: number;
+      min?: number;
     }
   >;
   additionalIpsPricePerMonth?: number;
@@ -132,6 +164,9 @@ export type ProductProviderOptions = {
   maxAliasesPerDomain?: number;
   eggId?: number;
   nestId?: number;
+  dockerImage?: string;
+  environment?: Record<string, string>;
+  providerVariables?: Record<string, string>;
 };
 
 export type ConfiguratorProviderOptions = ProductProviderOptions & {
@@ -139,8 +174,21 @@ export type ConfiguratorProviderOptions = ProductProviderOptions & {
   billingCycle: number;
 };
 
+export type InvalidUpgradeFields = Partial<
+  Record<
+    | "vcores"
+    | "memory"
+    | "storage"
+    | "maxDomains"
+    | "maxMailboxesPerDomain"
+    | "storagePerMailboxGb"
+    | "maxAliasesPerDomain",
+    boolean
+  >
+>;
+
 export function usesMbResources(providerType?: string | null): boolean {
-  return providerType?.toUpperCase() === "PROXMOX";
+  return providerType?.toUpperCase() === "PTERODACTYL";
 }
 
 export function numSpec(value: number | string | undefined, fallback: number): number {
@@ -152,4 +200,11 @@ export function numSpec(value: number | string | undefined, fallback: number): n
 export function productChipLabel(chip?: string | null): string | null {
   if (!chip) return null;
   return chip.toLowerCase() === "intel" ? "Intel" : "AMD EPYC";
+}
+
+export function formatDockerImageName(image: string): string {
+  const tag = image.split(":").pop() ?? image;
+  return tag
+    .replace(/[_-]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }

@@ -19,10 +19,35 @@ export type ShopProduct = {
   vcores?: number | string;
   memory?: number | string;
   storage?: number | string;
+  bandwidth?: number | string;
+  networkLimitMBs?: number | null;
+  trafficTb?: number;
+  storageTypeDisplay?: "HDD" | "SSD" | "NVME" | null;
+  deployTime?: string;
+  locations?: string[];
   highlights?: string[];
   soldOut?: boolean;
   backgroundImageUrls?: string[];
   schemaCardFields?: Array<{ label: string; value: string }>;
+  monthlyOffer?: {
+    discountPercent: number;
+    couponCode: string | null;
+    monthKey: string;
+    expiresAt: string;
+  } | null;
+  promotion?: {
+    active: boolean;
+    kind: string | null;
+    discountPercent: number | null;
+    campaignEndsAt: string | null;
+    savingsMonthlyApprox: number;
+    discountedPriceMonthly: number;
+    listPriceMonthly: number;
+  } | null;
+  showLowestPrice30dHint?: boolean;
+  lowestPriceMonthly30d?: number | string | null;
+  promotionScarcityRemaining?: number | null;
+  catalogAvailabilityRemaining?: number | null;
 };
 
 export type ShopCategory = {
@@ -95,7 +120,7 @@ export function filterCategoryVisibility(
 
   return {
     ...category,
-    products: (category.products ?? []).filter((product) => !product.soldOut),
+    products: category.products ?? [],
     children: (category.children ?? [])
       .map((child) => filterCategoryVisibility(child, isBusiness))
       .filter((child): child is ShopCategory => child !== null),

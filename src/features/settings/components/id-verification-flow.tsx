@@ -64,11 +64,11 @@ function ExplicitConsentBlock({
 }: {
   checked: boolean;
   onChange: (value: boolean) => void;
-  t: (key: string) => string;
+  t: (key: never) => string;
 }) {
   return (
     <div className="rounded-xl border border-(--border) bg-white/5 p-4 space-y-3">
-      <p className="text-sm text-(--text-muted)">{t("idVerificationConsentBody")}</p>
+      <p className="text-sm text-(--text-muted)">{t("idVerificationConsentBody" as never)}</p>
       <label className="flex cursor-pointer items-start gap-3 text-sm">
         <input
           type="checkbox"
@@ -76,7 +76,7 @@ function ExplicitConsentBlock({
           onChange={(e) => onChange(e.target.checked)}
           className="mt-0.5 h-4 w-4 shrink-0 rounded border-(--border)"
         />
-        <span>{t("idVerificationConsentCheckbox")}</span>
+        <span>{t("idVerificationConsentCheckbox" as never)}</span>
       </label>
     </div>
   );
@@ -201,7 +201,10 @@ export function IdVerificationFlow({
         setAddresses((json.addresses || []) as Address[]);
         const defaultAddr = (json.addresses as Address[]).find((a) => a.isDefault);
         if (defaultAddr) setSelectedAddressId(defaultAddr.id);
-        else if (json.addresses?.length) setSelectedAddressId(json.addresses[0].id);
+        else if (json.addresses?.length) {
+          const first = json.addresses[0] as Address | undefined;
+          if (first) setSelectedAddressId(first.id);
+        }
       }
     } catch {
       /* optional */

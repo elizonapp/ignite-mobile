@@ -80,11 +80,17 @@ export function SettingsScreen() {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const { show } = useToast();
-  const { navigate } = useRouter();
+  const { navigate, route } = useRouter();
   const [apiUrl, setApiUrl] = useState(getApiBaseUrl());
   const [view, setView] = useState<SettingsView>("main");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [idVerificationEnforcementRequired, setIdVerificationEnforcementRequired] = useState(false);
+
+  useEffect(() => {
+    if (route.name === "settings" && route.view === "id-verification") {
+      setView("id-verification");
+    }
+  }, [route]);
 
   const showIdVerification =
     Boolean(user?.dateOfBirth) &&

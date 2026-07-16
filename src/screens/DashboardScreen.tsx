@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from '../components/AuthProvider';
+import { ContractOverduePaymentBanner } from '../components/dashboard/ContractOverduePaymentBanner';
 import { MaintenanceBanner } from '../components/dashboard/MaintenanceBanner';
 import { QuickActions } from '../components/dashboard/QuickActions';
 import { ResourceUsage } from '../components/dashboard/ResourceUsage';
@@ -25,7 +26,7 @@ import { useRouter } from '../components/Router';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useBatchedServiceStatus } from '../hooks/useBatchedServiceStatus';
 import { useI18n } from '../i18n';
-import { isDesktopClient, isMobileNative } from '../lib/platform';
+import { isMobileNative } from '../lib/platform';
 import { showElizonPlusFeatures, shouldShowTrafficPoolingUi } from '../lib/elizon-plus';
 import { mergeLiveStatus } from '../lib/normalize';
 import { api } from '../lib/api';
@@ -47,6 +48,17 @@ export function DashboardScreen() {
     reload,
   } = useDashboardData();
   const [isAffiliate, setIsAffiliate] = useState(false);
+
+  const showFamilyAdoptionBanner = useMemo(() => {
+    if (!user?.dateOfBirth || user.familyGroupId) return false;
+    const dob = new Date(user.dateOfBirth);
+    if (Number.isNaN(dob.getTime())) return false;
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const md = now.getMonth() - dob.getMonth();
+    if (md < 0 || (md === 0 && now.getDate() < dob.getDate())) age -= 1;
+    return age < 16;
+  }, [user?.dateOfBirth, user?.familyGroupId]);
 
   useEffect(() => {
     api.affiliates
@@ -110,25 +122,48 @@ export function DashboardScreen() {
           </div>
         )}
 
+        <ContractOverduePaymentBanner />
+
+        {showFamilyAdoptionBanner ? (
+          <section className="glass border border-(--warning)/40 p-4">
+            <p className="text-sm text-(--text-primary)">{t("familyAdoptionDeadlineBanner")}</p>
+            <button
+              type="button"
+              onClick={() => navigate({ name: "family" })}
+              className="btn-secondary mt-3 px-3 py-2 text-xs font-medium"
+            >
+              {t("familyTitle")}
+            </button>
+          </section>
+        ) : null}
+
         <StatGrid stats={stats} isLoading={isLoading} />
 
         {maintenance.length > 0 && (
           <MaintenanceBanner notes={maintenance} onSelect={(id) => navigate({ name: "server", id })} />
         )}
 
-        {isDesktopClient() && servers.length === 0 && monthlyOffers.length > 0 && (
+        {servers.length === 0 && monthlyOffers.length > 0 && (
           <section className="glass border border-(--elizon-primary)/20 p-4">
-            <div className="flex items-start gap-3">
-              <DashboardIconBadge>
-                <IconTag className="h-4 w-4" />
-              </DashboardIconBadge>
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm font-medium text-(--text-primary)">{t("monthlyOffersDashboardBannerTitle")}</p>
-                <p className="text-xs text-(--text-muted)">
-                  {t("monthlyOffersDashboardBannerSubtitle").replace("{discount}", String(maxOfferDiscount))}
-                </p>
-                <p className="text-[11px] text-(--text-muted)">{t("monthlyOffersCodeInCheckout")}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <DashboardIconBadge>
+                  <IconTag className="h-4 w-4" />
+                </DashboardIconBadge>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-sm font-medium text-(--text-primary)">{t("monthlyOffersDashboardBannerTitle")}</p>
+                  <p className="text-xs text-(--text-muted)">
+                    {t("monthlyOffersDashboardBannerSubtitle").replace("{discount}", String(maxOfferDiscount))}
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => navigate({ name: "monthly-offers" })}
+                className="btn-primary shrink-0 px-3 py-2 text-xs font-medium"
+              >
+                {t("monthlyOffersDashboardBannerCta")}
+              </button>
             </div>
           </section>
         )}

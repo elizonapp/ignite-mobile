@@ -53,14 +53,14 @@ const TYPE_COLORS: Record<string, string> = {
 function expandIPv6(ip: string): string {
   const cleaned = ip.trim();
   if (!cleaned) return "";
-  const [addr] = cleaned.split("/");
+  const addr = cleaned.split("/")[0] ?? cleaned;
   if (!addr.includes(":")) return cleaned;
   let left = "";
   let right = "";
   if (addr.includes("::")) {
-    const [l, r = ""] = addr.split("::");
-    left = l;
-    right = r;
+    const parts = addr.split("::");
+    left = parts[0] ?? "";
+    right = parts[1] ?? "";
   } else {
     left = addr;
   }
@@ -145,7 +145,7 @@ function Ipv6Tools({
   address: string;
   subnetPrefix: string | null;
   cidr: number | null;
-  t: (key: string) => string;
+  t: (key: keyof import("../i18n/en").Dict) => string;
   onCopied: () => void;
 }) {
   const expanded = useMemo(() => expandIPv6(address), [address]);
@@ -348,7 +348,7 @@ export function IpManagerScreen() {
     if (!removeTarget) return;
     setRemovingId(removeTarget.id);
     try {
-      await api.ipManager.delete(removeTarget.id);
+      await api.ipManager.remove(removeTarget.id);
       show(t("ipManagerRemoveSuccess"), "success");
       setRemoveTarget(null);
       void load();

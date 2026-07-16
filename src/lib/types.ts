@@ -22,6 +22,9 @@ export type DashboardServer = {
   elizonThrottledUntil?: string | null;
   elizonPoolKey?: string | null;
   elizonForecastTb?: number | null;
+  suspendReason?: string | null;
+  terminationPending?: boolean;
+  reinstallPending?: boolean;
 };
 
 export type DashboardStats = {

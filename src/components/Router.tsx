@@ -8,15 +8,17 @@ export type Route =
   | { name: "billing" }
   | { name: "elizon-plus" }
   | { name: "invoices" }
+  | { name: "invoice-detail"; id: string }
   | { name: "invoice-pay"; id: string }
   | { name: "permission-accept"; permissionId: string }
   | { name: "support" }
-  | { name: "settings" }
+  | { name: "settings"; view?: "id-verification" }
   | { name: "shop" }
   | { name: "shop-category"; categoryKey: string }
   | { name: "shop-product"; categoryKey: string; productSlug: string }
   | { name: "cart" }
-  | { name: "checkout"; productId?: string }
+  | { name: "checkout"; productId?: string; coupon?: string; ref?: string; offerToken?: string }
+  | { name: "monthly-offers" }
   | { name: "storage" }
   | { name: "subdomains" }
   | { name: "domains" }

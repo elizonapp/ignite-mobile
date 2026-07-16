@@ -77,14 +77,27 @@ export type IdVerificationEnjynCallbackResponse = IdVerificationStatusResponse &
   outcome?: "verified" | "failed" | "expired" | "processing" | "pending" | "none";
 };
 
+export type IdVerificationEnforcementStatus = {
+  success?: boolean;
+  required: boolean;
+  deadlineAt: string | null;
+  relatedCaseReportId: string | null;
+  verificationId: string | null;
+  canRefuse: boolean;
+};
+
 export class IdVerificationResource extends ResourceClient {
   status() {
     return this.get<IdVerificationStatusResponse>("/api/user/id-verification/status");
   }
 
   enforcementStatus() {
-    return this.get<{ success: boolean; required?: boolean; status?: string | null }>(
-      "/api/user/id-verification/enforcement-status",
+    return this.get<IdVerificationEnforcementStatus>("/api/user/id-verification/enforcement-status");
+  }
+
+  refuseEnforcement(verificationId: string) {
+    return this.post<{ success: boolean }>(
+      `/api/user/id-verification/${encodeURIComponent(verificationId)}/refuse`,
     );
   }
 

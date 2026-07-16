@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,15 +18,23 @@ import type { Dict } from "../../i18n/en";
 import { useToast } from "../../components/Toast";
 import { useRouter } from "../../components/Router";
 import type { CheckoutPaymentMethod } from "../../api/checkout";
+import { useCheckout, type NewAddressForm } from "./useCheckout";
+import type { CartItem } from "../../lib/cart-service";
 
 type I18nKey = keyof Dict;
-import { useCheckout, type NewAddressForm } from "./useCheckout";
 
 export function CheckoutScreen() {
   const { t, lang } = useI18n();
   const { show } = useToast();
   const { navigate } = useRouter();
   const c = useCheckout();
+  const [sepaDetails, setSepaDetails] = useState<{
+    iban: string;
+    bic: string;
+    bankName?: string;
+    amount: number;
+    reference: string;
+  } | null>(null);
 
   const fmt = useMemo(
     () =>
@@ -63,6 +71,9 @@ export function CheckoutScreen() {
     const result = await c.submit();
     if (result.kind === "redirect") {
       show(t("checkoutRedirectOpened"), "info");
+    } else if (result.kind === "sepa") {
+      setSepaDetails(result.details);
+      show(t("checkoutSepaInstructions"), "info");
     } else if (result.kind === "invoice") {
       show(t("checkoutSuccess"), "success");
       navigate({ name: "invoices" });
@@ -85,6 +96,29 @@ export function CheckoutScreen() {
     );
   }
 
+  if (sepaDetails) {
+    return (
+      <div className="mx-auto w-full max-w-lg page-fullwidth safe-x py-6">
+        <section className="glass space-y-3 p-6">
+          <h1 className="text-lg font-semibold text-(--text-primary)">{t("checkoutSepaTitle")}</h1>
+          <p className="text-sm text-(--text-secondary)">{t("checkoutSepaInstructions")}</p>
+          <dl className="space-y-2 text-sm">
+            <div className="flex justify-between gap-2"><dt className="text-(--text-muted)">IBAN</dt><dd className="font-mono">{sepaDetails.iban}</dd></div>
+            <div className="flex justify-between gap-2"><dt className="text-(--text-muted)">BIC</dt><dd className="font-mono">{sepaDetails.bic}</dd></div>
+            {sepaDetails.bankName ? (
+              <div className="flex justify-between gap-2"><dt className="text-(--text-muted)">{t("checkoutBank")}</dt><dd>{sepaDetails.bankName}</dd></div>
+            ) : null}
+            <div className="flex justify-between gap-2"><dt className="text-(--text-muted)">{t("checkoutPayAmount")}</dt><dd className="font-semibold">{formatPrice(sepaDetails.amount)}</dd></div>
+            <div className="flex justify-between gap-2"><dt className="text-(--text-muted)">{t("checkoutSepaReference")}</dt><dd className="font-mono text-xs">{sepaDetails.reference}</dd></div>
+          </dl>
+          <button type="button" className="btn-primary w-full rounded-xl py-3 text-sm" onClick={() => navigate({ name: "dashboard" })}>
+            {t("checkoutDone")}
+          </button>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-5xl page-fullwidth">
       <header className="safe-x flex items-center gap-3 pb-4 pt-2">
@@ -102,22 +136,24 @@ export function CheckoutScreen() {
         </div>
       </header>
 
-      <StepIndicator labels={stepLabels} current={c.step} />
+      <div className="safe-x">
+        <StepIndicator labels={stepLabels} current={c.step} />
+      </div>
 
       {c.loadError && (
-        <div className="glass mt-4 border border-(--error)/30 p-4 text-sm text-(--error)">
+        <div className="glass safe-x mt-4 border border-(--error)/30 p-4 text-sm text-(--error)">
           {c.loadError}
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="safe-x mt-4 grid grid-cols-1 gap-4 pb-28 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           {c.step === 0 && <CartStep c={c} formatPrice={formatPrice} />}
           {c.step === 1 && <AddressStep c={c} />}
           {c.step === 2 && <PaymentStep c={c} formatPrice={formatPrice} />}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <OrderSummary c={c} formatPrice={formatPrice} />
 
           <div className="flex flex-col gap-2">
@@ -135,8 +171,8 @@ export function CheckoutScreen() {
             ) : (
               <button
                 type="button"
-                onClick={handleSubmit}
-                disabled={c.submitting}
+                onClick={() => void handleSubmit()}
+                disabled={c.submitting || !c.acceptTos || !c.acceptWithdrawal}
                 className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {c.submitting && <Loader2 className="size-4 animate-spin" />}
@@ -152,8 +188,9 @@ export function CheckoutScreen() {
             </button>
           </div>
 
-          {c.submitError && (
-            <p className="text-xs text-(--error)">{c.submitError}</p>
+          {c.submitError && <p className="text-xs text-(--error)">{c.submitError}</p>}
+          {c.showTermsError && (
+            <p className="text-xs text-(--error)">{t("checkoutTermsRequired")}</p>
           )}
         </div>
       </div>
@@ -194,6 +231,21 @@ function StepIndicator({ labels, current }: { labels: string[]; current: number 
 
 type CheckoutCtx = ReturnType<typeof useCheckout>;
 
+function itemConfigLines(item: CartItem, t: (k: I18nKey) => string): string {
+  const parts: string[] = [];
+  if (item.locationId) parts.push(t("checkoutConfigLocation"));
+  if (item.templateId != null) parts.push(t("checkoutConfigOs"));
+  if (item.eggId != null) parts.push(t("checkoutConfigEgg"));
+  if (item.additionalIPv4) parts.push(`+${item.additionalIPv4} IPv4`);
+  if (item.additionalIPv6) parts.push(`+${item.additionalIPv6} IPv6`);
+  if (item.customization?.bandwidth) parts.push(`+${item.customization.bandwidth} TB`);
+  if (item.customization?.speedGbit) parts.push(`${item.customization.speedGbit} Gbit/s`);
+  if (item.billingMode === "CONTRACT" && item.contractTermMonths) {
+    parts.push(`${item.contractTermMonths} ${t("months")}`);
+  }
+  return parts.join(" · ");
+}
+
 function CartStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number) => string }) {
   const { t } = useI18n();
   const { navigate } = useRouter();
@@ -229,15 +281,21 @@ function CartStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number)
       </div>
       <div className="space-y-2">
         {c.cartItems.map((item) => {
-          const priced = pricedItems.find((entry) => entry.productId === item.productId);
+          const priced =
+            pricedItems.find((entry) => (entry as { lineId?: string }).lineId === item.lineId) ??
+            pricedItems.find((entry) => entry.productId === item.productId);
+          const config = itemConfigLines(item, t);
           return (
-            <div key={item.lineId} className="flex items-start justify-between gap-3 rounded-xl border border-(--border) p-3">
+            <div
+              key={item.lineId}
+              className="flex items-start justify-between gap-3 rounded-xl border border-(--border) p-3"
+            >
               <div className="min-w-0">
                 <p className="text-sm font-medium text-(--text-primary)">{item.productName}</p>
                 <p className="text-xs text-(--text-muted)">
-                  {item.quantity} ×{" "}
-                  {item.billingCycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
+                  {item.quantity} × {item.billingCycle} {t("days")}
                 </p>
+                {config ? <p className="mt-1 text-[11px] text-(--text-muted)">{config}</p> : null}
               </div>
               <span className="shrink-0 text-sm font-semibold text-(--elizon-primary)">
                 {c.pricingLoading ? "…" : formatPrice(priced?.total ?? item.priceMonthly * item.quantity)}
@@ -246,6 +304,7 @@ function CartStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number)
           );
         })}
       </div>
+      <DiscountSidebar c={c} formatPrice={formatPrice} />
     </section>
   );
 }
@@ -302,97 +361,59 @@ function AddressStep({ c }: { c: CheckoutCtx }) {
           c.setShowNewAddressForm(true);
           c.setSelectedAddressId(null);
         }}
-        className={`w-full rounded-xl border p-3 text-left text-sm ${
+        className={`w-full rounded-xl border px-4 py-2.5 text-sm ${
           c.showNewAddressForm
-            ? "border-(--elizon-primary) bg-(--elizon-primary)/10 text-(--text-primary)"
-            : "border-dashed border-(--border) text-(--text-muted) hover:border-(--elizon-primary)/50"
+            ? "border-(--elizon-primary) bg-(--elizon-primary)/10 font-medium text-(--elizon-primary)"
+            : "border-(--border) text-(--text-secondary)"
         }`}
       >
         {t("checkoutNewAddress")}
       </button>
 
-      {c.showNewAddressForm && <NewAddressFields c={c} />}
-    </section>
-  );
-}
-
-function NewAddressFields({ c }: { c: CheckoutCtx }) {
-  const { t } = useI18n();
-  const a = c.newAddress;
-  const set = (patch: Partial<NewAddressForm>) => c.setNewAddress({ ...a, ...patch });
-
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {c.isBusiness && (
-        <Field
-          className="sm:col-span-2"
-          label={t("checkoutCompany")}
-          value={a.companyName}
-          onChange={(v) => set({ companyName: v })}
-          required
-        />
-      )}
-      <Field label={t("checkoutFirstName")} value={a.firstName} onChange={(v) => set({ firstName: v })} required />
-      <Field label={t("checkoutLastName")} value={a.lastName} onChange={(v) => set({ lastName: v })} required />
-      <Field
-        className="sm:col-span-2"
-        label={t("checkoutStreet")}
-        value={a.street}
-        onChange={(v) => set({ street: v })}
-        required
-      />
-      <Field label={t("checkoutZip")} value={a.zip} onChange={(v) => set({ zip: v })} required />
-      <Field label={t("checkoutCity")} value={a.city} onChange={(v) => set({ city: v })} required />
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-(--text-secondary)">
-          {t("checkoutCountry")} <span className="text-(--error)">*</span>
-        </label>
-        <select
-          value={a.countryCode}
-          onChange={(e) => set({ countryCode: e.target.value })}
-          className="w-full rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm text-(--text-primary) focus:border-(--primary) focus:outline-none"
-        >
-          <option value="">{t("checkoutCountrySelect")}</option>
-          {c.countries.map((country) => (
-            <option key={country.countryCode} value={country.countryCode}>
-              {country.countryName}
-            </option>
+      {c.showNewAddressForm && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {(
+            [
+              ["firstName", "firstName", true],
+              ["lastName", "lastName", true],
+              ["companyName", "company", c.isBusiness],
+              ["vatId", "vatId", c.isBusiness],
+              ["street", "street", true],
+              ["zip", "zip", true],
+              ["city", "city", true],
+              ["phone", "phone", false],
+            ] as Array<[keyof NewAddressForm, I18nKey, boolean]>
+          ).map(([field, labelKey, required]) => (
+            <label key={field} className="block space-y-1 text-xs">
+              <span className="text-(--text-secondary)">
+                {t(labelKey)}
+                {required ? " *" : ""}
+              </span>
+              <input
+                value={c.newAddress[field]}
+                onChange={(e) => c.setNewAddress({ ...c.newAddress, [field]: e.target.value })}
+                className="w-full rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2.5 text-sm"
+              />
+            </label>
           ))}
-        </select>
-      </div>
-      {c.isBusiness && (
-        <Field label={t("checkoutVatId")} value={a.vatId} onChange={(v) => set({ vatId: v })} />
+          <label className="block space-y-1 text-xs sm:col-span-2">
+            <span className="text-(--text-secondary)">{t("checkoutCountry")} *</span>
+            <select
+              value={c.newAddress.countryCode}
+              onChange={(e) => c.setNewAddress({ ...c.newAddress, countryCode: e.target.value })}
+              className="w-full rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2.5 text-sm"
+            >
+              <option value="">{t("checkoutCountrySelect")}</option>
+              {c.countries.map((country) => (
+                <option key={country.countryCode} value={country.countryCode}>
+                  {country.countryName}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       )}
-      <Field label={t("checkoutPhone")} value={a.phone} onChange={(v) => set({ phone: v })} />
-      <p className="text-xs text-(--text-muted) sm:col-span-2">{t("checkoutRequiredHint")}</p>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  required,
-  className,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <label className="text-xs font-medium text-(--text-secondary)">
-        {label} {required && <span className="text-(--error)">*</span>}
-      </label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm text-(--text-primary) focus:border-(--primary) focus:outline-none"
-      />
-    </div>
+    </section>
   );
 }
 
@@ -401,155 +422,289 @@ const METHOD_META: Record<
   { icon: typeof CreditCard; labelKey: I18nKey; descKey: I18nKey }
 > = {
   mollie: { icon: CreditCard, labelKey: "checkoutPayMollie", descKey: "checkoutPayMollieDesc" },
-  mollie_saved: { icon: CreditCard, labelKey: "checkoutPayMollieSaved", descKey: "checkoutPayMollieSavedDesc" },
+  mollie_saved: {
+    icon: CreditCard,
+    labelKey: "checkoutPayMollieSaved",
+    descKey: "checkoutPayMollieSavedDesc",
+  },
   sepa: { icon: Landmark, labelKey: "checkoutPaySepa", descKey: "checkoutPaySepaDesc" },
   guthaben: { icon: Wallet, labelKey: "checkoutPayGuthaben", descKey: "checkoutPayGuthabenDesc" },
   invoice: { icon: FileText, labelKey: "checkoutPayInvoice", descKey: "checkoutPayInvoiceDesc" },
-  businessfund: { icon: Building2, labelKey: "checkoutPayBusinessfund", descKey: "checkoutPayBusinessfundDesc" },
-  family_wallet: { icon: Users, labelKey: "checkoutPayFamilyWallet", descKey: "checkoutPayFamilyWalletDesc" },
+  businessfund: {
+    icon: Building2,
+    labelKey: "checkoutPayBusinessFund",
+    descKey: "checkoutPayBusinessFundDesc",
+  },
+  family_wallet: {
+    icon: Users,
+    labelKey: "checkoutPayFamilyWallet",
+    descKey: "checkoutPayFamilyWalletDesc",
+  },
 };
 
 function PaymentStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number) => string }) {
   const { t } = useI18n();
 
   return (
-    <section className="glass space-y-4 p-4">
-      <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutPaymentMethod")}</h2>
+    <div className="space-y-4">
+      <DiscountSidebar c={c} formatPrice={formatPrice} />
 
-      <div className="space-y-2">
-        {c.availableMethods.map((method) => {
-          const meta = METHOD_META[method];
-          const Icon = meta.icon;
-          const selected = c.paymentMethod === method;
-          const disabled =
-            method === "guthaben" && !c.guthabenSufficient && c.orderTotal > 0;
-          return (
-            <button
-              key={method}
-              type="button"
-              disabled={disabled}
-              onClick={() => c.setPaymentMethod(method)}
-              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left disabled:cursor-not-allowed disabled:opacity-50 ${
-                selected
-                  ? "border-(--elizon-primary) bg-(--elizon-primary)/10"
-                  : "border-(--border) hover:border-(--elizon-primary)/50"
-              }`}
-            >
-              <Icon className="size-5 shrink-0 text-(--text-secondary)" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-(--text-primary)">
-                  {t(meta.labelKey)}
-                  {method === "mollie_saved" && c.bootstrap?.savedPaymentMethods?.defaultLabel
-                    ? ` · ${c.bootstrap.savedPaymentMethods.defaultLabel}`
-                    : ""}
+      <section className="glass space-y-3 p-4">
+        <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutStepPayment")}</h2>
+        <p className="text-[11px] text-(--text-muted)">{t("checkoutMollieMethodsHint")}</p>
+        <div className="space-y-2">
+          {c.availableMethods.map((method) => {
+            const meta = METHOD_META[method];
+            const Icon = meta.icon;
+            const selected = c.paymentMethod === method;
+            const disabled = method === "guthaben" && !c.guthabenSufficient && c.orderTotal > 0;
+            return (
+              <button
+                key={method}
+                type="button"
+                disabled={disabled}
+                onClick={() => c.setPaymentMethod(method)}
+                className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left disabled:opacity-40 ${
+                  selected
+                    ? "border-(--elizon-primary) bg-(--elizon-primary)/10"
+                    : "border-(--border) hover:border-(--elizon-primary)/40"
+                }`}
+              >
+                <Icon className="mt-0.5 size-5 shrink-0 text-(--elizon-primary)" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-(--text-primary)">
+                    {method === "mollie_saved" && c.bootstrap?.savedPaymentMethods?.defaultLabel
+                      ? c.bootstrap.savedPaymentMethods.defaultLabel
+                      : t(meta.labelKey)}
+                  </span>
+                  <span className="text-xs text-(--text-muted)">{t(meta.descKey)}</span>
+                  {method === "guthaben" ? (
+                    <span className="mt-0.5 block text-xs text-(--text-muted)">
+                      {t("checkoutNetPointsAvailable")}: {formatPrice(c.userBalance)}
+                    </span>
+                  ) : null}
                 </span>
-                <span className="block text-xs text-(--text-muted)">
-                  {method === "guthaben"
-                    ? `${t("checkoutPayGuthabenDesc")} (${formatPrice(c.userBalance)})`
-                    : t(meta.descKey)}
-                </span>
-              </span>
-              {selected && <Check className="size-4 shrink-0 text-(--elizon-primary)" />}
-            </button>
-          );
-        })}
-      </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-      {c.netPointsEurAvailable > 0 && (
-        <label className="flex items-center gap-3 rounded-xl border border-(--border) p-3">
+      <section className="glass space-y-3 p-4">
+        <label className="flex items-start gap-2 text-sm">
           <input
             type="checkbox"
-            checked={c.applyNetPoints}
-            onChange={(e) => c.setApplyNetPoints(e.target.checked)}
-            className="size-4 accent-(--elizon-primary)"
+            checked={c.acceptTos}
+            onChange={(e) => c.setAcceptTos(e.target.checked)}
+            className="mt-1"
           />
-          <span className="min-w-0 flex-1 text-sm text-(--text-primary)">
-            {t("checkoutUseNetPoints")}
-            <span className="block text-xs text-(--text-muted)">
-              {t("checkoutNetPointsAvailable")}: {formatPrice(c.netPointsEurAvailable)}
-            </span>
-          </span>
+          <span className="text-(--text-secondary)">{t("checkoutAcceptTos")}</span>
         </label>
-      )}
-
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-(--text-secondary)">{t("checkoutCoupon")}</label>
-        <input
-          value={c.couponCode}
-          onChange={(e) => c.setCouponCode(e.target.value)}
-          placeholder={t("checkoutCouponPlaceholder")}
-          className="w-full rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm text-(--text-primary) focus:border-(--primary) focus:outline-none"
-        />
-      </div>
-
-      {c.bootstrap && !c.isBusiness && (
-        <label className="flex items-center gap-3 text-xs text-(--text-muted)">
+        <label className="flex items-start gap-2 text-sm">
           <input
             type="checkbox"
-            checked={c.newsletterOptIn}
-            onChange={(e) => c.setNewsletterOptIn(e.target.checked)}
-            className="size-4 accent-(--elizon-primary)"
+            checked={c.acceptWithdrawal}
+            onChange={(e) => c.setAcceptWithdrawal(e.target.checked)}
+            className="mt-1"
           />
-          {t("checkoutNewsletterOptIn")}
+          <span className="text-(--text-secondary)">{t("checkoutAcceptWithdrawal")}</span>
         </label>
-      )}
-    </section>
+        {!c.isBusiness ? (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={c.newsletterOptIn}
+              onChange={(e) => c.setNewsletterOptIn(e.target.checked)}
+              className="mt-1"
+            />
+            <span className="text-(--text-secondary)">{t("checkoutNewsletterOptIn")}</span>
+          </label>
+        ) : null}
+      </section>
+    </div>
   );
 }
 
-function OrderSummary({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number) => string }) {
+function DiscountSidebar({
+  c,
+  formatPrice,
+}: {
+  c: CheckoutCtx;
+  formatPrice: (v: number) => string;
+}) {
   const { t } = useI18n();
 
   return (
     <section className="glass space-y-3 p-4">
-      <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutSummary")}</h2>
+      <h3 className="text-sm font-semibold text-(--text-primary)">{t("checkoutDiscountsTitle")}</h3>
 
-      {c.cartItems.length > 0 ? (
-        <div className="space-y-2 text-sm">
-          {c.cartItems.map((item) => (
-            <div key={item.lineId} className="flex items-start justify-between gap-2">
-              <span className="min-w-0 text-(--text-secondary)">
-                {item.productName}
-                <span className="block text-xs text-(--text-muted)">
-                  {item.quantity} ×{" "}
-                  {item.billingCycle === 365 ? t("checkoutCycleYearly") : t("checkoutCycleMonthly")}
-                </span>
-              </span>
-            </div>
-          ))}
+      {!c.isBusiness && c.netPointsEurAvailable > 0 ? (
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-(--text-secondary)">
+            {t("checkoutUseNetPoints")} ({formatPrice(c.netPointsEurAvailable)})
+          </label>
+          <div className="flex gap-2">
+            <input
+              value={c.netPointsRedeemEur}
+              onChange={(e) => c.setNetPointsRedeemEur(e.target.value)}
+              placeholder="0,00"
+              className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={c.applyNetPointsAmount}
+              className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
+            >
+              {t("checkoutApply")}
+            </button>
+            {c.netPointsAppliedEur > 0 ? (
+              <button
+                type="button"
+                onClick={c.clearNetPoints}
+                className="shrink-0 text-xs text-(--text-muted) underline"
+              >
+                {t("checkoutRemove")}
+              </button>
+            ) : null}
+          </div>
+          {c.netPointsError ? <p className="text-xs text-(--error)">{c.netPointsError}</p> : null}
         </div>
-      ) : (
-        <p className="text-xs text-(--text-muted)">{t("checkoutNoProduct")}</p>
-      )}
+      ) : null}
 
-      <div className="space-y-1.5 border-t border-(--border) pt-3 text-sm">
-        <SummaryRow
-          label={t("checkoutSubtotal")}
-          value={c.pricingLoading ? "…" : formatPrice(c.pricing?.subtotal ?? 0)}
-          muted
-        />
-        <SummaryRow
-          label={c.pricing?.taxName ?? t("checkoutTax")}
-          value={c.pricingLoading ? "…" : formatPrice(c.pricing?.tax ?? 0)}
-          muted
-        />
-        {c.netPointsApplied > 0 && (
-          <SummaryRow label={t("netPoints")} value={`− ${formatPrice(c.netPointsApplied)}`} muted />
-        )}
-        <div className="flex items-center justify-between border-t border-(--border) pt-2 text-base font-bold text-(--text-primary)">
-          <span>{t("checkoutTotal")}</span>
-          <span>{c.pricingLoading ? "…" : formatPrice(c.orderTotal)}</span>
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-(--text-secondary)">{t("checkoutCoupon")}</label>
+        <div className="flex gap-2">
+          <input
+            value={c.couponCode}
+            onChange={(e) => c.setCouponCode(e.target.value)}
+            placeholder={t("checkoutCouponPlaceholder")}
+            className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm uppercase"
+          />
+          <button
+            type="button"
+            disabled={c.couponLoading}
+            onClick={() => void c.applyCoupon()}
+            className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
+          >
+            {c.couponLoading ? <Loader2 className="size-3.5 animate-spin" /> : t("checkoutApply")}
+          </button>
         </div>
+        {c.appliedCoupon ? (
+          <p className="text-xs text-(--success)">
+            {c.appliedCoupon.displayText}
+            <button type="button" className="ml-2 underline" onClick={c.clearCoupon}>
+              {t("checkoutRemove")}
+            </button>
+          </p>
+        ) : null}
+        {c.couponError ? <p className="text-xs text-(--error)">{c.couponError}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-(--text-secondary)">{t("checkoutCreatorCode")}</label>
+        <div className="flex gap-2">
+          <input
+            value={c.affiliateCode}
+            onChange={(e) => c.setAffiliateCode(e.target.value)}
+            placeholder={t("checkoutCreatorCodePlaceholder")}
+            className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            disabled={c.affiliateLoading}
+            onClick={() => void c.applyAffiliate()}
+            className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
+          >
+            {c.affiliateLoading ? <Loader2 className="size-3.5 animate-spin" /> : t("checkoutApply")}
+          </button>
+        </div>
+        {c.affiliateInfo ? (
+          <p className="text-xs text-(--success)">{c.affiliateInfo.name}</p>
+        ) : null}
+        {c.affiliateError ? <p className="text-xs text-(--error)">{c.affiliateError}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-(--text-secondary)">{t("voucherRedeem")}</label>
+        <div className="flex gap-2">
+          <input
+            value={c.voucherCode}
+            onChange={(e) => c.setVoucherCode(e.target.value)}
+            className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            disabled={c.voucherLoading}
+            onClick={() => void c.redeemVoucher()}
+            className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
+          >
+            {c.voucherLoading ? <Loader2 className="size-3.5 animate-spin" /> : t("voucherRedeem")}
+          </button>
+        </div>
+        {c.voucherMessage ? <p className="text-xs text-(--text-secondary)">{c.voucherMessage}</p> : null}
       </div>
     </section>
   );
 }
 
-function SummaryRow({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+function OrderSummary({
+  c,
+  formatPrice,
+}: {
+  c: CheckoutCtx;
+  formatPrice: (v: number) => string;
+}) {
+  const { t } = useI18n();
+
   return (
-    <div className="flex items-center justify-between">
+    <section className="glass space-y-2 p-4">
+      <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutSummary")}</h2>
+      <SummaryRow
+        label={t("checkoutSubtotal")}
+        value={c.pricingLoading ? "…" : formatPrice(c.pricing?.subtotal ?? 0)}
+      />
+      <SummaryRow
+        label={c.pricing?.taxName ?? t("checkoutTax")}
+        value={c.pricingLoading ? "…" : formatPrice(c.pricing?.tax ?? 0)}
+        muted
+      />
+      {c.appliedCoupon ? (
+        <SummaryRow
+          label={t("checkoutCoupon")}
+          value={`− ${formatPrice(c.appliedCoupon.amount)}`}
+          muted
+        />
+      ) : null}
+      {c.netPointsAppliedEur > 0 && (
+        <SummaryRow
+          label={t("netPoints")}
+          value={`− ${formatPrice(c.netPointsAppliedEur)}`}
+          muted
+        />
+      )}
+      <div className="flex items-center justify-between border-t border-(--border) pt-2">
+        <span className="text-sm font-bold text-(--text-primary)">{t("checkoutTotal")}</span>
+        <span className="text-base font-bold text-(--elizon-primary)">
+          {c.pricingLoading ? "…" : formatPrice(c.orderTotal)}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  muted,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm">
       <span className={muted ? "text-(--text-muted)" : "text-(--text-secondary)"}>{label}</span>
-      <span className="text-(--text-secondary)">{value}</span>
+      <span className="text-(--text-primary)">{value}</span>
     </div>
   );
 }

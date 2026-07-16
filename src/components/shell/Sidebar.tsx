@@ -27,7 +27,7 @@ import { cn } from "../../lib/utils";
 import { formatUserGreetingName } from "../../lib/userName";
 import type { Route } from "../Router";
 
-type SidebarRouteName = Exclude<Route["name"], "server" | "invoice-pay" | "permission-accept" | "console">;
+type SidebarRouteName = Exclude<Route["name"], "server" | "invoice-pay" | "invoice-detail" | "permission-accept" | "console">;
 type SidebarRoute = Extract<Route, { name: SidebarRouteName }>;
 
 type NavItem = {
@@ -92,7 +92,7 @@ function getLabel(route: SidebarRouteName, t: (key: string) => string) {
 
 function normalizeRouteName(route: Route["name"]): Route["name"] {
   if (route === "server") return "servers";
-  if (route === "invoices" || route === "invoice-pay") return "billing";
+  if (route === "invoices" || route === "invoice-pay" || route === "invoice-detail") return "billing";
   return route;
 }
 

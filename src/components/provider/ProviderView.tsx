@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { CreditCard } from "lucide-react";
 
 import { canManageBilling } from "../../lib/platform";
 import { useProviderT } from "./use-provider-t";
 import { ProviderActionBar } from "./ProviderActionBar";
 import { ProviderFieldGrid } from "./ProviderFieldGrid";
 import { ProviderWidgetHost } from "./ProviderWidgetHost";
+import { ServiceBillingPanel } from "./ServiceBillingPanel";
 import { hasResolvedFieldDisplayValue } from "./format-field";
 import type {
   ActionDispatchResponse,
@@ -37,6 +37,10 @@ type Props = {
   onActionCompleted?: (actionKey: string, result: ActionDispatchResponse) => void;
   /** Navigate to the dedicated billing area (desktop only). */
   onOpenBilling?: () => void;
+  onRefresh?: () => void;
+  onNavigateToInvoices?: () => void;
+  onNavigateToInvoiceDetail?: (invoiceId: string) => void;
+  onNavigateToInvoicePay?: (invoiceId: string) => void;
 };
 
 /**
@@ -53,6 +57,10 @@ export function ProviderView({
   widgetContext,
   onActionCompleted,
   onOpenBilling,
+  onRefresh,
+  onNavigateToInvoices,
+  onNavigateToInvoiceDetail,
+  onNavigateToInvoicePay,
 }: Props) {
   const t = useProviderT();
   const { layout } = view;
@@ -124,7 +132,16 @@ export function ProviderView({
 
   const renderTabBody = (tab: TabDef) => {
     if (tab.id === BILLING_TAB_ID) {
-      return <BillingTabBody onOpenBilling={onOpenBilling} />;
+      return (
+        <ServiceBillingPanel
+          serviceId={serviceId}
+          serviceName={resourceName ?? serviceId}
+          onRefresh={onRefresh}
+          onNavigateToInvoices={onNavigateToInvoices ?? onOpenBilling}
+          onNavigateToInvoiceDetail={onNavigateToInvoiceDetail}
+          onNavigateToInvoicePay={onNavigateToInvoicePay}
+        />
+      );
     }
 
     if (tab.id === ADVANCED_TAB_ID) {
@@ -205,28 +222,5 @@ export function ProviderView({
         <div className="space-y-4">{(layout.sections ?? []).map((section) => renderSection(section))}</div>
       )}
     </div>
-  );
-}
-
-function BillingTabBody({ onOpenBilling }: { onOpenBilling?: () => void }) {
-  const t = useProviderT();
-  return (
-    <section className="glass p-4">
-      <div className="flex items-center gap-2">
-        <CreditCard className="size-5 text-(--text-muted)" />
-        <h3 className="text-sm font-semibold text-(--text-primary)">{t("serverTabBilling")}</h3>
-      </div>
-      <p className="mt-1.5 text-xs text-(--text-muted)">{t("providerBillingManagedInBilling")}</p>
-      {onOpenBilling ? (
-        <button
-          type="button"
-          onClick={onOpenBilling}
-          className="btn-primary mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium"
-        >
-          <CreditCard className="size-4" />
-          {t("providerOpenBilling")}
-        </button>
-      ) : null}
-    </section>
   );
 }

@@ -10,10 +10,11 @@ import { BusinessFundTab } from "./tabs/BusinessFundTab";
 import { InvoicesTab } from "./tabs/InvoicesTab";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { PaymentMethodsTab } from "./tabs/PaymentMethodsTab";
+import { PaymentRequestsTab } from "./tabs/PaymentRequestsTab";
 import { SubscriptionsTab } from "./tabs/SubscriptionsTab";
 import { VouchersTab } from "./tabs/VouchersTab";
 
-type TabKey = "overview" | "subscriptions" | "invoices" | "methods" | "funding" | "fund";
+type TabKey = "overview" | "subscriptions" | "invoices" | "payment-requests" | "methods" | "funding" | "fund";
 
 export function WalletScreen() {
   const { t } = useI18n();
@@ -28,6 +29,7 @@ export function WalletScreen() {
       { key: "overview", labelKey: "walletTabOverview" },
       { key: "subscriptions", labelKey: "walletTabSubscriptions" },
       { key: "invoices", labelKey: "walletTabInvoices" },
+      { key: "payment-requests", labelKey: "walletTabPaymentRequests" },
     ];
     if (showPaymentMethodsTab) {
       base.push({ key: "methods", labelKey: "walletTabMethods" });
@@ -76,6 +78,7 @@ export function WalletScreen() {
         )}
         {tab === "subscriptions" && <SubscriptionsTab />}
         {tab === "invoices" && <InvoicesTab />}
+        {tab === "payment-requests" && <PaymentRequestsTab />}
         {tab === "methods" && <PaymentMethodsTab />}
         {tab === "funding" && (
           <div className="space-y-4">

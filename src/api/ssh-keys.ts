@@ -9,7 +9,7 @@ export class SshKeysResource extends ResourceClient {
     return this.post<{ success: boolean; error?: string }>("/api/ssh-keys", body);
   }
 
-  delete(id: string) {
+  remove(id: string) {
     return this.delete<{ success: boolean }>(`/api/ssh-keys/${id}`);
   }
 

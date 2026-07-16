@@ -14,9 +14,10 @@ const RESOURCE_STATUS_KEYS: Record<string, string> = {
 };
 
 /** Maps API resource status codes to localized labels; falls back to the raw code. */
-export function formatResourceStatus(status: string, t: (key: string) => string): string {
+export function formatResourceStatus(status: string, t: (key: never) => string): string {
+  const translate = t as (key: string) => string;
   const key = RESOURCE_STATUS_KEYS[status.toUpperCase()];
   if (!key) return status;
-  const translated = t(key);
+  const translated = translate(key);
   return translated !== key ? translated : status;
 }

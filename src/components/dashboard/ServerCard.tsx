@@ -58,6 +58,8 @@ export function ServerCard({
             <span className="truncate text-sm font-semibold text-(--text-primary)">{server.name}</span>
             {server.isShared && <Badge variant="outline">{t("serverShared")}</Badge>}
             {server.suspendedAt && <Badge variant="danger">{t("serverSuspended")}</Badge>}
+            {server.terminationPending && <Badge variant="warning">{t("serviceDeleting")}</Badge>}
+            {server.reinstallPending && <Badge variant="warning">{t("serverReinstallPending")}</Badge>}
             {maintenance && <Badge variant="warning">{t("serverMaintenance")}</Badge>}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-(--text-muted)">

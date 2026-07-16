@@ -207,7 +207,7 @@ export function SubscriptionsTab() {
           t("subscriptionCancelConsequenceData"),
         ]}
         confirmLabel={immediate ? t("subscriptionCancelConfirmNow") : t("subscriptionCancelConfirm")}
-        onConfirm={() => void confirmCancel()}
+        onConfirm={(_feedback) => void confirmCancel()}
         onCancel={() => {
           setCancelTarget(null);
           setImmediate(false);

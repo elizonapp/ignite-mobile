@@ -2,7 +2,7 @@ import { ResourceClient } from "./resource-client";
 
 export class DomainsResource extends ResourceClient {
   list() {
-    return this.get<{ success: boolean; data: unknown[] }>("/api/domains");
+    return this.get<{ success: boolean; data: Array<{ id: string; domain: string; [key: string]: unknown }> }>("/api/domains");
   }
 
   add(domain: string) {

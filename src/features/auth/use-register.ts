@@ -213,9 +213,8 @@ export function useRegister(onSuccess: () => void) {
           nameAddressAutomatedCheckDeclined: t("authAutomatedCheckDeclined"),
         };
         const msg =
-          result.error && errMap[result.error]
-            ? errMap[result.error]
-            : resolveApiError(result, t, { fallbackKey: "authRegisterError" });
+          (result.error && errMap[result.error]) ||
+          resolveApiError(result, t, { fallbackKey: "authRegisterError" });
         setFieldErrors({ email: msg });
       }
     } catch {

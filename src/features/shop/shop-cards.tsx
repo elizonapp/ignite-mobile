@@ -1,6 +1,8 @@
-import { ArrowRight, Cpu, HardDrive, MemoryStick } from "lucide-react";
+import { ArrowRight, Cpu, HardDrive, MemoryStick, Star } from "lucide-react";
 
 import { useI18n } from "../../i18n";
+import { isElizonPlusCustomerUiVisible } from "../../lib/elizon-plus";
+import type { AuthUser } from "../../lib/types";
 import {
   countPlansInSubtree,
   findLowestMonthlyPrice,
@@ -8,13 +10,11 @@ import {
   type ShopCategory,
   type ShopProduct,
 } from "../../lib/shop-catalog";
-import { displayShopPrice, formatShopPrice, vatLabel } from "./shop-pricing";
+import type { PlanCardRowSync } from "./shop-plan-utils";
+import { productAvailabilityText } from "./shop-plan-utils";
+import { displayShopPrice, vatLabelFromContext, type CardPricing } from "./shop-pricing";
 
-type CardPricing = {
-  isBusiness: boolean;
-  businessPricing?: { upchargePercent: number; taxRatePercent: number } | null;
-  defaultTaxName?: string;
-};
+export type { CardPricing };
 
 function CategoryBackground({ imageUrl }: { imageUrl: string | null }) {
   if (!imageUrl) return null;
@@ -82,10 +82,10 @@ export function ShopCategoryCard({
               {t("categoryTrustStartingAt")}
             </span>
             <span className={`text-base font-semibold ${imageUrl ? "text-white" : "text-(--text-primary)"}`}>
-              {displayShopPrice(lowest, lang, pricing.isBusiness, pricing.businessPricing)}
+              {displayShopPrice(lowest, lang, pricing.priceContext)}
             </span>
             <span className={`text-[10px] ${imageUrl ? "text-white/55" : "text-(--text-muted)"}`}>
-              {vatLabel(pricing.isBusiness, pricing.defaultTaxName, lang)}
+              {vatLabelFromContext(pricing.priceContext, lang)}
             </span>
           </div>
         ) : null}
@@ -143,12 +143,15 @@ export function ShopSubCategoryCard({
           </p>
         ) : null}
         {lowest != null ? (
-          <div className="mt-4 flex items-baseline gap-1.5">
+          <div className="mt-4 flex flex-wrap items-baseline gap-1.5">
             <span className={`text-xs uppercase tracking-wide ${imageUrl ? "text-white/60" : "text-(--text-muted)"}`}>
               {t("categoryTrustStartingAt")}
             </span>
             <span className={`text-base font-semibold ${imageUrl ? "text-white" : "text-(--text-primary)"}`}>
-              {displayShopPrice(lowest, lang, pricing.isBusiness, pricing.businessPricing)}
+              {displayShopPrice(lowest, lang, pricing.priceContext)}
+            </span>
+            <span className={`text-[10px] ${imageUrl ? "text-white/55" : "text-(--text-muted)"}`}>
+              {vatLabelFromContext(pricing.priceContext, lang)}
             </span>
           </div>
         ) : null}
@@ -164,89 +167,211 @@ export function ShopProductCard({
   product,
   category,
   onView,
-  onAddToCart,
   onDirectToCheckout,
   pricing,
+  rowSync,
+  isBestValue,
+  user,
+  onElizonPlusClick,
 }: {
   product: ShopProduct;
   category: ShopCategory;
   onView: () => void;
-  onAddToCart: () => void;
   onDirectToCheckout?: () => void;
   pricing: CardPricing;
+  rowSync?: PlanCardRowSync;
+  isBestValue?: boolean;
+  user?: AuthUser | null;
+  onElizonPlusClick?: () => void;
 }) {
   const { t, lang } = useI18n();
-  const priceValue = product.priceMonthly != null ? Number(product.priceMonthly) : null;
+  const fmt = (value: number | string) => displayShopPrice(value, lang, pricing.priceContext);
+  const vat = vatLabelFromContext(pricing.priceContext, lang);
+
+  const elizonPlusCustomerSurfaceVisible = isElizonPlusCustomerUiVisible(user);
+  const isElizonPlusActive = Boolean(elizonPlusCustomerSurfaceVisible && user?.elizonPlusActive);
+
+  const monthlyOfferDiscount = Number(product.monthlyOffer?.discountPercent ?? 0);
+  const hasMonthlyOffer = !product.soldOut && monthlyOfferDiscount > 0;
+  const showDiscountedPrice = hasMonthlyOffer && isElizonPlusActive;
+  const showPotentialSavings = Boolean(elizonPlusCustomerSurfaceVisible && hasMonthlyOffer && !isElizonPlusActive);
+  const listMonthly = parseFloat(String(product.priceMonthly)) || 0;
+  const promo = product.promotion;
+  const hasCampaignPromo =
+    !product.soldOut &&
+    !showDiscountedPrice &&
+    Boolean(promo?.active) &&
+    typeof promo?.discountedPriceMonthly === "number" &&
+    promo.discountedPriceMonthly < listMonthly - 0.004;
+  const discountedMonthlyPrice = showDiscountedPrice ? listMonthly * (1 - monthlyOfferDiscount / 100) : null;
+
+  const scarcityPromo = product.promotionScarcityRemaining;
+  const scarcityCatalog = product.catalogAvailabilityRemaining;
+  const showScarcityPromo =
+    Boolean(promo?.active) && typeof scarcityPromo === "number" && scarcityPromo >= 1 && scarcityPromo <= 5;
+  const showScarcityCatalog =
+    !showScarcityPromo && typeof scarcityCatalog === "number" && scarcityCatalog >= 1 && scarcityCatalog <= 5;
+  const lowest30 = product.lowestPriceMonthly30d != null ? Number(product.lowestPriceMonthly30d) : listMonthly;
+  const showLowestBlock = Boolean(product.showLowestPrice30dHint) && !product.soldOut;
+  const availabilityText = productAvailabilityText(product, t);
+
+  const sync = rowSync ?? {
+    bestValueBadge: false,
+    chip: Boolean(product.chip),
+    headerPotentialSavings: showPotentialSavings,
+    scarcityLine: showScarcityPromo || showScarcityCatalog,
+    lowest30Line: showLowestBlock,
+    tallPriceBand: showDiscountedPrice || hasCampaignPromo || product.soldOut,
+    footerElizon: showPotentialSavings,
+    soldOutSplit: false,
+    hasDescription: Boolean(product.description),
+  };
 
   return (
-    <div className="glass flex h-full flex-col gap-3 p-4">
+    <div
+      className={`glass flex h-full min-h-0 flex-col gap-3 p-5 transition-all ${
+        isBestValue && !product.soldOut ? "border-(--primary) ring-2 ring-(--primary)/25" : ""
+      } ${product.soldOut ? "opacity-85" : "hover:border-(--primary)/40"}`}
+    >
       <button type="button" onClick={onView} className="min-w-0 flex-1 text-left">
-        {product.chip ? (
-          <span className="mb-2 inline-block rounded-md bg-(--surface-soft) px-2 py-0.5 text-[10px] font-medium text-(--text-muted)">
-            {product.chip}
-          </span>
+        {sync.bestValueBadge ? (
+          <div className="mb-2 flex min-h-[2rem] items-center justify-center">
+            {isBestValue && !product.soldOut ? (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-(--primary)/10 px-2.5 py-1 text-xs font-medium text-(--primary)">
+                <Star className="size-3.5 fill-current" />
+                {t("productBestValue")}
+              </div>
+            ) : (
+              <span className="invisible inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs" aria-hidden>
+                {t("productBestValue")}
+              </span>
+            )}
+          </div>
+        ) : isBestValue && !product.soldOut ? (
+          <div className="mb-2 flex justify-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-(--primary)/10 px-2.5 py-1 text-xs font-medium text-(--primary)">
+              <Star className="size-3.5 fill-current" />
+              {t("productBestValue")}
+            </div>
+          </div>
         ) : null}
-        <p className="text-sm font-semibold text-(--text-primary)">{product.name}</p>
-        {product.description ? (
-          <p className="mt-0.5 line-clamp-2 text-xs text-(--text-muted)">{product.description}</p>
+
+        <h3 className="text-center text-lg font-semibold text-(--text-primary)">{product.name}</h3>
+
+        {sync.chip ? (
+          <div className="mt-1 flex min-h-[1.125rem] items-center justify-center">
+            {product.chip ? (
+              <p className="text-xs uppercase tracking-wide text-(--text-muted)">{product.chip}</p>
+            ) : (
+              <span className="invisible text-xs" aria-hidden>
+                —
+              </span>
+            )}
+          </div>
+        ) : product.chip ? (
+          <p className="mt-1 text-center text-xs uppercase tracking-wide text-(--text-muted)">{product.chip}</p>
+        ) : null}
+
+        <div className={sync.tallPriceBand || sync.soldOutSplit ? "mt-2 flex min-h-[5rem] flex-col items-center" : "mt-2 text-center"}>
+          {product.soldOut ? (
+            <div className="inline-flex rounded-full bg-(--text-muted)/20 px-2.5 py-1 text-xs font-medium text-(--text-muted)">
+              {t("productSoldOut")}
+            </div>
+          ) : showDiscountedPrice && discountedMonthlyPrice != null ? (
+            <>
+              <div className="inline-flex rounded-full bg-(--primary)/12 px-2.5 py-1 text-[11px] font-semibold text-(--primary)">
+                {t("elizonPlusMonthlyOfferBadge").replace("{percent}", String(monthlyOfferDiscount))}*
+              </div>
+              <div className="mt-2 text-2xl font-bold text-(--text-primary)">{fmt(discountedMonthlyPrice)}</div>
+              <div className="mt-1 text-xs text-(--text-muted)">
+                <span className="line-through">{fmt(product.priceMonthly ?? 0)}</span> · {t("productPerMonth")} {vat}
+              </div>
+            </>
+          ) : hasCampaignPromo && promo ? (
+            <>
+              <div className="text-2xl font-bold text-(--error)">{fmt(promo.discountedPriceMonthly)}</div>
+              <div className="mt-1 text-xs text-(--text-muted)">
+                <span className="line-through">{fmt(listMonthly)}</span> · {t("productPerMonth")} {vat}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-2xl font-bold text-(--text-primary)">{fmt(product.priceMonthly ?? 0)}</div>
+              <div className="mt-1 text-xs text-(--text-muted)">
+                {t("productPerMonth")} {vat}
+              </div>
+            </>
+          )}
+        </div>
+
+        {sync.headerPotentialSavings && showPotentialSavings ? (
+          <p className="mt-2 text-center text-xs font-medium text-(--primary)">
+            {t("elizonPlusPotentialSavingsBadge").replace("{percent}", String(monthlyOfferDiscount))}
+          </p>
+        ) : null}
+
+        <p className={`mt-2 text-center text-xs font-medium ${product.soldOut ? "text-(--warning)" : "text-(--success)"}`}>
+          {availabilityText}
+        </p>
+
+        {showScarcityPromo ? (
+          <p className="mt-1.5 text-center text-xs text-(--text-muted)">
+            {t("productScarcityPromotion").replace("{count}", String(scarcityPromo))}
+          </p>
+        ) : showScarcityCatalog ? (
+          <p className="mt-1.5 text-center text-xs text-(--text-muted)">
+            {t("productScarcityCatalog").replace("{count}", String(scarcityCatalog))}
+          </p>
+        ) : null}
+
+        {showLowestBlock ? (
+          <p className="mt-1.5 text-center text-xs text-(--text-muted)">
+            {t("productLowestPrice30d").replace("{price}", fmt(lowest30))}
+          </p>
         ) : null}
       </button>
 
-      {(product.vcores || product.memory || product.storage || product.schemaCardFields?.length) ? (
-        <div className="flex flex-wrap gap-2">
+      {(product.schemaCardFields?.length || product.vcores || product.memory || product.storage) ? (
+        <div className="flex flex-wrap justify-center gap-2">
           {product.schemaCardFields?.map((field) => (
             <Spec key={`${field.label}-${field.value}`} label={`${field.label}: ${field.value}`} />
           ))}
-          {!!product.vcores && <Spec icon={<Cpu className="size-3" />} label={`${product.vcores} vCPU`} />}
-          {!!product.memory && <Spec icon={<MemoryStick className="size-3" />} label={`${product.memory} GB RAM`} />}
-          {!!product.storage && <Spec icon={<HardDrive className="size-3" />} label={`${product.storage} GB`} />}
+          {!!product.vcores && !product.schemaCardFields?.length ? (
+            <Spec icon={<Cpu className="size-3" />} label={`${product.vcores} vCPU`} />
+          ) : null}
+          {!!product.memory && !product.schemaCardFields?.length ? (
+            <Spec icon={<MemoryStick className="size-3" />} label={`${product.memory} GB RAM`} />
+          ) : null}
+          {!!product.storage && !product.schemaCardFields?.length ? (
+            <Spec icon={<HardDrive className="size-3" />} label={`${product.storage} GB`} />
+          ) : null}
         </div>
       ) : null}
 
-      <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        {priceValue != null && Number.isFinite(priceValue) ? (
-          <div>
-            <span className="text-base font-bold text-(--elizon-primary)">
-              {displayShopPrice(priceValue, lang, pricing.isBusiness, pricing.businessPricing)}
-            </span>
-            <span className="text-xs text-(--text-muted)">{t("shopPerMonth")}</span>
-          </div>
-        ) : (
-          <span className="text-xs text-(--text-muted)">—</span>
-        )}
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={onView}
-            className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold"
-          >
-            {t("shopViewDetails")}
+      {sync.hasDescription && product.description ? (
+        <p className="line-clamp-2 text-center text-xs text-(--text-secondary)">{product.description}</p>
+      ) : product.description ? (
+        <p className="line-clamp-2 text-center text-xs text-(--text-secondary)">{product.description}</p>
+      ) : null}
+
+      <div className="mt-auto flex flex-col gap-2">
+        {showPotentialSavings && onElizonPlusClick ? (
+          <button type="button" onClick={onElizonPlusClick} className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold text-(--primary)">
+            {t("elizonPlusSubscribeAndSave")}
           </button>
-          {!product.soldOut ? (
-            <>
-              <button
-                type="button"
-                onClick={onAddToCart}
-                className="btn-primary w-full rounded-xl px-3 py-2 text-xs font-semibold"
-              >
-                {t("shopAddToCart")}
-              </button>
-              {onDirectToCheckout ? (
-                <button
-                  type="button"
-                  onClick={onDirectToCheckout}
-                  className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold"
-                >
-                  {t("productGoToCheckout")}
-                </button>
-              ) : null}
-            </>
-          ) : (
-            <button type="button" disabled className="btn-secondary w-full rounded-xl px-3 py-2 text-xs font-semibold opacity-50">
-              {t("productSoldOut")}
-            </button>
-          )}
-        </div>
+        ) : null}
+        <button type="button" onClick={onView} className="btn-secondary w-full rounded-xl px-3 py-2.5 text-sm font-semibold">
+          {t("categoryViewDetails")}
+        </button>
+        {!product.soldOut && onDirectToCheckout ? (
+          <button type="button" onClick={onDirectToCheckout} className="btn-primary w-full rounded-xl px-3 py-2.5 text-sm font-semibold">
+            {t("productGoToCheckout")}
+          </button>
+        ) : product.soldOut ? (
+          <button type="button" disabled className="btn-secondary w-full rounded-xl px-3 py-2.5 text-sm font-semibold opacity-50">
+            {t("productGoToCheckout")}
+          </button>
+        ) : null}
       </div>
       <span className="sr-only">{category.name}</span>
     </div>
@@ -261,5 +386,3 @@ function Spec({ icon, label }: { icon?: React.ReactNode; label: string }) {
     </span>
   );
 }
-
-export { formatShopPrice };

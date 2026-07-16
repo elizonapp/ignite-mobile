@@ -40,4 +40,11 @@ export class DashboardResource extends ResourceClient {
   monthlyOffers() {
     return this.get<{ success: boolean; offers?: unknown[] }>("/api/user/monthly-offers");
   }
+
+  contractPaymentAlert() {
+    return this.get<{
+      success: boolean;
+      alert?: { hasOverdue?: boolean };
+    }>("/api/dashboard/contract-payment-alert");
+  }
 }

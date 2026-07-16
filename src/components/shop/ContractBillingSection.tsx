@@ -29,7 +29,7 @@ type ContractBillingSectionProps = {
   lang: string;
   isBusiness: boolean;
   businessPricing?: ShopBusinessPricing | null;
-  t: (key: string) => string;
+  t: (key: keyof import("../../i18n/en").Dict) => string;
 };
 
 export function ContractBillingSection({

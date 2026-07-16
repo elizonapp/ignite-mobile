@@ -52,14 +52,17 @@ export type CheckoutBootstrap = {
   } | null;
 };
 
-/** Positions-Payload für validate/calculate/submit (nur "new"-Items im nativen Client). */
+/** Positions-Payload für validate/calculate/submit. */
 export type CheckoutCartLine = {
   lineId: string;
   productId: string;
   productName: string;
   quantity: number;
   billingCycle: number;
-  itemType: "new";
+  itemType: "new" | "renewal" | "upgrade";
+  serviceId?: string;
+  subscriptionId?: string;
+  daysExtension?: number;
   billingMode?: "PREPAID" | "CONTRACT";
   contractTermMonths?: number;
   customization?: { vcores?: number; memory?: number; storage?: number };
@@ -123,6 +126,7 @@ export type CheckoutSubmitPayload = {
     isDefault?: boolean;
   };
   newsletterOptIn?: boolean;
+  offerToken?: string;
   lang?: string;
 };
 

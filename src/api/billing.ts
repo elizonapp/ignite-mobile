@@ -102,4 +102,11 @@ export class BillingResource extends ResourceClient {
   deletePaymentMethod(mandateId: string) {
     return this.delete<{ success: boolean }>(`/api/account/payment-methods/${encodeURIComponent(mandateId)}`);
   }
+
+  disputeInvoice(id: string, reason: string) {
+    return this.post<{ success: boolean; ticketId?: string; ticketNumber?: string }>(
+      `/api/invoices/${encodeURIComponent(id)}/dispute`,
+      { reason },
+    );
+  }
 }

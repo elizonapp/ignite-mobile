@@ -1,5 +1,13 @@
 import type { Lang } from "../../i18n";
+import type { Dict } from "../../i18n/en";
+import { getApiBaseUrl } from "../../lib/config";
 import { openHostedFlow } from "../../lib/hosted-flow";
+import type { InvoiceListItem } from "./types";
+
+/** Widens the strict i18n `t` for APIs that accept arbitrary string keys (e.g. resolveApiError). */
+export function looseTranslate(t: (key: keyof Dict) => string): (key: string) => string {
+  return t as (key: string) => string;
+}
 
 /**
  * Money helpers. All monetary values coming from the billing/invoice/subscription
@@ -59,4 +67,54 @@ export function toneClasses(tone: "success" | "warning" | "danger" | "muted"): s
     default:
       return "bg-(--surface-soft) text-(--text-muted)";
   }
+}
+
+/** Resolves relative API document paths to an absolute URL for hosted-flow / downloads. */
+export function resolveApiUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = getApiBaseUrl().replace(/\/+$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export function formatTaxLabel(
+  taxName: string | null | undefined,
+  taxRatePercent: number | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!taxName) return t("taxIncluded");
+  const pct = taxRatePercent != null ? `${taxRatePercent} % ` : "";
+  return `${taxName} (${pct}${t("taxIncludedSuffix")})`;
+}
+
+type InvoiceStatusSource = {
+  status: string;
+  claimHandedToCollection?: boolean;
+  hasPendingMolliePayment?: boolean;
+  isCreditNote?: boolean;
+};
+
+export function getInvoiceStatusLabel(
+  invoice: InvoiceStatusSource,
+  t: (key: string) => string,
+): string {
+  if ("isCreditNote" in invoice && invoice.isCreditNote) return t("billingCreditNote");
+  if (invoice.status === "REFUNDED" || invoice.status === "PARTIALLY_REFUNDED") return t("billingRefunded");
+  if (invoice.status === "CANCELLED") return t("billingCancelled");
+  if (invoice.status === "PAID") return t("billingPaid");
+  if (invoice.status === "VOIDED") return t("billingVoided");
+  if (invoice.claimHandedToCollection) return t("billingClaimHandedToCollection");
+  if (invoice.status === "OVERDUE") return t("billingOverdue");
+  if (invoice.hasPendingMolliePayment) return t("paymentProcessingShort");
+  return t("billingPending");
+}
+
+export function getPaymentRequestStatusLabel(
+  invoice: Pick<InvoiceListItem, "status" | "claimHandedToCollection">,
+  t: (key: string) => string,
+): string {
+  if (invoice.claimHandedToCollection) return t("billingClaimHandedToCollection");
+  if (invoice.status === "VOIDED") return t("billingVoided");
+  if (invoice.status === "PENDING") return t("billingPending");
+  return t("billingOverdue");
 }

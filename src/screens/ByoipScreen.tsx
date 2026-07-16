@@ -639,7 +639,7 @@ export function ByoipScreen() {
   );
 }
 
-function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
+function StatusBadge({ status, t }: { status: string; t: (key: keyof import("../i18n/en").Dict) => string }) {
   const tone =
     status === "ACTIVE"
       ? "bg-(--success)/15 text-(--success)"
@@ -691,7 +691,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 type ApplyFormPanelProps = {
-  t: (key: string) => string;
+  t: (key: keyof import("../i18n/en").Dict) => string;
   applyPrefix: string;
   setApplyPrefix: (v: string) => void;
   applyLocationId: string;
@@ -853,7 +853,7 @@ function AssignFormPanel({
   onCancel,
   onSubmit,
 }: {
-  t: (key: string) => string;
+  t: (key: keyof import("../i18n/en").Dict) => string;
   services: ServiceOption[];
   assignServiceId: string;
   setAssignServiceId: (v: string) => void;

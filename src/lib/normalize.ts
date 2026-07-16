@@ -69,6 +69,9 @@ export function mapBaseServer(raw: Record<string, unknown>): DashboardServer {
     elizonThrottledUntil: (raw.elizonThrottledUntil as string | null) ?? null,
     elizonPoolKey: (raw.elizonPoolKey as string | null) ?? null,
     elizonForecastTb: typeof raw.elizonForecastTb === "number" ? raw.elizonForecastTb : null,
+    suspendReason: (raw.suspendReason as string | null) ?? null,
+    terminationPending: Boolean(raw.terminationPending),
+    reinstallPending: Boolean(raw.reinstallPending),
   };
 }
 

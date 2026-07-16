@@ -4,7 +4,13 @@ export type CartCustomization = {
   storage?: number;
   bandwidth?: number;
   speedGbit?: number;
+  maxDomains?: number;
+  maxMailboxesPerDomain?: number;
+  storagePerMailboxGb?: number;
+  maxAliasesPerDomain?: number;
 };
+
+export type CartItemType = "new" | "renewal" | "upgrade";
 
 export type CartItem = {
   lineId: string;
@@ -17,8 +23,22 @@ export type CartItem = {
   billingCycle: number;
   priceMonthly: number;
   priceYearly?: number | null;
-  itemType: "new";
+  itemType: CartItemType;
+  serviceId?: string;
+  subscriptionId?: string;
+  daysExtension?: number;
   locationId?: string;
+  templateId?: number;
+  additionalIPv4?: number;
+  additionalIPv6?: number;
+  includeIPv4?: boolean;
+  includeIPv6?: boolean;
+  sshKeyIds?: string[];
+  eggId?: number;
+  nestId?: number;
+  dockerImage?: string;
+  environment?: Record<string, string>;
+  providerVariables?: Record<string, string>;
   customization?: CartCustomization;
   customizationPrices?: Record<string, number | undefined>;
   configuredSpecs?: { vcores: number; memory: number; storage: number };
@@ -38,7 +58,18 @@ function itemMergeKey(item: Omit<CartItem, "lineId">): string {
     productId: item.productId,
     billingCycle: item.billingCycle,
     locationId: item.locationId ?? null,
+    templateId: item.templateId ?? null,
+    eggId: item.eggId ?? null,
+    dockerImage: item.dockerImage ?? null,
+    additionalIPv4: item.additionalIPv4 ?? 0,
+    additionalIPv6: item.additionalIPv6 ?? 0,
+    includeIPv4: item.includeIPv4 ?? true,
+    includeIPv6: item.includeIPv6 ?? true,
+    sshKeyIds: item.sshKeyIds ?? [],
+    environment: item.environment ?? null,
+    providerVariables: item.providerVariables ?? null,
     customization: item.customization ?? null,
+    configuredSpecs: item.configuredSpecs ?? null,
     billingMode: item.billingMode ?? "PREPAID",
     contractTermMonths: item.contractTermMonths ?? null,
   });
@@ -62,9 +93,10 @@ function readCart(): Cart {
     if (!raw) return { items: [] };
     const parsed = JSON.parse(raw) as Cart;
     return {
-      items: (parsed.items ?? []).map((item) =>
-        item.lineId ? item : { ...item, lineId: generateLineId() },
-      ),
+      items: (parsed.items ?? []).map((item) => ({
+        ...(item.lineId ? item : { ...item, lineId: generateLineId() }),
+        itemType: item.itemType ?? "new",
+      })),
     };
   } catch {
     return { items: [] };
@@ -78,16 +110,36 @@ function writeCart(cart: Cart): void {
 }
 
 function mergeNewItem(cart: Cart, item: Omit<CartItem, "lineId">): Cart {
+  const itemType = item.itemType ?? "new";
+
+  if ((itemType === "renewal" || itemType === "upgrade") && item.serviceId) {
+    const existingIndex = cart.items.findIndex(
+      (entry) =>
+        (entry.itemType === "renewal" || entry.itemType === "upgrade") &&
+        entry.serviceId === item.serviceId,
+    );
+    const lineId = existingIndex >= 0 ? cart.items[existingIndex]!.lineId : `renewal-${item.serviceId}`;
+    const newItem: CartItem = { ...item, itemType, lineId };
+    if (existingIndex >= 0) {
+      const next = [...cart.items];
+      next[existingIndex] = newItem;
+      return { items: next };
+    }
+    return { items: [...cart.items, newItem] };
+  }
+
   const mergeKey = itemMergeKey(item);
   const existingIndex = cart.items.findIndex(
     (entry) => entry.itemType === "new" && itemMergeKey(entry) === mergeKey,
   );
 
   if (existingIndex >= 0) {
+    const existing = cart.items[existingIndex];
+    if (!existing) return cart;
     const next = [...cart.items];
     next[existingIndex] = {
-      ...next[existingIndex],
-      quantity: next[existingIndex].quantity + item.quantity,
+      ...existing,
+      quantity: existing.quantity + item.quantity,
     };
     return { items: next };
   }
@@ -118,50 +170,59 @@ export const cartService = {
     return cart;
   },
 
+  removeByServiceId(serviceId: string): Cart {
+    const cart = {
+      items: readCart().items.filter(
+        (item) =>
+          !(
+            (item.itemType === "renewal" || item.itemType === "upgrade") &&
+            item.serviceId === serviceId
+          ),
+      ),
+    };
+    writeCart(cart);
+    return cart;
+  },
+
   updateQuantity(lineId: string, quantity: number): Cart {
-    const cart = readCart();
-    const next = cart.items.map((item) =>
-      item.lineId === lineId ? { ...item, quantity: Math.max(1, quantity) } : item,
-    );
-    writeCart({ items: next });
-    return { items: next };
+    const cart = {
+      items: readCart().items.map((item) =>
+        item.lineId === lineId ? { ...item, quantity: Math.max(1, quantity) } : item,
+      ),
+    };
+    writeCart(cart);
+    return cart;
   },
 
   updateBillingCycle(lineId: string, billingCycle: number): Cart {
-    const cart = readCart();
-    const target = cart.items.find((item) => item.lineId === lineId);
-    if (!target) return cart;
-
-    const withoutTarget = cart.items.filter((item) => item.lineId !== lineId);
-    const targetKey = itemMergeKey({ ...target, billingCycle });
-    const duplicate = withoutTarget.find((item) => itemMergeKey(item) === targetKey);
-
-    if (duplicate) {
-      const next = withoutTarget.map((item) =>
-        item.lineId === duplicate.lineId
-          ? { ...item, quantity: item.quantity + target.quantity }
-          : item,
-      );
-      writeCart({ items: next });
-      return { items: next };
-    }
-
-    const next = cart.items.map((item) =>
-      item.lineId === lineId ? { ...item, billingCycle } : item,
-    );
-    writeCart({ items: next });
-    return { items: next };
+    const cart = {
+      items: readCart().items.map((item) =>
+        item.lineId === lineId ? { ...item, billingCycle } : item,
+      ),
+    };
+    writeCart(cart);
+    return cart;
   },
 
   clearCart(): Cart {
-    const empty = { items: [] };
-    writeCart(empty);
-    return empty;
+    const cart = { items: [] as CartItem[] };
+    writeCart(cart);
+    return cart;
+  },
+
+  clear(): Cart {
+    return this.clearCart();
   },
 
   subscribe(listener: () => void): () => void {
     const handler = () => listener();
     window.addEventListener(CART_EVENT, handler);
-    return () => window.removeEventListener(CART_EVENT, handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener(CART_EVENT, handler);
+      window.removeEventListener("storage", handler);
+    };
   },
 };
+
+export { CART_EVENT };

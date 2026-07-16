@@ -67,6 +67,9 @@ export function useServiceDetail(id: string) {
           elizonThrottledUntil: raw.elizonThrottledUntil ?? null,
           elizonPoolKey: raw.elizonPoolKey ?? null,
           elizonForecastTb: raw.elizonForecastTb ?? null,
+          suspendReason: (raw.suspendReason as string | null) ?? null,
+          terminationPending: Boolean(raw.terminationPending),
+          reinstallPending: Boolean(raw.reinstallPending),
         };
         const base = mapBaseServer(flat);
         let merged = base;

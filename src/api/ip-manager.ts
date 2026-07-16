@@ -9,7 +9,7 @@ export class IpManagerResource extends ResourceClient {
     return this.patch<{ success: boolean }>(`/api/ip-manager/${id}`, body);
   }
 
-  delete(id: string) {
+  remove(id: string) {
     return this.delete<{ success: boolean }>(`/api/ip-manager/${id}`);
   }
 

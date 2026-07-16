@@ -9,7 +9,7 @@ import { api } from "../../../lib/api";
 import { canManageBilling } from "../../../lib/platform";
 import { cn } from "../../../lib/utils";
 import { formatResourceStatus } from "../../../i18n/format-status";
-import { formatDate, formatMoney, invoiceStatusTone, toneClasses } from "../lib";
+import { formatDate, formatMoney, invoiceStatusTone, looseTranslate, toneClasses } from "../lib";
 import type { InvoiceListItem } from "../types";
 
 type Filter = "all" | "PENDING" | "PAID" | "OVERDUE";
@@ -26,6 +26,7 @@ const PAYABLE = new Set(["PENDING", "OVERDUE"]);
 export function InvoicesTab() {
   const { t, lang } = useI18n();
   const { navigate } = useRouter();
+  const translate = looseTranslate(t);
   const [filter, setFilter] = useState<Filter>("all");
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,14 +43,14 @@ export function InvoicesTab() {
         setInvoices((res.invoices ?? []) as InvoiceListItem[]);
         setError(null);
       } else {
-        setError(resolveApiError(res, t, { fallbackKey: "unknownError" }));
+        setError(resolveApiError(res, translate, { fallbackKey: "unknownError" }));
       }
     } catch (err) {
-      setError(resolveCaughtApiError(err, t));
+      setError(resolveCaughtApiError(err, translate));
     } finally {
       setIsLoading(false);
     }
-  }, [filter, t]);
+  }, [filter, translate]);
 
   useEffect(() => {
     void load();
@@ -99,23 +100,29 @@ export function InvoicesTab() {
           const payable = canManageBilling() && !inv.isCreditNote && PAYABLE.has(inv.status);
           return (
             <div key={inv.id} className="glass flex items-center gap-3 p-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-(--surface-soft) text-(--elizon-primary)">
-                <Receipt className="size-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-(--text-primary)">
-                  {inv.displayVoucherNumber || inv.number || inv.invoiceNumber}
-                </p>
-                <p className="text-[11px] text-(--text-muted)">{formatDate(inv.issuedAt ?? inv.createdAt, lang)}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-sm font-semibold text-(--text-primary)">
-                  {formatMoney(inv.total ?? inv.amount, lang, inv.currency)}
+              <button
+                type="button"
+                onClick={() => navigate({ name: "invoice-detail", id: inv.id })}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-(--surface-soft) text-(--elizon-primary)">
+                  <Receipt className="size-4" />
                 </span>
-                <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", toneClasses(tone))}>
-                  {formatResourceStatus(inv.status, t)}
-                </span>
-              </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-(--text-primary)">
+                    {inv.displayVoucherNumber || inv.number || inv.invoiceNumber}
+                  </p>
+                  <p className="text-[11px] text-(--text-muted)">{formatDate(inv.issuedAt ?? inv.createdAt, lang)}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-sm font-semibold text-(--text-primary)">
+                    {formatMoney(inv.total ?? inv.amount, lang, inv.currency)}
+                  </span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", toneClasses(tone))}>
+                    {formatResourceStatus(inv.status, translate)}
+                  </span>
+                </div>
+              </button>
               {payable && (
                 <button
                   type="button"
