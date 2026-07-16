@@ -2,13 +2,14 @@ import { resolveApiError } from "../api/resolve-error";
 import { resolveCaughtApiError } from "../api/resolve-caught-error";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ArrowLeft, Bell, CreditCard, Globe, Key, Link2, Loader2, LogOut, MapPin, Moon, Shield, Sun, Trash2, User, Monitor, FileText, AlertTriangle, Ticket, BadgeCheck,
+  ArrowLeft, Bell, CreditCard, Globe, Key, Link2, Loader2, LogOut, MapPin, Moon, Scale, Shield, Sun, Trash2, User, Monitor, FileText, AlertTriangle, Ticket, BadgeCheck,
 } from "lucide-react";
 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useAuth } from '../components/AuthProvider';
+import { useLegal } from '../components/legal/LegalProvider';
 import { useRouter } from '../components/Router';
 import { useTheme } from '../components/ThemeProvider';
 import { useToast } from '../components/Toast';
@@ -79,6 +80,7 @@ export function SettingsScreen() {
   const { t, lang, setLang } = useI18n();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { openLegalHub } = useLegal();
   const { show } = useToast();
   const { navigate, route } = useRouter();
   const [apiUrl, setApiUrl] = useState(getApiBaseUrl());
@@ -200,6 +202,12 @@ export function SettingsScreen() {
           </div>
 
           <SettingsNavRow icon={<User className="size-4" />} label={t("settingsProfile")} onClick={() => setView("profile")} />
+          <SettingsNavRow
+            icon={<Scale className="size-4" />}
+            label={t("footerLegal")}
+            hint={t("settingsLegalHint")}
+            onClick={() => openLegalHub()}
+          />
           <SettingsNavRow icon={<Bell className="size-4" />} label={t("settingsNotifications")} onClick={() => setView("notifications")} />
           <SettingsNavRow icon={<MapPin className="size-4" />} label={t("settingsAddresses")} hint={t("settingsAddressesDesc")} onClick={() => setView("addresses")} />
           {showIdVerification && (

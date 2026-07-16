@@ -17,6 +17,7 @@ import { useI18n } from "../../i18n";
 import type { Dict } from "../../i18n/en";
 import { useToast } from "../../components/Toast";
 import { useRouter } from "../../components/Router";
+import { useLegal } from "../../components/legal/LegalProvider";
 import type { CheckoutPaymentMethod } from "../../api/checkout";
 import { useCheckout, type NewAddressForm } from "./useCheckout";
 import type { CartItem } from "../../lib/cart-service";
@@ -442,8 +443,38 @@ const METHOD_META: Record<
   },
 };
 
+function paymentMethodHint(
+  method: CheckoutPaymentMethod,
+  c: CheckoutCtx,
+  t: (key: I18nKey) => string,
+  formatPrice: (v: number) => string,
+): string | null {
+  const family = c.bootstrap?.familyBillingConfig;
+  if (method === "guthaben" && !c.guthabenSufficient && c.orderTotal > 0) {
+    return `${t("guthabenInsufficient")} (${formatPrice(c.orderTotal)} ${t("required")})`;
+  }
+  if (method === "family_wallet" && family) {
+    if (family.requirePaymentApproval) return t("familyApprovalRequired");
+    if (family.userRole !== "MINOR" && (family.walletBalance ?? 0) < c.orderTotal && c.orderTotal > 0) {
+      return `${t("guthabenInsufficient")} (${formatPrice(c.orderTotal)} ${t("required")})`;
+    }
+  }
+  if (method === "invoice" && c.bootstrap?.businessBillingConfig?.invoiceEnabled !== true) {
+    return t("checkoutActivateInBusinessCenter");
+  }
+  if (method === "businessfund") {
+    if (c.hasDomainCheckout) return t("checkoutBusinessFundDomainUnavailable");
+    if (c.bootstrap?.businessBillingConfig?.hasActiveFund !== true) {
+      return t("checkoutActivateInBusinessCenter");
+    }
+  }
+  return null;
+}
+
 function PaymentStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number) => string }) {
   const { t } = useI18n();
+  const { openLegal } = useLegal();
+  const isFreeOrder = c.orderTotal <= 0;
 
   return (
     <div className="space-y-4">
@@ -451,56 +482,100 @@ function PaymentStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: numb
 
       <section className="glass space-y-3 p-4">
         <h2 className="text-sm font-semibold text-(--text-primary)">{t("checkoutStepPayment")}</h2>
-        <p className="text-[11px] text-(--text-muted)">{t("checkoutMollieMethodsHint")}</p>
-        <div className="space-y-2">
-          {c.availableMethods.map((method) => {
-            const meta = METHOD_META[method];
-            const Icon = meta.icon;
-            const selected = c.paymentMethod === method;
-            const disabled = method === "guthaben" && !c.guthabenSufficient && c.orderTotal > 0;
-            return (
-              <button
-                key={method}
-                type="button"
-                disabled={disabled}
-                onClick={() => c.setPaymentMethod(method)}
-                className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left disabled:opacity-40 ${
-                  selected
-                    ? "border-(--elizon-primary) bg-(--elizon-primary)/10"
-                    : "border-(--border) hover:border-(--elizon-primary)/40"
-                }`}
-              >
-                <Icon className="mt-0.5 size-5 shrink-0 text-(--elizon-primary)" />
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium text-(--text-primary)">
-                    {method === "mollie_saved" && c.bootstrap?.savedPaymentMethods?.defaultLabel
-                      ? c.bootstrap.savedPaymentMethods.defaultLabel
-                      : t(meta.labelKey)}
-                  </span>
-                  <span className="text-xs text-(--text-muted)">{t(meta.descKey)}</span>
-                  {method === "guthaben" ? (
-                    <span className="mt-0.5 block text-xs text-(--text-muted)">
-                      {t("checkoutNetPointsAvailable")}: {formatPrice(c.userBalance)}
+        {isFreeOrder ? (
+          <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
+            <p className="text-sm font-semibold text-green-400">{t("checkoutPeriodFree")}</p>
+            <p className="mt-0.5 text-xs text-(--text-muted)">{t("checkoutPeriodFreeDesc")}</p>
+          </div>
+        ) : (
+          <>
+            <p className="text-[11px] text-(--text-muted)">{t("checkoutMollieMethodsHint")}</p>
+            <div className="space-y-2">
+              {c.availableMethods.map((method) => {
+                const meta = METHOD_META[method];
+                const Icon = meta.icon;
+                const selected = c.paymentMethod === method;
+                const enabled = c.isPaymentMethodEnabled(method);
+                const hint = paymentMethodHint(method, c, t, formatPrice);
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    disabled={!enabled}
+                    onClick={() => c.setPaymentMethod(method)}
+                    className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left disabled:opacity-40 ${
+                      selected
+                        ? "border-(--elizon-primary) bg-(--elizon-primary)/10"
+                        : "border-(--border) hover:border-(--elizon-primary)/40"
+                    }`}
+                  >
+                    <Icon className="mt-0.5 size-5 shrink-0 text-(--elizon-primary)" />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-(--text-primary)">
+                        {method === "mollie_saved" && c.bootstrap?.savedPaymentMethods?.defaultLabel
+                          ? c.bootstrap.savedPaymentMethods.defaultLabel
+                          : t(meta.labelKey)}
+                      </span>
+                      <span className="text-xs text-(--text-muted)">{t(meta.descKey)}</span>
+                      {method === "guthaben" ? (
+                        <span className="mt-0.5 block text-xs text-(--text-muted)">
+                          {t("balance")}: {formatPrice(c.userBalance)}
+                        </span>
+                      ) : null}
+                      {method === "family_wallet" && c.bootstrap?.familyBillingConfig?.userRole !== "MINOR" ? (
+                        <span className="mt-0.5 block text-xs text-(--text-muted)">
+                          {t("balance")}: {formatPrice(c.bootstrap?.familyBillingConfig?.walletBalance ?? 0)}
+                        </span>
+                      ) : null}
+                      {hint ? (
+                        <span className="mt-1 block text-xs text-amber-500">{hint}</span>
+                      ) : null}
                     </span>
-                  ) : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </section>
 
       <section className="glass space-y-3 p-4">
-        <label className="flex items-start gap-2 text-sm">
+        <label className="flex cursor-pointer items-start gap-2 text-sm">
           <input
             type="checkbox"
             checked={c.acceptTos}
             onChange={(e) => c.setAcceptTos(e.target.checked)}
             className="mt-1"
           />
-          <span className="text-(--text-secondary)">{t("checkoutAcceptTos")}</span>
+          <span className="text-(--text-secondary)">
+            {t("acceptTos")}{" "}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openLegal("terms");
+              }}
+              className="text-(--elizon-primary) underline decoration-dotted underline-offset-2 hover:decoration-solid"
+            >
+              {t("termsOfService")}
+            </button>{" "}
+            {t("andThe")}{" "}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openLegal("privacy");
+              }}
+              className="text-(--elizon-primary) underline decoration-dotted underline-offset-2 hover:decoration-solid"
+            >
+              {t("privacyPolicy")}
+            </button>
+            .
+          </span>
         </label>
-        <label className="flex items-start gap-2 text-sm">
+        <label className="flex cursor-pointer items-start gap-2 text-sm">
           <input
             type="checkbox"
             checked={c.acceptWithdrawal}
@@ -510,7 +585,7 @@ function PaymentStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: numb
           <span className="text-(--text-secondary)">{t("checkoutAcceptWithdrawal")}</span>
         </label>
         {!c.isBusiness ? (
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
             <input
               type="checkbox"
               checked={c.newsletterOptIn}

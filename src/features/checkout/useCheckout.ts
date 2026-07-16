@@ -228,22 +228,62 @@ export function useCheckout() {
   const userBalance = user?.balance ?? 0;
   const guthabenSufficient = userBalance >= orderTotal;
 
+  const hasDomainCheckout = useMemo(
+    () =>
+      cartItems.some((item) => {
+        const haystack = `${item.categoryName ?? ""} ${item.categoryId} ${item.productSlug}`.toLowerCase();
+        return haystack.includes("domain");
+      }),
+    [cartItems],
+  );
+
   const availableMethods = useMemo<CheckoutPaymentMethod[]>(() => {
+    const family = bootstrap?.familyBillingConfig;
+    const isMinor = family?.userRole === "MINOR" && !!family?.groupId;
+    // Web: Minderjährige sehen nur Family-Wallet, keine Mollie/Guthaben/SEPA.
+    if (isMinor) return ["family_wallet"];
+
     const methods: CheckoutPaymentMethod[] = [];
-    const isMinor = bootstrap?.familyBillingConfig?.userRole === "MINOR";
-    if (isMinor && bootstrap?.familyBillingConfig?.groupId) {
-      methods.push("family_wallet");
-      return methods;
-    }
-    methods.push("mollie");
+    // Web zeigt gespeicherte Methode vor Mollie; SEPA/Überweisung ist im Checkout nicht angeboten.
     if (bootstrap?.savedPaymentMethods?.hasValid) methods.push("mollie_saved");
-    methods.push("sepa");
+    methods.push("mollie");
     methods.push("guthaben");
-    if (bootstrap?.businessBillingConfig?.invoiceEnabled) methods.push("invoice");
-    if (bootstrap?.businessBillingConfig?.hasActiveFund) methods.push("businessfund");
-    if (bootstrap?.familyBillingConfig?.groupId) methods.push("family_wallet");
+    if (
+      family?.groupId &&
+      family.sharedBalance &&
+      !family.adoptionDeadlineEnforced &&
+      !family.accountLocked
+    ) {
+      methods.push("family_wallet");
+    }
+    if (isBusiness) {
+      methods.push("invoice");
+      methods.push("businessfund");
+    }
     return methods;
-  }, [bootstrap]);
+  }, [bootstrap, isBusiness]);
+
+  const isPaymentMethodEnabled = useCallback(
+    (method: CheckoutPaymentMethod): boolean => {
+      const family = bootstrap?.familyBillingConfig;
+      if (method === "guthaben") return orderTotal === 0 || guthabenSufficient;
+      if (method === "family_wallet") {
+        if (!family?.groupId) return false;
+        if (family.requirePaymentApproval) return false;
+        if (family.userRole === "MINOR") return orderTotal > 0;
+        return (family.walletBalance ?? 0) >= orderTotal && orderTotal > 0;
+      }
+      if (method === "invoice") return bootstrap?.businessBillingConfig?.invoiceEnabled === true;
+      if (method === "businessfund") {
+        return (
+          bootstrap?.businessBillingConfig?.hasActiveFund === true && !hasDomainCheckout
+        );
+      }
+      if (method === "sepa") return false;
+      return true;
+    },
+    [bootstrap, guthabenSufficient, hasDomainCheckout, orderTotal],
+  );
 
   useEffect(() => {
     if (step !== 2) return;
@@ -252,13 +292,17 @@ export function useCheckout() {
       return;
     }
     if (!availableMethods.includes(paymentMethod)) {
-      setPaymentMethod(availableMethods[0] ?? "mollie");
+      const fallback =
+        availableMethods.find((m) => isPaymentMethodEnabled(m)) ?? availableMethods[0] ?? "mollie";
+      setPaymentMethod(fallback);
       return;
     }
-    if (paymentMethod === "guthaben" && !guthabenSufficient && orderTotal > 0) {
-      setPaymentMethod(availableMethods.includes("mollie") ? "mollie" : availableMethods[0] ?? "mollie");
+    if (!isPaymentMethodEnabled(paymentMethod)) {
+      const fallback =
+        availableMethods.find((m) => isPaymentMethodEnabled(m)) ?? availableMethods[0] ?? "mollie";
+      if (fallback !== paymentMethod) setPaymentMethod(fallback);
     }
-  }, [step, orderTotal, availableMethods, paymentMethod, guthabenSufficient]);
+  }, [step, orderTotal, availableMethods, paymentMethod, isPaymentMethodEnabled]);
 
   const addressReady = useMemo(() => {
     if (selectedAddressId && !showNewAddressForm) return true;
@@ -527,6 +571,8 @@ export function useCheckout() {
     total,
     orderTotal,
     availableMethods,
+    isPaymentMethodEnabled,
+    hasDomainCheckout,
     paymentMethod,
     setPaymentMethod,
     guthabenSufficient,

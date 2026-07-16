@@ -12,6 +12,7 @@ import {
   Sparkles,
   Star,
   LogOut,
+  Scale,
   Users,
   Globe,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { BrandLogoLink } from "../BrandLogo";
 import { useAuth } from "../AuthProvider";
+import { useLegal } from "../legal/LegalProvider";
 import { useI18n } from "../../i18n";
 import { api } from "../../lib/api";
 import { hideElizonPlusUi, isRouteVisibleInStealth } from "../../lib/elizon-plus";
@@ -100,6 +102,7 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
   const { t } = useI18n();
   const tAny = t as (key: string) => string;
   const { user, logout } = useAuth();
+  const { openLegalHub } = useLegal();
   const [isAffiliate, setIsAffiliate] = useState(false);
   const activeRoute = normalizeRouteName(routeName);
 
@@ -216,7 +219,7 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
           })}
         </nav>
 
-        <div className="border-t border-(--border) p-4 space-y-2">
+        <div className="space-y-2 border-t border-(--border) p-4">
           <div className="glass flex items-center gap-3 p-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-surface)] bg-(--primary)/10 text-(--primary)">
               <Users className="h-5 w-5" />
@@ -233,6 +236,14 @@ export function Sidebar({ routeName, navigate }: { routeName: Route["name"]; nav
               </div>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => openLegalHub()}
+            className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-control)] border border-(--border) px-3 py-2.5 text-sm font-medium text-(--text-secondary) transition-colors hover:bg-(--surface-soft) hover:text-(--text-primary)"
+          >
+            <Scale className="h-4 w-4" />
+            {t("footerLegal")}
+          </button>
           <button
             type="button"
             onClick={() => void logout()}

@@ -43,6 +43,7 @@ export type CheckoutBootstrap = {
     sharedBalance?: boolean;
     userRole?: string;
     userBillingMode?: string;
+    adoptionDeadlineEnforced?: boolean;
     accountLocked?: boolean;
   } | null;
   savedPaymentMethods: {

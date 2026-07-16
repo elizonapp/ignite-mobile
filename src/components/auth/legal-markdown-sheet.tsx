@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 
-import { AUTH_LEGAL_PAGES, type LegalSlug } from "../../lib/legal-content";
+import { getLegalPage, type LegalSlug } from "../../lib/legal-content";
 import { useI18n } from "../../i18n";
 import { LegalMarkdownView } from "./legal-markdown-view";
 
@@ -15,7 +15,7 @@ export function LegalMarkdownSheet({
 
   if (!slug) return null;
 
-  const page = AUTH_LEGAL_PAGES.find((entry) => entry.slug === slug);
+  const page = getLegalPage(slug);
   const title = page ? t(page.labelKey) : slug;
 
   return (
