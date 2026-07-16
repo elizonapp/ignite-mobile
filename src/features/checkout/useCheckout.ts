@@ -115,6 +115,7 @@ export function useCheckout() {
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
+  const [voucherMessageTone, setVoucherMessageTone] = useState<"success" | "error" | null>(null);
   const [acceptTos, setAcceptTos] = useState(false);
   const [acceptWithdrawal, setAcceptWithdrawal] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
@@ -391,7 +392,7 @@ export function useCheckout() {
   }, [couponCode, cartItems, effectiveCountryCode, lang, t]);
 
   const applyAffiliate = useCallback(async () => {
-    const code = affiliateCode.trim();
+    const code = affiliateCode.trim().toUpperCase();
     if (!code) return;
     setAffiliateLoading(true);
     setAffiliateError(null);
@@ -403,6 +404,7 @@ export function useCheckout() {
         return;
       }
       setAffiliateInfo({ code: res.affiliate.code, name: res.affiliate.name });
+      setAffiliateCode(res.affiliate.code);
     } catch {
       setAffiliateInfo(null);
       setAffiliateError(t("affiliateCodeInvalid"));
@@ -416,10 +418,12 @@ export function useCheckout() {
     if (!code) return;
     setVoucherLoading(true);
     setVoucherMessage(null);
+    setVoucherMessageTone(null);
     try {
       const res = await api.wallet.redeemVoucher(code);
       if (!res?.success) {
         setVoucherMessage(resolveApiError(res, t, { fallbackKey: "voucherInvalid" }));
+        setVoucherMessageTone("error");
         return;
       }
       setVoucherMessage(
@@ -428,9 +432,10 @@ export function useCheckout() {
           new Intl.NumberFormat(lang === "de" ? "de-DE" : "en-US", {
             style: "currency",
             currency: "EUR",
-          }).format(res.amount ?? 0),
+          }).format(res.creditAmount ?? 0),
         ),
       );
+      setVoucherMessageTone("success");
       setVoucherCode("");
       await refresh();
     } catch (error) {
@@ -439,6 +444,7 @@ export function useCheckout() {
           ? resolveApiError(error.payload, t, { fallbackKey: "voucherInvalid" })
           : t("voucherInvalid"),
       );
+      setVoucherMessageTone("error");
     } finally {
       setVoucherLoading(false);
     }
@@ -605,10 +611,16 @@ export function useCheckout() {
     affiliateLoading,
     affiliateError,
     applyAffiliate,
+    clearAffiliate: () => {
+      setAffiliateInfo(null);
+      setAffiliateCode("");
+      setAffiliateError(null);
+    },
     voucherCode,
     setVoucherCode,
     voucherLoading,
     voucherMessage,
+    voucherMessageTone,
     redeemVoucher,
     acceptTos,
     setAcceptTos,

@@ -610,113 +610,176 @@ function DiscountSidebar({
   const { t } = useI18n();
 
   return (
-    <section className="glass space-y-3 p-4">
+    <section className="glass space-y-4 p-4">
       <h3 className="text-sm font-semibold text-(--text-primary)">{t("checkoutDiscountsTitle")}</h3>
 
       {!c.isBusiness && c.netPointsEurAvailable > 0 ? (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-(--text-secondary)">
+        <div>
+          <label className="mb-2 block text-xs font-medium text-(--text-muted)">
             {t("checkoutUseNetPoints")} ({formatPrice(c.netPointsEurAvailable)})
           </label>
-          <div className="flex gap-2">
-            <input
-              value={c.netPointsRedeemEur}
-              onChange={(e) => c.setNetPointsRedeemEur(e.target.value)}
-              placeholder="0,00"
-              className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={c.applyNetPointsAmount}
-              className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
-            >
-              {t("checkoutApply")}
-            </button>
-            {c.netPointsAppliedEur > 0 ? (
+          {c.netPointsAppliedEur > 0 ? (
+            <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 p-2.5">
+              <span className="text-sm font-medium text-green-400">
+                {formatPrice(c.netPointsAppliedEur)}
+              </span>
               <button
                 type="button"
                 onClick={c.clearNetPoints}
-                className="shrink-0 text-xs text-(--text-muted) underline"
+                className="shrink-0 text-xs text-(--text-secondary) hover:text-red-500"
               >
-                {t("checkoutRemove")}
+                {t("remove")}
               </button>
-            ) : null}
-          </div>
-          {c.netPointsError ? <p className="text-xs text-(--error)">{c.netPointsError}</p> : null}
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                value={c.netPointsRedeemEur}
+                onChange={(e) => c.setNetPointsRedeemEur(e.target.value)}
+                placeholder="0,00"
+                inputMode="decimal"
+                className="min-w-0 flex-1 rounded-lg border border-(--border) bg-(--bg-base) px-3 py-2 text-sm focus:border-(--primary) focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={c.applyNetPointsAmount}
+                className="shrink-0 rounded-lg bg-(--primary) px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {t("apply")}
+              </button>
+            </div>
+          )}
+          {c.netPointsError ? <p className="mt-1.5 text-xs text-red-500">{c.netPointsError}</p> : null}
         </div>
       ) : null}
 
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-(--text-secondary)">{t("checkoutCoupon")}</label>
-        <div className="flex gap-2">
-          <input
-            value={c.couponCode}
-            onChange={(e) => c.setCouponCode(e.target.value)}
-            placeholder={t("checkoutCouponPlaceholder")}
-            className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm uppercase"
-          />
-          <button
-            type="button"
-            disabled={c.couponLoading}
-            onClick={() => void c.applyCoupon()}
-            className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
-          >
-            {c.couponLoading ? <Loader2 className="size-3.5 animate-spin" /> : t("checkoutApply")}
-          </button>
-        </div>
+      <div>
+        <label className="mb-2 block text-xs font-medium text-(--text-muted)">{t("checkoutCoupon")}</label>
         {c.appliedCoupon ? (
-          <p className="text-xs text-(--success)">
-            {c.appliedCoupon.displayText}
-            <button type="button" className="ml-2 underline" onClick={c.clearCoupon}>
-              {t("checkoutRemove")}
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-2.5">
+            <div className="min-w-0">
+              <span className="block truncate text-sm font-medium text-green-400">
+                {c.appliedCoupon.code}
+              </span>
+              {c.appliedCoupon.displayText !== c.appliedCoupon.code ? (
+                <span className="block truncate text-xs text-green-500/70">
+                  {c.appliedCoupon.displayText}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={c.clearCoupon}
+              className="shrink-0 text-xs text-(--text-secondary) hover:text-red-500"
+            >
+              {t("remove")}
             </button>
-          </p>
-        ) : null}
-        {c.couponError ? <p className="text-xs text-(--error)">{c.couponError}</p> : null}
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              value={c.couponCode}
+              onChange={(e) => c.setCouponCode(e.target.value.toUpperCase())}
+              placeholder={t("checkoutCouponPlaceholder")}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className="min-w-0 flex-1 rounded-lg border border-(--border) bg-(--bg-base) px-3 py-2 text-sm uppercase focus:border-(--primary) focus:outline-none"
+            />
+            <button
+              type="button"
+              disabled={c.couponLoading || !c.couponCode.trim()}
+              onClick={() => void c.applyCoupon()}
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-(--primary) px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {c.couponLoading ? <Loader2 className="size-4 animate-spin" /> : t("apply")}
+            </button>
+          </div>
+        )}
+        {c.couponError ? <p className="mt-1.5 text-xs text-red-500">{c.couponError}</p> : null}
+        <p className="mt-1.5 text-xs text-(--text-muted)">{t("couponOnePerOrderHint")}</p>
+        <p className="mt-1 text-xs text-(--text-muted)/90">{t("discountsFirstMonthOnly")}</p>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-(--text-secondary)">{t("checkoutCreatorCode")}</label>
-        <div className="flex gap-2">
-          <input
-            value={c.affiliateCode}
-            onChange={(e) => c.setAffiliateCode(e.target.value)}
-            placeholder={t("checkoutCreatorCodePlaceholder")}
-            className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm"
-          />
-          <button
-            type="button"
-            disabled={c.affiliateLoading}
-            onClick={() => void c.applyAffiliate()}
-            className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
-          >
-            {c.affiliateLoading ? <Loader2 className="size-3.5 animate-spin" /> : t("checkoutApply")}
-          </button>
-        </div>
+      <div>
+        <label className="mb-0.5 block text-xs font-medium text-(--text-muted)">
+          {t("checkoutCreatorCode")}
+        </label>
+        <p className="mb-2 min-h-[1.25rem] text-xs leading-snug text-(--text-muted)/80">
+          {t("creatorCodeDesc")}
+        </p>
         {c.affiliateInfo ? (
-          <p className="text-xs text-(--success)">{c.affiliateInfo.name}</p>
-        ) : null}
-        {c.affiliateError ? <p className="text-xs text-(--error)">{c.affiliateError}</p> : null}
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-(--border) bg-(--bg-base) p-2.5">
+            <div className="min-w-0">
+              <span className="block truncate font-mono text-sm text-(--text-primary)">
+                {c.affiliateInfo.code}
+              </span>
+              {c.affiliateInfo.name ? (
+                <span className="block truncate text-xs text-(--text-muted)">{c.affiliateInfo.name}</span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={c.clearAffiliate}
+              className="shrink-0 text-xs text-(--text-secondary) hover:text-red-500"
+            >
+              {t("remove")}
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              value={c.affiliateCode}
+              onChange={(e) => c.setAffiliateCode(e.target.value.toUpperCase())}
+              placeholder={t("checkoutCreatorCodePlaceholder")}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className="min-w-0 flex-1 rounded-lg border border-(--border) bg-(--bg-base) px-3 py-2 text-sm uppercase focus:border-(--primary) focus:outline-none"
+            />
+            <button
+              type="button"
+              disabled={c.affiliateLoading || !c.affiliateCode.trim()}
+              onClick={() => void c.applyAffiliate()}
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-(--primary) px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {c.affiliateLoading ? <Loader2 className="size-4 animate-spin" /> : t("apply")}
+            </button>
+          </div>
+        )}
+        {c.affiliateError ? <p className="mt-1.5 text-xs text-red-500">{c.affiliateError}</p> : null}
       </div>
 
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-(--text-secondary)">{t("voucherRedeem")}</label>
+      <div className="space-y-2 rounded-xl border border-(--border) p-3">
+        <p className="text-sm font-medium text-(--text-primary)">{t("walletCheckoutRedeem")}</p>
         <div className="flex gap-2">
           <input
             value={c.voucherCode}
-            onChange={(e) => c.setVoucherCode(e.target.value)}
-            className="min-w-0 flex-1 rounded-xl border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm"
+            onChange={(e) => c.setVoucherCode(e.target.value.toUpperCase())}
+            placeholder="XXXXXX-XXXXXX-XXXXXX"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            className="min-w-0 flex-1 rounded-lg border border-(--border) bg-(--bg-base) px-3 py-2 text-sm uppercase tracking-wider focus:border-(--primary) focus:outline-none"
           />
           <button
             type="button"
-            disabled={c.voucherLoading}
+            disabled={c.voucherLoading || !c.voucherCode.trim()}
             onClick={() => void c.redeemVoucher()}
-            className="btn-secondary shrink-0 rounded-xl px-3 py-2 text-xs"
+            className="btn-primary inline-flex shrink-0 items-center justify-center rounded-lg px-3 py-2 text-sm disabled:opacity-50"
           >
-            {c.voucherLoading ? <Loader2 className="size-3.5 animate-spin" /> : t("voucherRedeem")}
+            {c.voucherLoading ? <Loader2 className="size-4 animate-spin" /> : t("walletRedeemSubmit")}
           </button>
         </div>
-        {c.voucherMessage ? <p className="text-xs text-(--text-secondary)">{c.voucherMessage}</p> : null}
+        {c.voucherMessage ? (
+          <p
+            className={`text-xs ${
+              c.voucherMessageTone === "error" ? "text-red-500" : "text-green-500"
+            }`}
+          >
+            {c.voucherMessage}
+          </p>
+        ) : null}
       </div>
     </section>
   );

@@ -23,11 +23,19 @@ export type AutoTopupCreateBody = {
 
 export type WalletVoucher = {
   id: string;
-  amount: number;
+  paidAmount: number;
+  faceValue: number;
+  redeemCreditAmount: number;
   status: string;
-  code?: string | null;
-  createdAt?: string | null;
+  issuedAt?: string | null;
+  expiresAt?: string | null;
   redeemedAt?: string | null;
+  source?: string | null;
+  promoPercent?: number | null;
+  invoiceId?: string | null;
+  paymentId?: string | null;
+  canWithdraw?: boolean;
+  withdrawUntil?: string | null;
 };
 
 export type WalletBonusEvent = {
@@ -75,6 +83,25 @@ export class WalletResource extends ResourceClient {
   }
 
   redeemVoucher(code: string) {
-    return this.post<{ success: boolean; amount?: number }>("/api/wallet/vouchers/redeem", { code });
+    return this.post<{
+      success: boolean;
+      creditAmount?: number;
+      newBalance?: number;
+      voucherId?: string;
+    }>("/api/wallet/vouchers/redeem", { code });
+  }
+
+  voucherCode(id: string) {
+    return this.get<{ success: boolean; code?: string }>(
+      `/api/wallet/vouchers/${encodeURIComponent(id)}/code`,
+    );
+  }
+
+  withdrawVoucher(id: string) {
+    return this.post<{
+      success: boolean;
+      refundedAmount?: number;
+      mollieRefundId?: string;
+    }>(`/api/wallet/vouchers/${encodeURIComponent(id)}/withdraw`);
   }
 }
