@@ -2755,7 +2755,7 @@ export const de: Dict = {
   idVerificationAdminRequestedBanner: "Ein Administrator hat eine Identitätsverifikation für Ihr Konto angefordert. Bitte schließen Sie den Vorgang ab oder lehnen Sie ihn ab.",
   idVerificationBackToSettings: "Zurück zu den Einstellungen",
   idVerificationCaseRequestedBanner: "Im Rahmen eines laufenden Falls wurde eine Identitätsverifikation angefordert. Bitte schließen Sie den Vorgang ab oder lehnen Sie ihn ab.",
-  idVerificationConsentBody: "Im Rahmen der Identitätsverifikation werden Ausweis- und biometrische Daten verarbeitet (Art. 9 Abs. 2 lit. a DSGVO). Bei automatisierter Verifikation erfolgt die Verarbeitung durch die Enjyn® Gruppe als eigenständigen Verantwortlichen; bei manueller Verifikation durch elizon. Einzelheiten finden Sie in der Datenschutzerklärung. Sie können diese Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen.",
+  idVerificationConsentBody: "Im Rahmen der Identitätsverifikation werden Ausweis- und biometrische Daten verarbeitet (Art. 9 Abs. 2 lit. a DSGVO). Verantwortlicher ist elizon. Bei automatisierter Verifikation erfolgt die Verarbeitung durch die Enjyn® Gruppe als Auftragsverarbeiter gemäß Art. 28 DSGVO im Auftrag von elizon; bei manueller Verifikation durch elizon selbst. Einzelheiten finden Sie in der Datenschutzerklärung. Sie können diese Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen.",
   idVerificationConsentCheckbox: "Ich willige ausdrücklich in die Verarbeitung meiner Ausweis- und biometrischen Daten zur Identitätsverifikation ein.",
   idVerificationConsentRequired: "Bitte bestätigen Sie die ausdrückliche Einwilligung zur Datenverarbeitung.",
   idVerificationContinueButton: "Weiter zur Verifikation",

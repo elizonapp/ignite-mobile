@@ -2763,7 +2763,7 @@ export const en = {
   idVerificationAdminRequestedBanner: "An administrator has requested identity verification for your account. Please complete or decline the process.",
   idVerificationBackToSettings: "Back to settings",
   idVerificationCaseRequestedBanner: "Identity verification was requested in connection with an open case. Please complete or decline the process.",
-  idVerificationConsentBody: "As part of identity verification, ID and biometric data are processed (Art. 9 (2) (a) GDPR). For automated verification, processing is carried out by the Enjyn® Group as an independent controller; for manual verification, by elizon. Details are in the privacy policy. You may withdraw this consent at any time with effect for the future.",
+  idVerificationConsentBody: "As part of identity verification, ID and biometric data are processed (Art. 9 (2) (a) GDPR). elizon is the controller. For automated verification, processing is carried out by the Enjyn® Group as a processor on behalf of elizon pursuant to Art. 28 GDPR; for manual verification, by elizon itself. Details are in the privacy policy. You may withdraw this consent at any time with effect for the future.",
   idVerificationConsentCheckbox: "I expressly consent to the processing of my ID and biometric data for identity verification.",
   idVerificationConsentRequired: "Please confirm the explicit consent to data processing.",
   idVerificationContinueButton: "Continue to verification",
