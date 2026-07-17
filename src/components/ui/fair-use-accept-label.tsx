@@ -21,14 +21,16 @@ export function FairUseAcceptLabel({
   const { openLegal } = useLegal();
 
   return (
-    <label className={`flex cursor-pointer select-none items-start gap-3 ${className}`.trim()}>
+    <label
+      className={`flex min-h-11 cursor-pointer select-none items-center gap-2.5 ${className}`.trim()}
+    >
       <input
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-5 shrink-0 cursor-pointer rounded border-(--border) accent-(--elizon-primary)"
+        className="size-4 shrink-0 cursor-pointer rounded border-(--border) accent-(--elizon-primary)"
       />
-      <span className="min-w-0 flex-1 text-sm leading-snug text-(--text-secondary)">
+      <span className="min-w-0 flex-1 text-sm leading-normal text-(--text-secondary)">
         {acceptPrefix}
         <button
           type="button"
