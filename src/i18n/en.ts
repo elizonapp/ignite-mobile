@@ -1183,6 +1183,7 @@ export const en = {
   productContractEffectivePeriodPrice: "Price per billing period",
   productContractNoticeDays: "Notice period: {days} days before term end",
   productContractEarlyTerminationFee: "Early termination fee: {percent}% of remaining payments",
+  productContractNoDowngradeHint: "Downgrades are not available with contract billing. After purchase, resources can only be increased, not reduced.",
   monthShort: "month",
   productSoldOut: "Sold out",
   productSoldOutNoOrder: "This product cannot be ordered at the moment.",

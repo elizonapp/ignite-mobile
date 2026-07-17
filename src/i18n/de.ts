@@ -1178,6 +1178,7 @@ export const de: Dict = {
   productContractEffectivePeriodPrice: "Preis pro Abrechnungsperiode",
   productContractNoticeDays: "Kündigungsfrist: {days} Tage zum Laufzeitende",
   productContractEarlyTerminationFee: "Auflösungsentgelt bei vorzeitiger Beendigung: {percent}% der verbleibenden Zahlungen",
+  productContractNoDowngradeHint: "Bei Vertragsabrechnung sind Downgrades nicht möglich. Ressourcen können nach dem Kauf nur erhöht, nicht verringert werden.",
   monthShort: "Monat",
   productSoldOut: "Ausverkauft",
   productSoldOutNoOrder: "Dieses Produkt ist derzeit nicht bestellbar.",

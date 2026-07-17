@@ -182,6 +182,7 @@ export function ContractBillingSection({
                 String(earlyTerminationFeePercent),
               )}
             </li>
+            <li>{t("productContractNoDowngradeHint")}</li>
           </ul>
         </div>
       ) : null}

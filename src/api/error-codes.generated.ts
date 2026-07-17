@@ -1845,6 +1845,7 @@ export const ApiErrorCodes = {
   subscriptionSpecialTerminationPending: "subscriptionSpecialTerminationPending",
   subscriptionBuyoutNotAvailable: "subscriptionBuyoutNotAvailable",
   subscriptionFeePercentCanOnlyBeLowered: "subscriptionFeePercentCanOnlyBeLowered",
+  contractDowngradeNotAllowed: "contractDowngradeNotAllowed",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCodes)[keyof typeof ApiErrorCodes];
