@@ -46,6 +46,16 @@ function getFormOwnedSpecKeys(
     owned.add("storagePerMailbox");
     owned.add("maxAliases");
   }
+  if (type === "PLESK") {
+    owned.add("maxDomains");
+    owned.add("storagePerDomain");
+    owned.add("storagePerDomainGb");
+    owned.add("maxMailboxes");
+    owned.add("maxMailboxesPerDomain");
+    owned.add("storagePerMailbox");
+    owned.add("storagePerMailboxGb");
+    owned.add("dnsManagement");
+  }
   if (type === "PROXMOX" && (product.speedUpgradeOptions?.length || product.maxTrafficAddonTb)) {
     owned.add("bandwidth");
     owned.add("traffic");

@@ -8,6 +8,8 @@ export type CartCustomization = {
   maxMailboxesPerDomain?: number;
   storagePerMailboxGb?: number;
   maxAliasesPerDomain?: number;
+  storagePerDomainGb?: number;
+  dnsManagement?: number;
   domain?: string;
   location?: string;
   appType?: string;

@@ -5,7 +5,10 @@ import type { DashboardServer } from '../../lib/types';
 export function ResourceUsage({ servers }: { servers: DashboardServer[] }) {
   const { t } = useI18n();
   const sample = servers.filter(
-    (s) => s.status === "online" && (s.providerType || "").toUpperCase() !== "MAILCOW"
+    (s) =>
+      s.status === "online" &&
+      (s.providerType || "").toUpperCase() !== "MAILCOW" &&
+      (s.providerType || "").toUpperCase() !== "PLESK"
   );
 
   const avgPct = (selector: (s: DashboardServer) => { used: number; total: number }) => {

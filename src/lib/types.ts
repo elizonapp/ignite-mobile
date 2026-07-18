@@ -35,6 +35,15 @@ export type DashboardServer = {
     dnsStatus: string;
     locationLabel?: string;
   };
+  pleskStats?: {
+    usedDomains: number;
+    maxDomains: number;
+    avgStorageUsedGb: number;
+    storagePerDomainGb: number;
+    usedMailboxes: number;
+    maxMailboxesPerDomain: number;
+    locationLabel: string;
+  };
 };
 
 export type DashboardStats = {

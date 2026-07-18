@@ -1,5 +1,6 @@
 import { computePeriodPrice, type BillingPeriodOptions } from "./billing";
 import { calculateMailcowSurcharge, type MailcowLimits } from "./mailcow-pricing";
+import { calculatePleskSurcharge, type PleskLimits } from "./plesk-pricing";
 import { calculateTrafficAddonPrice, type TrafficPricingBlock } from "./traffic-pricing";
 import { numSpec, type ProductProviderOptions, type ShopProductDetail, type ShopUpgradeConfig } from "./shop-product-detail";
 
@@ -12,6 +13,10 @@ export function productUsesMbResources(product: ShopProductDetail): boolean {
 }
 
 export function initialProductProviderOptions(product: ShopProductDetail): ProductProviderOptions {
+  const isPlesk = product.provider?.type?.toUpperCase() === "PLESK";
+  const baseStoragePerDomain =
+    typeof product.storagePerDomainGb === "number" ? product.storagePerDomainGb : isPlesk ? 5 : undefined;
+  const baseDns = typeof product.dnsManagement === "number" ? product.dnsManagement : isPlesk ? -1 : undefined;
   return {
     vcores: numSpec(product.vcores, 2),
     memory: numSpec(product.memory, 4),
@@ -32,6 +37,8 @@ export function initialProductProviderOptions(product: ShopProductDetail): Produ
       typeof product.storagePerMailboxGb === "number" ? product.storagePerMailboxGb : undefined,
     maxAliasesPerDomain:
       typeof product.maxAliasesPerDomain === "number" ? product.maxAliasesPerDomain : undefined,
+    storagePerDomainGb: baseStoragePerDomain,
+    dnsManagement: baseDns != null ? Math.max(0, baseDns) : undefined,
     eggId: product.pterodactylProductEggId ?? product.pterodactylEggs?.[0]?.eggId,
     nestId: product.pterodactylProductNestId ?? product.pterodactylEggs?.[0]?.nestId,
     dockerImage:
@@ -69,18 +76,48 @@ export function computeBasePriceMonthly(
       extra += (storageDiff / storageStep) * pricing.storage.upgradePrice;
     }
 
-    const baseMailcow: MailcowLimits = {
-      maxDomains: typeof product.maxDomains === "number" ? product.maxDomains : 1,
-      maxMailboxesPerDomain: typeof product.maxMailboxesPerDomain === "number" ? product.maxMailboxesPerDomain : 5,
-      storagePerMailboxGb: typeof product.storagePerMailboxGb === "number" ? product.storagePerMailboxGb : 1,
-      maxAliasesPerDomain: typeof product.maxAliasesPerDomain === "number" ? product.maxAliasesPerDomain : 5,
-    };
-    extra += calculateMailcowSurcharge(baseMailcow, {
-      maxDomains: options.maxDomains ?? baseMailcow.maxDomains,
-      maxMailboxesPerDomain: options.maxMailboxesPerDomain ?? baseMailcow.maxMailboxesPerDomain,
-      storagePerMailboxGb: options.storagePerMailboxGb ?? baseMailcow.storagePerMailboxGb,
-      maxAliasesPerDomain: options.maxAliasesPerDomain ?? baseMailcow.maxAliasesPerDomain,
-    }, pricing);
+    if (product.provider?.type?.toUpperCase() === "PLESK") {
+      const basePlesk: PleskLimits = {
+        maxDomains: typeof product.maxDomains === "number" ? product.maxDomains : 1,
+        storagePerDomainGb: typeof product.storagePerDomainGb === "number" ? product.storagePerDomainGb : 5,
+        maxMailboxesPerDomain:
+          typeof product.maxMailboxesPerDomain === "number" ? product.maxMailboxesPerDomain : -1,
+        storagePerMailboxGb:
+          typeof product.storagePerMailboxGb === "number" ? product.storagePerMailboxGb : -1,
+        dnsManagement: typeof product.dnsManagement === "number" ? product.dnsManagement : -1,
+      };
+      extra += calculatePleskSurcharge(
+        basePlesk,
+        {
+          maxDomains: options.maxDomains ?? basePlesk.maxDomains,
+          storagePerDomainGb: options.storagePerDomainGb ?? basePlesk.storagePerDomainGb,
+          maxMailboxesPerDomain: options.maxMailboxesPerDomain ?? basePlesk.maxMailboxesPerDomain,
+          storagePerMailboxGb: options.storagePerMailboxGb ?? basePlesk.storagePerMailboxGb,
+          dnsManagement: options.dnsManagement ?? Math.max(0, basePlesk.dnsManagement),
+        },
+        pricing,
+      );
+    } else {
+      const baseMailcow: MailcowLimits = {
+        maxDomains: typeof product.maxDomains === "number" ? product.maxDomains : 1,
+        maxMailboxesPerDomain:
+          typeof product.maxMailboxesPerDomain === "number" ? product.maxMailboxesPerDomain : 5,
+        storagePerMailboxGb:
+          typeof product.storagePerMailboxGb === "number" ? product.storagePerMailboxGb : 1,
+        maxAliasesPerDomain:
+          typeof product.maxAliasesPerDomain === "number" ? product.maxAliasesPerDomain : 5,
+      };
+      extra += calculateMailcowSurcharge(
+        baseMailcow,
+        {
+          maxDomains: options.maxDomains ?? baseMailcow.maxDomains,
+          maxMailboxesPerDomain: options.maxMailboxesPerDomain ?? baseMailcow.maxMailboxesPerDomain,
+          storagePerMailboxGb: options.storagePerMailboxGb ?? baseMailcow.storagePerMailboxGb,
+          maxAliasesPerDomain: options.maxAliasesPerDomain ?? baseMailcow.maxAliasesPerDomain,
+        },
+        pricing,
+      );
+    }
   }
 
   if (product.provider?.type?.toUpperCase() === "PROXMOX" && (options.trafficAddonTb ?? 0) > 0) {

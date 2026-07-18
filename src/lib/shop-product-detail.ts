@@ -62,6 +62,8 @@ export type ShopProductDetail = {
   maxMailboxesPerDomain?: number;
   storagePerMailboxGb?: number;
   maxAliasesPerDomain?: number;
+  storagePerDomainGb?: number;
+  dnsManagement?: number;
   allowCpuCustomization?: boolean;
   allowRamCustomization?: boolean;
   allowStorageCustomization?: boolean;
@@ -172,6 +174,10 @@ export type ProductProviderOptions = {
   appType?: string;
   domainMode?: "owned" | "external";
   storageGb?: number;
+  /** Plesk shared hosting */
+  storagePerDomainGb?: number;
+  dnsManagement?: number;
+  pleskLocation?: string;
 };
 
 export type ConfiguratorProviderOptions = ProductProviderOptions & {
@@ -187,7 +193,9 @@ export type InvalidUpgradeFields = Partial<
     | "maxDomains"
     | "maxMailboxesPerDomain"
     | "storagePerMailboxGb"
-    | "maxAliasesPerDomain",
+    | "maxAliasesPerDomain"
+    | "storagePerDomainGb"
+    | "dnsManagement",
     boolean
   >
 >;

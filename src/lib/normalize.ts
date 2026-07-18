@@ -85,13 +85,25 @@ export function mapBaseServer(raw: Record<string, unknown>): DashboardServer {
             locationLabel: String((raw.ploiStats as Record<string, unknown>).locationLabel ?? ""),
           }
         : undefined,
+    pleskStats:
+      typeof raw.pleskStats === "object" && raw.pleskStats !== null
+        ? {
+            usedDomains: Number((raw.pleskStats as Record<string, unknown>).usedDomains) || 0,
+            maxDomains: Number((raw.pleskStats as Record<string, unknown>).maxDomains) || 0,
+            avgStorageUsedGb: Number((raw.pleskStats as Record<string, unknown>).avgStorageUsedGb) || 0,
+            storagePerDomainGb: Number((raw.pleskStats as Record<string, unknown>).storagePerDomainGb) || 0,
+            usedMailboxes: Number((raw.pleskStats as Record<string, unknown>).usedMailboxes) || 0,
+            maxMailboxesPerDomain: Number((raw.pleskStats as Record<string, unknown>).maxMailboxesPerDomain) ?? -1,
+            locationLabel: String((raw.pleskStats as Record<string, unknown>).locationLabel ?? ""),
+          }
+        : undefined,
   };
 }
 
 export function mergeLiveStatus(server: DashboardServer, status: Record<string, unknown> | null | undefined): DashboardServer {
   if (!status) return server;
-  const isPloi = (server.providerType || "").toUpperCase() === "PLOI";
-  if (isPloi) {
+  const provider = (server.providerType || "").toUpperCase();
+  if (provider === "PLOI") {
     const disk = status.disk as { used?: unknown; total?: unknown } | undefined;
     const usedBytes = Number(disk?.used) || server.ploiStats?.storageUsedBytes || 0;
     const limitBytes = Number(disk?.total) || server.ploiStats?.storageLimitBytes || 0;
@@ -102,6 +114,17 @@ export function mergeLiveStatus(server: DashboardServer, status: Record<string, 
       status: normalizeStatus((status as { status?: unknown }).status ?? server.status),
       disk: { used: usedGb, total: limitGb },
       ip: server.ploiStats?.domain || server.providerAddress || server.ip,
+    };
+  }
+  if (provider === "PLESK") {
+    const avg = server.pleskStats?.avgStorageUsedGb ?? 0;
+    const limit = server.pleskStats?.storagePerDomainGb ?? 0;
+    return {
+      ...server,
+      status: normalizeStatus((status as { status?: unknown }).status ?? server.status),
+      disk: { used: avg, total: limit },
+      ip: server.providerAddress || server.ip,
+      location: server.pleskStats?.locationLabel || server.location,
     };
   }
   const cpuPct = normalizeCpuUsageToPercent((status.cpu as { usage?: unknown } | undefined)?.usage);

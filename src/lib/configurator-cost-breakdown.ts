@@ -1,4 +1,5 @@
 ﻿import { calculateMailcowSurcharge } from "./mailcow-pricing";
+import { calculatePleskSurcharge } from "./plesk-pricing";
 import { calculateTrafficAddonPrice } from "./traffic-pricing";
 import { numSpec, type ShopProductDetail, type ShopUpgradeConfig } from "./shop-product-detail";
 
@@ -30,6 +31,8 @@ export function computeConfiguratorCostBreakdown(args: {
     maxMailboxesPerDomain?: number;
     storagePerMailboxGb?: number;
     maxAliasesPerDomain?: number;
+    storagePerDomainGb?: number;
+    dnsManagement?: number;
   };
   upgradeConfig: ShopUpgradeConfig | null;
   usesMb: boolean;
@@ -101,22 +104,59 @@ export function computeConfiguratorCostBreakdown(args: {
       }
     }
 
-    const mailcow = calculateMailcowSurcharge(
-      {
-        maxDomains: typeof activeProduct.maxDomains === "number" ? activeProduct.maxDomains : 1,
-        maxMailboxesPerDomain: typeof activeProduct.maxMailboxesPerDomain === "number" ? activeProduct.maxMailboxesPerDomain : 5,
-        storagePerMailboxGb: typeof activeProduct.storagePerMailboxGb === "number" ? activeProduct.storagePerMailboxGb : 1,
-        maxAliasesPerDomain: typeof activeProduct.maxAliasesPerDomain === "number" ? activeProduct.maxAliasesPerDomain : 5,
-      },
-      {
-        maxDomains: options.maxDomains ?? activeProduct.maxDomains ?? 1,
-        maxMailboxesPerDomain: options.maxMailboxesPerDomain ?? activeProduct.maxMailboxesPerDomain ?? 5,
-        storagePerMailboxGb: options.storagePerMailboxGb ?? activeProduct.storagePerMailboxGb ?? 1,
-        maxAliasesPerDomain: options.maxAliasesPerDomain ?? activeProduct.maxAliasesPerDomain ?? 5,
-      },
-      pricing,
-    );
-    if (mailcow > 0) items.push({ label: translate("configuratorCostMailcow"), amount: mailcow * cycleFactor });
+    if (activeProduct.provider?.type?.toUpperCase() === "PLESK") {
+      const plesk = calculatePleskSurcharge(
+        {
+          maxDomains: typeof activeProduct.maxDomains === "number" ? activeProduct.maxDomains : 1,
+          storagePerDomainGb:
+            typeof activeProduct.storagePerDomainGb === "number" ? activeProduct.storagePerDomainGb : 5,
+          maxMailboxesPerDomain:
+            typeof activeProduct.maxMailboxesPerDomain === "number"
+              ? activeProduct.maxMailboxesPerDomain
+              : -1,
+          storagePerMailboxGb:
+            typeof activeProduct.storagePerMailboxGb === "number" ? activeProduct.storagePerMailboxGb : -1,
+          dnsManagement: typeof activeProduct.dnsManagement === "number" ? activeProduct.dnsManagement : -1,
+        },
+        {
+          maxDomains: options.maxDomains ?? activeProduct.maxDomains ?? 1,
+          storagePerDomainGb:
+            options.storagePerDomainGb ??
+            (typeof activeProduct.storagePerDomainGb === "number" ? activeProduct.storagePerDomainGb : 5),
+          maxMailboxesPerDomain:
+            options.maxMailboxesPerDomain ?? activeProduct.maxMailboxesPerDomain ?? -1,
+          storagePerMailboxGb: options.storagePerMailboxGb ?? activeProduct.storagePerMailboxGb ?? -1,
+          dnsManagement:
+            options.dnsManagement ??
+            Math.max(0, typeof activeProduct.dnsManagement === "number" ? activeProduct.dnsManagement : -1),
+        },
+        pricing,
+      );
+      if (plesk > 0) items.push({ label: translate("configuratorCostPlesk"), amount: plesk * cycleFactor });
+    } else {
+      const mailcow = calculateMailcowSurcharge(
+        {
+          maxDomains: typeof activeProduct.maxDomains === "number" ? activeProduct.maxDomains : 1,
+          maxMailboxesPerDomain:
+            typeof activeProduct.maxMailboxesPerDomain === "number"
+              ? activeProduct.maxMailboxesPerDomain
+              : 5,
+          storagePerMailboxGb:
+            typeof activeProduct.storagePerMailboxGb === "number" ? activeProduct.storagePerMailboxGb : 1,
+          maxAliasesPerDomain:
+            typeof activeProduct.maxAliasesPerDomain === "number" ? activeProduct.maxAliasesPerDomain : 5,
+        },
+        {
+          maxDomains: options.maxDomains ?? activeProduct.maxDomains ?? 1,
+          maxMailboxesPerDomain:
+            options.maxMailboxesPerDomain ?? activeProduct.maxMailboxesPerDomain ?? 5,
+          storagePerMailboxGb: options.storagePerMailboxGb ?? activeProduct.storagePerMailboxGb ?? 1,
+          maxAliasesPerDomain: options.maxAliasesPerDomain ?? activeProduct.maxAliasesPerDomain ?? 5,
+        },
+        pricing,
+      );
+      if (mailcow > 0) items.push({ label: translate("configuratorCostMailcow"), amount: mailcow * cycleFactor });
+    }
   }
 
   if ((options.speedUpgradeGbit ?? 0) > 0 && Array.isArray(activeProduct.speedUpgradeOptions)) {

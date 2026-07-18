@@ -87,6 +87,7 @@ export function ShopProductOrderForm({
   const isProxmox = providerType === "PROXMOX";
   const isPterodactyl = providerType === "PTERODACTYL";
   const isMailcow = providerType === "MAILCOW";
+  const isPlesk = providerType === "PLESK";
   const usesMb = isPterodactyl;
 
   const fieldByKey = useMemo(() => new Map(orderFields.map((f) => [f.key, f])), [orderFields]);
@@ -124,9 +125,9 @@ export function ShopProductOrderForm({
   const memoryUnit = usesMb ? "MB" : "GB";
   const storageUnit = usesMb ? "MB" : "GB";
 
-  const vcoresEditable = !isMailcow && isResourceEditable(product, upgradeConfig, "vcores");
-  const memoryEditable = !isMailcow && isResourceEditable(product, upgradeConfig, "memory");
-  const storageEditable = !isMailcow && isResourceEditable(product, upgradeConfig, "storage");
+  const vcoresEditable = !isMailcow && !isPlesk && isResourceEditable(product, upgradeConfig, "vcores");
+  const memoryEditable = !isMailcow && !isPlesk && isResourceEditable(product, upgradeConfig, "memory");
+  const storageEditable = !isMailcow && !isPlesk && isResourceEditable(product, upgradeConfig, "storage");
 
   const canAddSshKey =
     !!(product.providerCapabilities as { canAddSshKey?: boolean } | undefined)?.canAddSshKey &&
@@ -189,6 +190,83 @@ export function ShopProductOrderForm({
       ),
     };
   }, [canUpgradeMailcow, options, product, rp]);
+
+  const canUpgradePlesk = upgradeConfig?.allowPrePurchaseUpgrade === true;
+  const basePleskStoragePerDomain =
+    typeof product.storagePerDomainGb === "number" ? product.storagePerDomainGb : 5;
+  const basePleskDns = typeof product.dnsManagement === "number" ? product.dnsManagement : -1;
+  const basePleskMailboxes =
+    typeof product.maxMailboxesPerDomain === "number" ? product.maxMailboxesPerDomain : -1;
+  const basePleskStoragePerMailbox =
+    typeof product.storagePerMailboxGb === "number" ? product.storagePerMailboxGb : -1;
+  const showPleskMailLimits = basePleskMailboxes >= 0 || basePleskStoragePerMailbox >= 0;
+  const showPleskDnsLimit = basePleskDns >= 0;
+
+  const pleskLimits = useMemo(() => {
+    const domainsBase = product.maxDomains ?? 1;
+    const lim = (
+      key:
+        | "maxDomains"
+        | "storagePerDomainGb"
+        | "maxMailboxesPerDomain"
+        | "storagePerMailboxGb"
+        | "dnsManagement",
+      current: number,
+      base: number,
+      opts?: { max?: number; forceEditable?: boolean },
+    ) => {
+      const pricing = rp?.[key];
+      const editable = Boolean(
+        (opts?.forceEditable ?? true) &&
+          canUpgradePlesk &&
+          (pricing?.upgradePrice != null || pricing?.allowDowngrade || (pricing?.max ?? 0) > base),
+      );
+      return {
+        current,
+        min: base,
+        max: Math.max(base, opts?.max ?? pricing?.max ?? base),
+        step: pricing?.step ?? 1,
+        editable,
+      };
+    };
+    return {
+      maxDomains: lim("maxDomains", options.maxDomains ?? domainsBase, domainsBase),
+      storagePerDomainGb: lim(
+        "storagePerDomainGb",
+        options.storagePerDomainGb ?? basePleskStoragePerDomain,
+        basePleskStoragePerDomain,
+      ),
+      maxMailboxesPerDomain: lim(
+        "maxMailboxesPerDomain",
+        options.maxMailboxesPerDomain ?? Math.max(0, basePleskMailboxes),
+        Math.max(0, basePleskMailboxes),
+        { forceEditable: showPleskMailLimits },
+      ),
+      storagePerMailboxGb: lim(
+        "storagePerMailboxGb",
+        options.storagePerMailboxGb ?? Math.max(0, basePleskStoragePerMailbox),
+        Math.max(0, basePleskStoragePerMailbox),
+        { forceEditable: showPleskMailLimits },
+      ),
+      dnsManagement: lim(
+        "dnsManagement",
+        options.dnsManagement ?? Math.max(0, basePleskDns),
+        Math.max(0, basePleskDns),
+        { max: 1, forceEditable: showPleskDnsLimit && basePleskDns < 1 },
+      ),
+    };
+  }, [
+    canUpgradePlesk,
+    options,
+    product,
+    rp,
+    basePleskStoragePerDomain,
+    basePleskMailboxes,
+    basePleskStoragePerMailbox,
+    basePleskDns,
+    showPleskMailLimits,
+    showPleskDnsLimit,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -427,6 +505,121 @@ export function ShopProductOrderForm({
                   ? t("mailcowWordAliasSingular")
                   : t("mailcowWordAliasPlural"),
               )}
+          </p>
+        </section>
+      ) : null}
+
+      {isPlesk ? (
+        <section className="glass space-y-4 p-4">
+          <div>
+            <h3 className="text-sm font-semibold text-(--text-primary)">{t("pleskShopTitle")}</h3>
+            <p className="mt-1 text-xs text-(--text-muted)">{t("pleskShopDesc")}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  key: "maxDomains" as const,
+                  limit: pleskLimits.maxDomains,
+                  label: t("pleskLimitDomainsLabel"),
+                  unit: "",
+                },
+                {
+                  key: "storagePerDomainGb" as const,
+                  limit: pleskLimits.storagePerDomainGb,
+                  label: t("pleskLimitStoragePerDomainLabel"),
+                  unit: "GB",
+                },
+                ...(showPleskMailLimits
+                  ? ([
+                      {
+                        key: "maxMailboxesPerDomain" as const,
+                        limit: pleskLimits.maxMailboxesPerDomain,
+                        label: t("pleskLimitMailboxesPerDomainLabel"),
+                        unit: "",
+                      },
+                      {
+                        key: "storagePerMailboxGb" as const,
+                        limit: pleskLimits.storagePerMailboxGb,
+                        label: t("pleskLimitStoragePerMailboxLabel"),
+                        unit: "GB",
+                      },
+                    ] as const)
+                  : []),
+                ...(showPleskDnsLimit
+                  ? ([
+                      {
+                        key: "dnsManagement" as const,
+                        limit: pleskLimits.dnsManagement,
+                        label: t("pleskLimitDnsLabel"),
+                        unit: "",
+                      },
+                    ] as const)
+                  : []),
+              ] as const
+            ).map(({ key, limit, label, unit }) =>
+              limit.editable ? (
+                <SpecStepper
+                  key={key}
+                  label={label}
+                  value={limit.current}
+                  unit={unit}
+                  min={limit.min}
+                  max={limit.max}
+                  step={limit.step}
+                  onChange={(value) => {
+                    patch({ [key]: value });
+                    onUpgradeFieldEdited?.(key);
+                  }}
+                  invalid={!!invalidUpgradeFields?.[key]}
+                />
+              ) : (
+                <div key={key} className="rounded-xl border border-(--border) bg-(--bg-elevated) p-3">
+                  <p className="text-xs text-(--text-muted)">{label}</p>
+                  <p className="text-sm font-semibold text-(--text-primary)">
+                    {key === "dnsManagement"
+                      ? limit.current >= 1
+                        ? t("pleskDnsEnabledShort")
+                        : t("pleskDnsDisabledShort")
+                      : `${limit.current}${unit ? ` ${unit}` : ""}`}
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+          <p className="text-xs text-(--text-muted)">
+            {(() => {
+              let text = t("pleskProductPanelAllocationSummary")
+                .replace("{domains}", String(pleskLimits.maxDomains.current))
+                .replace(
+                  "{domainsWord}",
+                  pleskLimits.maxDomains.current === 1
+                    ? t("pleskWordDomainSingular")
+                    : t("pleskWordDomainPlural"),
+                )
+                .replace("{storage}", String(pleskLimits.storagePerDomainGb.current));
+              if (showPleskMailLimits) {
+                text +=
+                  " " +
+                  t("pleskProductPanelMailSummary")
+                    .replace("{mailboxes}", String(pleskLimits.maxMailboxesPerDomain.current))
+                    .replace(
+                      "{mailboxesWord}",
+                      pleskLimits.maxMailboxesPerDomain.current === 1
+                        ? t("pleskWordMailboxSingular")
+                        : t("pleskWordMailboxPlural"),
+                    )
+                    .replace("{mailboxStorage}", String(pleskLimits.storagePerMailboxGb.current));
+              }
+              if (showPleskDnsLimit) {
+                text +=
+                  " " +
+                  (pleskLimits.dnsManagement.current >= 1
+                    ? t("pleskProductPanelDnsEnabled")
+                    : t("pleskProductPanelDnsDisabled"));
+              }
+              return text;
+            })()}
           </p>
         </section>
       ) : null}

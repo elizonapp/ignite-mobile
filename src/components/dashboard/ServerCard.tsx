@@ -29,10 +29,14 @@ export function ServerCard({
   maintenance?: boolean;
 }) {
   const { t } = useI18n();
-  const isPloi = (server.providerType || "").toUpperCase() === "PLOI";
+  const provider = (server.providerType || "").toUpperCase();
+  const isPloi = provider === "PLOI";
+  const isPlesk = provider === "PLESK";
   const displayIp = isPloi
     ? server.ploiStats?.domain || server.providerAddress || server.ip
-    : server.ip;
+    : isPlesk
+      ? server.providerAddress || server.ip
+      : server.ip;
   const ramPct = server.ram.total > 0 ? Math.round((server.ram.used / server.ram.total) * 100) : 0;
   const diskPct = server.disk.total > 0 ? Math.round((server.disk.used / server.disk.total) * 100) : 0;
   const cpuPct = Math.min(100, Math.max(0, +server.cpu.used.toFixed(1)));
@@ -43,6 +47,19 @@ export function ServerCard({
   const storageStatus = server.ploiStats?.storageStatus ?? "unknown";
   const storageTone =
     storageStatus === "exceeded" ? "danger" : storageStatus === "warning" ? "warning" : "success";
+
+  const pleskDomains = `${server.pleskStats?.usedDomains ?? 0} / ${server.pleskStats?.maxDomains || "—"}`;
+  const pleskStorage = `${(server.pleskStats?.avgStorageUsedGb ?? 0).toFixed(1)} / ${server.pleskStats?.storagePerDomainGb || "—"} GB`;
+  const pleskMailOn = (server.pleskStats?.maxMailboxesPerDomain ?? -1) >= 0;
+  const pleskStoragePct =
+    (server.pleskStats?.storagePerDomainGb ?? 0) > 0
+      ? Math.min(
+          100,
+          Math.round(
+            ((server.pleskStats?.avgStorageUsedGb ?? 0) / (server.pleskStats?.storagePerDomainGb ?? 1)) * 100
+          )
+        )
+      : 0;
 
   const statusLabel: Record<ServerStatus, string> = {
     online: t("serverOnline"),
@@ -71,7 +88,12 @@ export function ServerCard({
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-(--text-muted)">
             <span className="inline-flex items-center gap-1">
-              <IconMapPin className="h-4 w-4 shrink-0" /> {server.location}
+              <IconMapPin className="h-4 w-4 shrink-0" />{" "}
+              {isPlesk
+                ? server.pleskStats?.locationLabel || server.location
+                : isPloi
+                  ? server.ploiStats?.locationLabel || server.location
+                  : server.location}
             </span>
             <span className="inline-flex items-center gap-1">
               <IconGlobe className="h-4 w-4 shrink-0" /> {displayIp}
@@ -97,7 +119,29 @@ export function ServerCard({
         </div>
       )}
 
-      {isPloi ? (
+      {isPlesk ? (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-(--text-muted)">{t("pleskDomains")}</span>
+            <span className="font-medium text-(--text-primary)">{pleskDomains}</span>
+          </div>
+          <div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-(--text-muted)">{t("pleskAvgStorage")}</span>
+              <span className="font-medium text-(--text-primary)">{pleskStorage}</span>
+            </div>
+            <Progress className="mt-1 h-1.5" value={pleskStoragePct} tone="primary" />
+          </div>
+          {pleskMailOn ? (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-(--text-muted)">{t("pleskMailboxes")}</span>
+              <span className="font-medium text-(--text-primary)">
+                {server.pleskStats?.usedMailboxes ?? 0}
+              </span>
+            </div>
+          ) : null}
+        </div>
+      ) : isPloi ? (
         <div className="mt-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-(--text-muted)">{t("ploiStorage")}</span>
@@ -114,8 +158,14 @@ export function ServerCard({
       )}
 
       <div className="mt-3 flex items-center justify-between text-sm text-(--text-muted)">
-        <span className="truncate pr-2">{isPloi ? (server.ploiStats?.locationLabel || server.location) : server.os}</span>
-        {!isPloi && (
+        <span className="truncate pr-2">
+          {isPloi
+            ? server.ploiStats?.locationLabel || server.location
+            : isPlesk
+              ? server.pleskStats?.locationLabel || server.location
+              : server.os}
+        </span>
+        {!isPloi && !isPlesk && (
           <span className="whitespace-nowrap">
             {t("serverUptime")} · {server.uptime}
           </span>

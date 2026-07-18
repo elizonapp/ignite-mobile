@@ -122,7 +122,7 @@ export function ShopConfiguratorSection({ category, pricing, className = "" }: S
   const steps = useMemo<ConfiguratorStep[]>(() => {
     const list: ConfiguratorStep[] = [];
     if (networkTiers.length > 1) list.push("filter");
-    if (providerType !== "PLOI" && providerType !== "MAILCOW") list.push("performance");
+    if (providerType !== "PLOI" && providerType !== "MAILCOW" && providerType !== "PLESK") list.push("performance");
     if (providerType === "PROXMOX") list.push("networkUpgrades");
     if (providerType === "PTERODACTYL" || providerType === "PROXMOX") list.push("system");
     list.push("access", "checkout");
@@ -179,8 +179,29 @@ export function ShopConfiguratorSection({ category, pricing, className = "" }: S
           speedUpgradeGbit: 0,
           environment: {},
           providerVariables: {},
+          maxDomains: detailed[0]?.maxDomains,
+          storagePerDomainGb:
+            typeof detailed[0]?.storagePerDomainGb === "number"
+              ? detailed[0].storagePerDomainGb
+              : providerType === "PLESK"
+                ? 5
+                : undefined,
+          maxMailboxesPerDomain: detailed[0]?.maxMailboxesPerDomain,
+          storagePerMailboxGb: detailed[0]?.storagePerMailboxGb,
+          dnsManagement:
+            typeof detailed[0]?.dnsManagement === "number"
+              ? Math.max(0, detailed[0].dnsManagement)
+              : undefined,
         });
-        setStep(getAvailableNetworkTiers(detailed).length > 1 ? "filter" : "performance");
+        const nextSteps: ConfiguratorStep[] = [];
+        if (getAvailableNetworkTiers(detailed).length > 1) nextSteps.push("filter");
+        if (providerType !== "PLOI" && providerType !== "MAILCOW" && providerType !== "PLESK") {
+          nextSteps.push("performance");
+        }
+        if (providerType === "PROXMOX") nextSteps.push("networkUpgrades");
+        if (providerType === "PTERODACTYL" || providerType === "PROXMOX") nextSteps.push("system");
+        nextSteps.push("access", "checkout");
+        setStep(nextSteps[0] ?? "access");
       } catch (err) {
         if (!cancelled) setError(resolveCaughtApiError(err, t));
       } finally {
@@ -673,6 +694,108 @@ export function ShopConfiguratorSection({ category, pricing, className = "" }: S
                       />
                     ))}
                   </div>
+                </div>
+              ) : null}
+              {providerType === "PLESK" && activeProduct ? (
+                <div className="space-y-3 rounded-xl border border-(--border) bg-(--bg-base) p-3">
+                  <p className="text-sm font-medium text-(--text-primary)">{t("pleskShopTitle")}</p>
+                  <p className="text-xs text-(--text-muted)">{t("pleskShopDesc")}</p>
+                  <SpecStepper
+                    label={t("pleskLimitDomainsLabel")}
+                    value={options.maxDomains ?? activeProduct.maxDomains ?? 1}
+                    unit=""
+                    min={activeProduct.maxDomains ?? 1}
+                    max={Math.max(
+                      activeProduct.maxDomains ?? 1,
+                      upgradeConfig?.resourcePricing?.maxDomains?.max ?? (activeProduct.maxDomains ?? 1) + 10,
+                    )}
+                    step={upgradeConfig?.resourcePricing?.maxDomains?.step ?? 1}
+                    onChange={(maxDomains) =>
+                      setOptions((prev) => (prev ? { ...prev, maxDomains } : prev))
+                    }
+                  />
+                  <SpecStepper
+                    label={t("pleskLimitStoragePerDomainLabel")}
+                    value={
+                      options.storagePerDomainGb ??
+                      (typeof activeProduct.storagePerDomainGb === "number"
+                        ? activeProduct.storagePerDomainGb
+                        : 5)
+                    }
+                    unit="GB"
+                    min={
+                      typeof activeProduct.storagePerDomainGb === "number"
+                        ? activeProduct.storagePerDomainGb
+                        : 5
+                    }
+                    max={Math.max(
+                      typeof activeProduct.storagePerDomainGb === "number"
+                        ? activeProduct.storagePerDomainGb
+                        : 5,
+                      upgradeConfig?.resourcePricing?.storagePerDomainGb?.max ??
+                        (typeof activeProduct.storagePerDomainGb === "number"
+                          ? activeProduct.storagePerDomainGb
+                          : 5) + 50,
+                    )}
+                    step={upgradeConfig?.resourcePricing?.storagePerDomainGb?.step ?? 1}
+                    onChange={(storagePerDomainGb) =>
+                      setOptions((prev) => (prev ? { ...prev, storagePerDomainGb } : prev))
+                    }
+                  />
+                  {(activeProduct.maxMailboxesPerDomain ?? -1) >= 0 ||
+                  (activeProduct.storagePerMailboxGb ?? -1) >= 0 ? (
+                    <>
+                      <SpecStepper
+                        label={t("pleskLimitMailboxesPerDomainLabel")}
+                        value={
+                          options.maxMailboxesPerDomain ??
+                          Math.max(0, activeProduct.maxMailboxesPerDomain ?? 0)
+                        }
+                        unit=""
+                        min={Math.max(0, activeProduct.maxMailboxesPerDomain ?? 0)}
+                        max={Math.max(
+                          Math.max(0, activeProduct.maxMailboxesPerDomain ?? 0),
+                          upgradeConfig?.resourcePricing?.maxMailboxesPerDomain?.max ??
+                            Math.max(0, activeProduct.maxMailboxesPerDomain ?? 0) + 50,
+                        )}
+                        step={upgradeConfig?.resourcePricing?.maxMailboxesPerDomain?.step ?? 1}
+                        onChange={(maxMailboxesPerDomain) =>
+                          setOptions((prev) => (prev ? { ...prev, maxMailboxesPerDomain } : prev))
+                        }
+                      />
+                      <SpecStepper
+                        label={t("pleskLimitStoragePerMailboxLabel")}
+                        value={
+                          options.storagePerMailboxGb ??
+                          Math.max(0, activeProduct.storagePerMailboxGb ?? 0)
+                        }
+                        unit="GB"
+                        min={Math.max(0, activeProduct.storagePerMailboxGb ?? 0)}
+                        max={Math.max(
+                          Math.max(0, activeProduct.storagePerMailboxGb ?? 0),
+                          upgradeConfig?.resourcePricing?.storagePerMailboxGb?.max ??
+                            Math.max(0, activeProduct.storagePerMailboxGb ?? 0) + 20,
+                        )}
+                        step={upgradeConfig?.resourcePricing?.storagePerMailboxGb?.step ?? 1}
+                        onChange={(storagePerMailboxGb) =>
+                          setOptions((prev) => (prev ? { ...prev, storagePerMailboxGb } : prev))
+                        }
+                      />
+                    </>
+                  ) : null}
+                  {(activeProduct.dnsManagement ?? -1) >= 0 ? (
+                    <SpecStepper
+                      label={t("pleskLimitDnsLabel")}
+                      value={options.dnsManagement ?? Math.max(0, activeProduct.dnsManagement ?? 0)}
+                      unit=""
+                      min={Math.max(0, activeProduct.dnsManagement ?? 0)}
+                      max={1}
+                      step={1}
+                      onChange={(dnsManagement) =>
+                        setOptions((prev) => (prev ? { ...prev, dnsManagement } : prev))
+                      }
+                    />
+                  ) : null}
                 </div>
               ) : null}
               {locations.length > 0 ? (

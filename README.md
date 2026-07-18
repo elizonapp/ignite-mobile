@@ -15,7 +15,7 @@ Changes are made in the monorepo and mirrored to `ignite-mobile` via **Mirror sy
 
 - **Runtime / bundler:** [Bun](https://bun.sh) 1.2.x
 - **UI:** React 19, Tailwind CSS 4, Radix UI
-- **Desktop:** Electron 41 + electron-builder
+- **Desktop:** Electron 43 + electron-builder 26
 - **Android:** Capacitor 8 (Node.js ≥ 22 for `cap sync`)
 - **API:** REST against elizon (`src/lib/api.ts`, resources under `src/api/`)
 

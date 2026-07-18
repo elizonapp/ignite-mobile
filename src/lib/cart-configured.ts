@@ -8,6 +8,7 @@ import type {
 } from "./shop-product-detail";
 import { numSpec } from "./shop-product-detail";
 import { productUsesMbResources } from "./product-pricing";
+import { calculatePleskSurcharge } from "./plesk-pricing";
 
 export function buildCustomizationPayload(
   product: ShopProductDetail,
@@ -18,6 +19,7 @@ export function buildCustomizationPayload(
   const baseVcores = numSpec(product.vcores, 2);
   const baseMemory = numSpec(product.memory, 4);
   const baseStorage = numSpec(product.storage, 50);
+  const isPlesk = product.provider?.type?.toUpperCase() === "PLESK";
 
   const customization: CartCustomization = {};
 
@@ -58,16 +60,60 @@ export function buildCustomizationPayload(
   }
 
   const rp = upgradeConfig?.resourcePricing;
+  let pleskSurcharge: number | undefined;
+
+  if (isPlesk) {
+    const baseStoragePerDomain =
+      typeof product.storagePerDomainGb === "number" ? product.storagePerDomainGb : 5;
+    const baseDns = typeof product.dnsManagement === "number" ? product.dnsManagement : -1;
+    const selectedStoragePerDomain = options.storagePerDomainGb ?? baseStoragePerDomain;
+    if (selectedStoragePerDomain > baseStoragePerDomain) {
+      customization.storagePerDomainGb = selectedStoragePerDomain - baseStoragePerDomain;
+    }
+    const selectedDns = options.dnsManagement ?? Math.max(0, baseDns);
+    if (baseDns >= 0 && selectedDns >= 1 && baseDns < 1) {
+      customization.dnsManagement = 1;
+    }
+    if (options.pleskLocation?.trim()) {
+      customization.location = options.pleskLocation.trim();
+    }
+    delete customization.domain;
+    if (rp) {
+      const baseLimits = {
+        maxDomains: product.maxDomains ?? 1,
+        storagePerDomainGb: baseStoragePerDomain,
+        maxMailboxesPerDomain: product.maxMailboxesPerDomain ?? -1,
+        storagePerMailboxGb: product.storagePerMailboxGb ?? -1,
+        dnsManagement: baseDns,
+      };
+      pleskSurcharge = calculatePleskSurcharge(
+        baseLimits,
+        {
+          maxDomains: options.maxDomains ?? baseLimits.maxDomains,
+          storagePerDomainGb: selectedStoragePerDomain,
+          maxMailboxesPerDomain: options.maxMailboxesPerDomain ?? baseLimits.maxMailboxesPerDomain,
+          storagePerMailboxGb: options.storagePerMailboxGb ?? baseLimits.storagePerMailboxGb,
+          dnsManagement: selectedDns,
+        },
+        rp,
+      );
+    }
+  }
+
   const storageStep = rp?.storage?.step ?? 10;
+  const usePleskSurcharge = pleskSurcharge != null;
   const customizationPrices = rp
     ? {
         vcores: rp.vcores?.upgradePrice,
         memory: rp.memory?.upgradePrice,
         storage: rp.storage?.upgradePrice != null ? rp.storage.upgradePrice / storageStep : undefined,
-        maxDomains: rp.maxDomains?.upgradePrice,
-        maxMailboxesPerDomain: rp.maxMailboxesPerDomain?.upgradePrice,
-        storagePerMailboxGb: rp.storagePerMailboxGb?.upgradePrice,
-        maxAliasesPerDomain: rp.maxAliasesPerDomain?.upgradePrice,
+        maxDomains: usePleskSurcharge ? undefined : rp.maxDomains?.upgradePrice,
+        maxMailboxesPerDomain: usePleskSurcharge ? undefined : rp.maxMailboxesPerDomain?.upgradePrice,
+        storagePerMailboxGb: usePleskSurcharge ? undefined : rp.storagePerMailboxGb?.upgradePrice,
+        maxAliasesPerDomain: usePleskSurcharge ? undefined : rp.maxAliasesPerDomain?.upgradePrice,
+        storagePerDomainGb: usePleskSurcharge ? undefined : rp.storagePerDomainGb?.upgradePrice,
+        dnsManagement: usePleskSurcharge ? undefined : rp.dnsManagement?.upgradePrice,
+        pleskSurcharge: usePleskSurcharge && (pleskSurcharge ?? 0) > 0 ? pleskSurcharge : undefined,
       }
     : undefined;
 
@@ -90,6 +136,9 @@ export function computeInvalidUpgradeFieldFlags(
   const baseVcores = numSpec(product.vcores, 2);
   const baseMemory = numSpec(product.memory, 4);
   const baseStorage = numSpec(product.storage, 50);
+  const baseStoragePerDomain =
+    typeof product.storagePerDomainGb === "number" ? product.storagePerDomainGb : 5;
+  const baseDns = typeof product.dnsManagement === "number" ? product.dnsManagement : -1;
   const flagged: InvalidUpgradeFields = {
     vcores: options.vcores > baseVcores,
     memory: options.memory > baseMemory,
@@ -101,6 +150,8 @@ export function computeInvalidUpgradeFieldFlags(
       (options.storagePerMailboxGb ?? 0) > (product.storagePerMailboxGb ?? 0),
     maxAliasesPerDomain:
       (options.maxAliasesPerDomain ?? 0) > (product.maxAliasesPerDomain ?? 0),
+    storagePerDomainGb: (options.storagePerDomainGb ?? 0) > baseStoragePerDomain,
+    dnsManagement: baseDns >= 0 && (options.dnsManagement ?? 0) >= 1 && baseDns < 1,
   };
   if (
     !flagged.vcores &&
@@ -109,7 +160,9 @@ export function computeInvalidUpgradeFieldFlags(
     !flagged.maxDomains &&
     !flagged.maxMailboxesPerDomain &&
     !flagged.storagePerMailboxGb &&
-    !flagged.maxAliasesPerDomain
+    !flagged.maxAliasesPerDomain &&
+    !flagged.storagePerDomainGb &&
+    !flagged.dnsManagement
   ) {
     return null;
   }
