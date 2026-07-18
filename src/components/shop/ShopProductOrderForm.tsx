@@ -57,8 +57,11 @@ function isResourceEditable(
         ? product.allowRamCustomization
         : product.allowStorageCustomization;
   const pricing = upgradeConfig?.resourcePricing?.[key];
+  const resourceUpgradesAllowed =
+    upgradeConfig?.upgradeMode == null || upgradeConfig.upgradeMode === "freeWithinLimits";
   return Boolean(
-    (allowFlag || upgradeConfig?.allowPrePurchaseUpgrade) &&
+    resourceUpgradesAllowed &&
+      (allowFlag || upgradeConfig?.allowPrePurchaseUpgrade) &&
       (pricing?.upgradePrice != null || pricing?.allowDowngrade),
   );
 }
@@ -150,7 +153,10 @@ export function ShopProductOrderForm({
   const speedMonthlyPrice =
     speedOptions.find((o) => o.gbit === options.speedUpgradeGbit)?.priceGross ?? 0;
 
-  const canUpgradeMailcow = upgradeConfig?.allowPrePurchaseUpgrade === true;
+  const resourceUpgradesAllowed =
+    upgradeConfig?.upgradeMode == null || upgradeConfig.upgradeMode === "freeWithinLimits";
+  const canUpgradeMailcow =
+    resourceUpgradesAllowed && upgradeConfig?.allowPrePurchaseUpgrade === true;
   const mailcowLimits = useMemo(() => {
     const domainsBase = product.maxDomains ?? 1;
     const mailboxesBase = product.maxMailboxesPerDomain ?? 5;
@@ -191,7 +197,8 @@ export function ShopProductOrderForm({
     };
   }, [canUpgradeMailcow, options, product, rp]);
 
-  const canUpgradePlesk = upgradeConfig?.allowPrePurchaseUpgrade === true;
+  const canUpgradePlesk =
+    resourceUpgradesAllowed && upgradeConfig?.allowPrePurchaseUpgrade === true;
   const basePleskStoragePerDomain =
     typeof product.storagePerDomainGb === "number" ? product.storagePerDomainGb : 5;
   const basePleskDns = typeof product.dnsManagement === "number" ? product.dnsManagement : -1;

@@ -115,6 +115,7 @@ export type ShopProductDetail = {
 };
 
 export type ShopUpgradeConfig = {
+  upgradeMode?: "disabled" | "packagesOnly" | "freeWithinLimits";
   allowPrePurchaseUpgrade?: boolean;
   configuratorEnabled?: boolean;
   resourcePricing?: Record<
