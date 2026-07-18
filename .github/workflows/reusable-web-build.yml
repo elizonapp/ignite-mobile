@@ -1,4 +1,4 @@
-# Wiederverwendbar: Monorepo (mobile-app.yml) + Standalone (build.yml)
+# Standalone (ignite-mobile) + sync source for .github/workflows/reusable-mobile-web-build.yml
 name: Reusable — web build
 
 on:
