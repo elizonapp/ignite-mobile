@@ -55,6 +55,7 @@ function getFormOwnedSpecKeys(
     owned.add("storagePerMailbox");
     owned.add("storagePerMailboxGb");
     owned.add("dnsManagement");
+    owned.add("location");
   }
   if (type === "PROXMOX" && (product.speedUpgradeOptions?.length || product.maxTrafficAddonTb)) {
     owned.add("bandwidth");

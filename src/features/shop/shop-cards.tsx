@@ -4,6 +4,10 @@ import { useI18n } from "../../i18n";
 import { isElizonPlusCustomerUiVisible } from "../../lib/elizon-plus";
 import type { AuthUser } from "../../lib/types";
 import {
+  formatResolvedFieldValue,
+  hasResolvedFieldDisplayValue,
+} from "../../components/provider/format-field";
+import {
   countPlansInSubtree,
   findLowestMonthlyPrice,
   pickCategoryImage,
@@ -333,9 +337,39 @@ export function ShopProductCard({
 
       {(product.schemaCardFields?.length || product.vcores || product.memory || product.storage) ? (
         <div className="flex flex-wrap justify-center gap-2">
-          {product.schemaCardFields?.map((field) => (
-            <Spec key={`${field.label}-${field.value}`} label={`${field.label}: ${field.value}`} />
-          ))}
+          {product.schemaCardFields?.map((field) => {
+            const display = formatResolvedFieldValue(
+              {
+                key: field.key,
+                format: (field.format as "limit" | "number" | "storage_gb" | "text" | undefined) ?? "text",
+                value: field.value,
+                formatted: field.formatted ?? (typeof field.value === "string" ? field.value : ""),
+              },
+              t,
+            );
+            if (!display) return null;
+            if (
+              !hasResolvedFieldDisplayValue({
+                key: field.key,
+                format: (field.format as "limit" | "number" | "storage_gb" | "text" | undefined) ?? "text",
+                value: field.value,
+                formatted: field.formatted ?? "",
+              })
+            ) {
+              return null;
+            }
+            const label =
+              (field.labelKey ? t(field.labelKey) : null) ||
+              field.label ||
+              field.key ||
+              "";
+            return (
+              <Spec
+                key={`${field.key ?? label}-${display}`}
+                label={label ? `${label}: ${display}` : display}
+              />
+            );
+          })}
           {!!product.vcores && !product.schemaCardFields?.length ? (
             <Spec icon={<Cpu className="size-3" />} label={`${product.vcores} vCPU`} />
           ) : null}

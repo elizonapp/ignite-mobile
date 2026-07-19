@@ -28,7 +28,14 @@ export type ShopProduct = {
   highlights?: string[];
   soldOut?: boolean;
   backgroundImageUrls?: string[];
-  schemaCardFields?: Array<{ label: string; value: string }>;
+  schemaCardFields?: Array<{
+    key?: string;
+    label?: string;
+    labelKey?: string;
+    value?: unknown;
+    format?: string;
+    formatted?: string;
+  }>;
   monthlyOffer?: {
     discountPercent: number;
     couponCode: string | null;
