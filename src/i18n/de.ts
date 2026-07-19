@@ -480,8 +480,6 @@ export const de: Dict = {
   billingContractEarlyTerminationFee: "Auflösungsentgelt",
   billingContractLegalDocs: "Rechtsdokumente (Abschluss)",
   billingContractLegalDocsEmpty: "Keine gespeicherten Rechtsdokumente für diesen Abschluss vorhanden.",
-  billingContractDpaDocs: "AVV-Dokumente",
-  billingContractDpaEmpty: "Kein aktiver AVV für Ihr Geschäftskonto.",
   billingMonthsShort: "Monate",
   billingDaysShort: "Tage",
   serverFirewall: "Firewall",

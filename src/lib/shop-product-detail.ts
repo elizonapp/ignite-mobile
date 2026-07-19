@@ -64,6 +64,10 @@ export type ShopProductDetail = {
   maxAliasesPerDomain?: number;
   storagePerDomainGb?: number;
   dnsManagement?: number;
+  /** Ploi entitlements */
+  storageGb?: number;
+  databases?: number;
+  domains?: number;
   allowCpuCustomization?: boolean;
   allowRamCustomization?: boolean;
   allowStorageCustomization?: boolean;
@@ -175,6 +179,8 @@ export type ProductProviderOptions = {
   appType?: string;
   domainMode?: "owned" | "external";
   storageGb?: number;
+  databases?: number;
+  domains?: number;
   /** Plesk shared hosting */
   storagePerDomainGb?: number;
   dnsManagement?: number;

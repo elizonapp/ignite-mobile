@@ -704,33 +704,6 @@ export function ServiceBillingPanel({
                 </ul>
               )}
             </div>
-
-            {contractDocs.dpa ? (
-              <div>
-                <h4 className="text-xs font-semibold text-(--text-secondary)">{t("billingContractDpaDocs")}</h4>
-                {contractDocs.dpa.documents.length === 0 ? (
-                  <p className="mt-1 text-xs text-(--text-muted)">{t("billingContractDpaEmpty")}</p>
-                ) : (
-                  <ul className="mt-2 space-y-2">
-                    {contractDocs.dpa.documents.map((doc) => (
-                      <li
-                        key={doc.id}
-                        className="flex items-center justify-between gap-2 rounded-[var(--radius-control)] border border-(--border) bg-(--surface-soft) px-3 py-2"
-                      >
-                        <span className="truncate text-xs text-(--text-primary)">{doc.fileName}</span>
-                        <button
-                          type="button"
-                          onClick={() => openDocument(doc.downloadUrl, doc.fileName)}
-                          className="shrink-0 text-xs font-medium text-(--elizon-primary)"
-                        >
-                          {t("billingDownload")}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ) : null}
           </div>
         ) : (
           <p className="text-xs text-(--text-muted)">{t("billingContractLegalDocsEmpty")}</p>

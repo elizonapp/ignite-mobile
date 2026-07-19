@@ -48,7 +48,20 @@ export type CartItem = {
   providerVariables?: Record<string, string>;
   customization?: CartCustomization;
   customizationPrices?: Record<string, number | undefined>;
-  configuredSpecs?: { vcores: number; memory: number; storage: number };
+  configuredSpecs?: {
+    vcores?: number;
+    memory?: number;
+    storage?: number;
+    maxDomains?: number;
+    storagePerDomainGb?: number;
+    maxMailboxesPerDomain?: number;
+    storagePerMailboxGb?: number;
+    maxAliasesPerDomain?: number;
+    dnsManagement?: number;
+    storageGb?: number;
+    databases?: number;
+    domains?: number;
+  };
   resourceSpecsUnit?: "mb";
   billingOptions?: {
     billingDiscountPerMonth?: number;

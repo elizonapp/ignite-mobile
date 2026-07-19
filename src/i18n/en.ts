@@ -476,8 +476,6 @@ export const en = {
   billingContractEarlyTerminationFee: "Early termination fee",
   billingContractLegalDocs: "Legal documents (checkout)",
   billingContractLegalDocsEmpty: "No stored legal documents for this checkout.",
-  billingContractDpaDocs: "DPA documents",
-  billingContractDpaEmpty: "No active DPA for your business account.",
   billingMonthsShort: "months",
   billingDaysShort: "days",
   serverFirewall: "Firewall",

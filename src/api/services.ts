@@ -67,10 +67,6 @@ export type ServiceContractDocuments = {
     startedAt: string;
   };
   legalDocuments: Array<{ filename: string; downloadUrl: string }>;
-  dpa?: {
-    hasActiveAgreement: boolean;
-    documents: Array<{ id: string; fileName: string; status: string; downloadUrl: string; createdAt: string }>;
-  } | null;
 };
 
 export class ServicesResource extends ResourceClient {

@@ -117,14 +117,33 @@ export function buildCustomizationPayload(
       }
     : undefined;
 
+  const providerType = product.provider?.type?.toUpperCase() ?? "";
+  const configuredSpecs =
+    providerType === "PLESK" || providerType === "MAILCOW"
+      ? {
+          maxDomains: options.maxDomains ?? product.maxDomains ?? 0,
+          storagePerDomainGb: options.storagePerDomainGb ?? product.storagePerDomainGb ?? 0,
+          maxMailboxesPerDomain: options.maxMailboxesPerDomain ?? product.maxMailboxesPerDomain,
+          storagePerMailboxGb: options.storagePerMailboxGb ?? product.storagePerMailboxGb,
+          maxAliasesPerDomain: options.maxAliasesPerDomain ?? product.maxAliasesPerDomain,
+          dnsManagement: options.dnsManagement ?? product.dnsManagement,
+        }
+      : providerType === "PLOI"
+        ? {
+            storageGb: options.storageGb ?? product.storageGb ?? 0,
+            databases: options.databases ?? product.databases ?? 0,
+            domains: options.domains ?? product.domains ?? 0,
+          }
+        : {
+            vcores: options.vcores,
+            memory: options.memory,
+            storage: options.storage,
+          };
+
   return {
     customization: Object.keys(customization).length ? customization : undefined,
     customizationPrices,
-    configuredSpecs: {
-      vcores: options.vcores,
-      memory: options.memory,
-      storage: options.storage,
-    },
+    configuredSpecs,
     ...(usesMb ? { resourceSpecsUnit: "mb" as const } : {}),
   };
 }
