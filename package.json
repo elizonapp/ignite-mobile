@@ -14,6 +14,8 @@
     "dev": "bun --hot src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "build": "bun run build.ts",
+    "ios:sync": "bunx cap sync ios",
+    "ios:build": "bun run build && bunx cap sync ios",
     "icons:desktop": "bun scripts/prepare-app-icons.mjs",
     "desktop:dev": "bun run build && electron .",
     "desktop:run": "bun run build && electron .",
