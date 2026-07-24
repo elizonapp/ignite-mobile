@@ -65,14 +65,26 @@ async function sourcePipeline() {
   });
 }
 
-async function writePng(pipeline, size, outFile, fit = "contain") {
+/**
+ * @param {import("sharp").Sharp} pipeline
+ * @param {number} size
+ * @param {string} outFile
+ * @param {{ fit?: keyof import("sharp").FitEnum, opaque?: boolean }} [opts]
+ */
+async function writePng(pipeline, size, outFile, opts = {}) {
+  const { fit = "contain", opaque = false } = opts;
   await mkdir(path.dirname(outFile), { recursive: true });
-  await pipeline
+  let img = pipeline
     .clone()
-    .resize(size, size, { fit, background: iconBg })
-    .png()
-    .toFile(outFile);
-  console.log(`[icons] Wrote ${path.relative(root, outFile)} (${size}px)`);
+    .resize(size, size, { fit, background: iconBg });
+
+  // App Store rejects 1024 icons with any alpha channel (ITMS-90717).
+  if (opaque) {
+    img = img.flatten({ background: iconBg }).removeAlpha();
+  }
+
+  await img.png().toFile(outFile);
+  console.log(`[icons] Wrote ${path.relative(root, outFile)} (${size}px${opaque ? ", opaque" : ""})`);
 }
 
 const androidForegroundSizes = {
@@ -93,9 +105,14 @@ const androidLegacySizes = {
 
 const pipeline = await sourcePipeline();
 
-await writePng(pipeline, 512, path.join(buildDir, "icon.png"));
-await writePng(pipeline, 180, path.join(root, "public/apple-touch-icon.png"));
-await writePng(pipeline, 1024, path.join(root, "ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"));
+await writePng(pipeline, 512, path.join(buildDir, "icon.png"), { opaque: true });
+await writePng(pipeline, 180, path.join(root, "public/apple-touch-icon.png"), { opaque: true });
+await writePng(
+  pipeline,
+  1024,
+  path.join(root, "ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"),
+  { opaque: true },
+);
 
 for (const [folder, size] of Object.entries(androidForegroundSizes)) {
   await writePng(
