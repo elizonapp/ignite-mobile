@@ -18,8 +18,8 @@ install_bun() {
     return 0
   fi
 
+  # homebrew/core ships bun; oven-sh/bun is blocked by Homebrew tap trust on Xcode Cloud.
   echo "==> Installing Bun via Homebrew"
-  brew tap oven-sh/bun
   brew install bun
   hash -r || true
 
@@ -43,7 +43,9 @@ if ! command -v bun >/dev/null 2>&1; then
 fi
 
 echo "==> Installing JS dependencies"
-bun install --frozen-lockfile
+# --no-peer: bun-plugin-tailwind peers on the npm package "bun", whose postinstall
+# pulls @oven/bun-darwin-* and fails on Xcode Cloud. The runtime is already from brew.
+bun install --frozen-lockfile --no-peer
 
 PLUGIN_PATH="node_modules/capacitor-secure-storage-plugin"
 if [[ ! -d "$PLUGIN_PATH" ]]; then
