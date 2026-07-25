@@ -43,15 +43,21 @@ if ! command -v bun >/dev/null 2>&1; then
 fi
 
 echo "==> Installing JS dependencies"
-# --no-peer: bun-plugin-tailwind peers on the npm package "bun", whose postinstall
-# pulls @oven/bun-darwin-* and fails on Xcode Cloud. The runtime is already from brew.
-bun install --frozen-lockfile --no-peer
+# Omit peers + ignore scripts: bun-plugin-tailwind peers on the npm package "bun",
+# which is already in older lockfiles and whose postinstall fails on Xcode Cloud
+# (@oven/bun-darwin-*). Runtime Bun comes from Homebrew above.
+bun install --frozen-lockfile --omit=peer --ignore-scripts
 
 PLUGIN_PATH="node_modules/capacitor-secure-storage-plugin"
 if [[ ! -d "$PLUGIN_PATH" ]]; then
   echo "ERROR: ${PLUGIN_PATH} missing after bun install (required by CapApp-SPM)"
   ls -la node_modules 2>/dev/null | head -n 50 || true
   exit 1
+fi
+
+if [[ -d node_modules/bun ]]; then
+  echo "==> Removing unused npm package bun (runtime is Homebrew)"
+  rm -rf node_modules/bun node_modules/@oven
 fi
 
 echo "==> Building web assets"

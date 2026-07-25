@@ -1,3 +1,9 @@
 [serve.static]
 plugins = ["bun-plugin-tailwind"]
 env = "BUN_PUBLIC_*"
+
+# bun-plugin-tailwind peers on the npm package "bun". Auto-installing that
+# package fails on Xcode Cloud (optional @oven/bun-darwin-* postinstall).
+# The Bun runtime is provided by the host / Homebrew, not by node_modules.
+[install]
+peer = false
