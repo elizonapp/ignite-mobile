@@ -17,7 +17,7 @@ dist
 coverage
 *.lcov
 
-bun.lock
+# bun.lock must stay tracked for reproducible CI (Xcode Cloud + GitHub Actions)
 
 # logs
 logs
