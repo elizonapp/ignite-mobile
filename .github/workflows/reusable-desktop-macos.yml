@@ -30,11 +30,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop-macos
           path: |
             ${{ inputs.project-dir }}/release/ignite-desktop-*.dmg
             ${{ inputs.project-dir }}/release/latest-mac.yml
-          retention-days: 14
+          retention-days: 5
           if-no-files-found: error

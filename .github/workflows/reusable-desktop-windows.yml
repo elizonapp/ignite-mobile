@@ -41,28 +41,28 @@ jobs:
             throw 'NSIS installer (ignite-desktop-setup-*.exe) not found in release/'
           }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop-windows-portable
           path: ${{ inputs.project-dir }}/release/ignite-desktop-portable-*.exe
-          retention-days: 30
+          retention-days: 7
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop-windows-installer
           path: |
             ${{ inputs.project-dir }}/release/ignite-desktop-setup-*.exe
             ${{ inputs.project-dir }}/release/latest.yml
             ${{ inputs.project-dir }}/release/*.blockmap
-          retention-days: 30
+          retention-days: 7
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop-windows
           path: |
             ${{ inputs.project-dir }}/release/ignite-desktop-setup-*.exe
             ${{ inputs.project-dir }}/release/ignite-desktop-portable-*.exe
-          retention-days: 14
+          retention-days: 5
           if-no-files-found: warn

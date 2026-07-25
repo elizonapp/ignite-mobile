@@ -29,11 +29,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: desktop-linux
           path: |
             ${{ inputs.project-dir }}/release/ignite-desktop-*.AppImage
             ${{ inputs.project-dir }}/release/latest-linux.yml
-          retention-days: 14
+          retention-days: 5
           if-no-files-found: error
