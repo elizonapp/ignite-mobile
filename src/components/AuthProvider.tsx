@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { resolveApiError } from '../api/resolve-error';
 import { resolveCaughtApiError } from '../api/resolve-caught-error';
 import { ApiError, api, setSessionToken, clearSessionToken, getSessionToken, initSessionToken } from '../lib/api';
+import { unregisterMobilePushOnLogout } from '../lib/push-notifications';
 import { mobileTranslate } from '../i18n/mobile-translate';
 import type { RegisterPayload } from "../features/auth/use-register";
 import type { AuthUser } from "../lib/types";
@@ -153,6 +154,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const logout = useCallback(async () => {
+    try {
+      await unregisterMobilePushOnLogout();
+    } catch {
+      // ignore push cleanup failures
+    }
     try {
       await api.auth.logout();
     } catch {

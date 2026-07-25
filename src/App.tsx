@@ -50,6 +50,11 @@ import { StorageScreen } from './screens/StorageScreen';
 import { SupportScreen } from './screens/SupportScreen';
 import { VrouteScreen } from './screens/VrouteScreen';
 import { getDesktopOS, getMobileOS, isDesktopClient, isElectron, isMobileNative } from './lib/platform';
+import {
+  reconcileMobilePushWithOsPermission,
+  setPushNavigateHandler,
+  syncMobilePushAfterAuth,
+} from './lib/push-notifications';
 
 import "./index.css";
 
@@ -151,6 +156,36 @@ function AuthenticatedShell() {
   const { route, navigate } = useRouter();
   const { tab, setTab } = useTab();
   const mobileNative = isMobileNative();
+
+  useEffect(() => {
+    void syncMobilePushAfterAuth();
+  }, []);
+
+  // Re-check after returning from system settings (esp. Android notification master switch).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void reconcileMobilePushWithOsPermission();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, []);
+
+  useEffect(() => {
+    setPushNavigateHandler(({ serviceId }) => {
+      if (serviceId) {
+        navigate({ name: "server", id: serviceId });
+        return;
+      }
+      navigate({ name: "dashboard" });
+    });
+    return () => setPushNavigateHandler(null);
+  }, [navigate]);
 
   return (
     <>

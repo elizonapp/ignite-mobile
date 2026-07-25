@@ -542,6 +542,17 @@ export const en = {
   settingsPrivacyHint: "Export, audit log and account deletion",
   settingsVouchersHint: "Vouchers and auto top-up in wallet",
   settingsNotifications: "Notifications",
+  settingsPushNotifications: "Push notifications",
+  settingsPushNotificationsDesc: "We send you notifications about new activity on your account.",
+  settingsPushNotificationsDenied:
+    "Push notifications are disabled in system settings. Please enable them there for elizon.",
+  settingsPushNotificationsDeniedAndroid:
+    "Push notifications are disabled on Android. Please enable them under Settings → Apps → elizon → Notifications.",
+  settingsPushNotificationsDeniedIos:
+    "Push notifications are disabled on iOS. Please enable them under Settings → elizon → Notifications.",
+  settingsPushNotificationsDeniedDesktop:
+    "Push notifications are disabled in the system. Please enable them in Windows or Linux notification settings for elizon.",
+  settingsPushNotificationsUnsupported: "Push notifications are not available on this device.",
   settingsEmailNotifications: "Email notifications",
   settingsEmailNotificationsDesc: "Receive email updates about your account",
   settingsServicePowerActionEmail: "Power action emails",

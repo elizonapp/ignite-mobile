@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, nativeImage, session } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { startDistServer, PACKAGED_DIST_PORT } from "./static-server.js";
@@ -73,6 +73,14 @@ function createWindow() {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    if (permission === "notifications") {
+      callback(true);
+      return;
+    }
+    callback(false);
+  });
 
   ipcMain.handle("updater:check", async () => {
     if (!app.isPackaged || !isAutoUpdateSupported()) {

@@ -545,6 +545,18 @@ export const de: Dict = {
   settingsPrivacyHint: "Export, Audit-Log und Kontolöschung",
   settingsVouchersHint: "Gutscheine und Auto-Aufladung im Wallet",
   settingsNotifications: "Benachrichtigungen",
+  settingsPushNotifications: "Push-Benachrichtigungen",
+  settingsPushNotificationsDesc:
+    "Wir senden Ihnen Benachrichtigungen zu neuen Aktivitäten auf Ihrem Konto.",
+  settingsPushNotificationsDenied:
+    "Push-Benachrichtigungen sind in den Systemeinstellungen deaktiviert. Bitte aktivieren Sie sie dort für elizon.",
+  settingsPushNotificationsDeniedAndroid:
+    "Push-Benachrichtigungen sind unter Android deaktiviert. Bitte aktivieren Sie sie unter Einstellungen → Apps → elizon → Benachrichtigungen.",
+  settingsPushNotificationsDeniedIos:
+    "Push-Benachrichtigungen sind unter iOS deaktiviert. Bitte aktivieren Sie sie unter Einstellungen → elizon → Mitteilungen.",
+  settingsPushNotificationsDeniedDesktop:
+    "Push-Benachrichtigungen sind im System deaktiviert. Bitte aktivieren Sie sie in den Benachrichtigungseinstellungen von Windows oder Linux für elizon.",
+  settingsPushNotificationsUnsupported: "Push-Benachrichtigungen sind auf diesem Gerät nicht verfügbar.",
   settingsEmailNotifications: "E-Mail-Benachrichtigungen",
   settingsEmailNotificationsDesc: "E-Mail-Updates über Ihr Konto erhalten",
   settingsServicePowerActionEmail: "Power-Aktionen per E-Mail",

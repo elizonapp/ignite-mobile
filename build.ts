@@ -176,7 +176,7 @@ if (sanitizedHtml !== indexHtml) {
   await Bun.write(indexPath, sanitizedHtml);
 }
 
-const publicAssets = ["favicon.ico", "apple-touch-icon.png"];
+const publicAssets = ["favicon.ico", "apple-touch-icon.png", "push-sw.js"];
 for (const asset of publicAssets) {
   const src = path.join(process.cwd(), "public", asset);
   if (existsSync(src)) {

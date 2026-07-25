@@ -59,4 +59,34 @@ export class UserResource extends ResourceClient {
   generateSupportPin() {
     return this.post<SupportPinApiResponse>("/api/user/support-pin").then(mapSupportPinResponse);
   }
+
+  registerDeviceToken(body: {
+    deviceToken: string;
+    platform?: string;
+    channel?: "MOBILE_NATIVE" | "ELECTRON";
+  }) {
+    return this.post<{ success: boolean }>("/api/user/push/device-token", body);
+  }
+
+  disableDeviceToken(deviceToken: string) {
+    return this.delete<{ success: boolean }>("/api/user/push/device-token", undefined, { deviceToken });
+  }
+
+  pushPublicKey() {
+    return this.get<{ success: boolean; publicKey: string | null }>("/api/user/push/public-key");
+  }
+
+  subscribeWebPush(body: {
+    platform?: string;
+    subscription: {
+      endpoint?: string;
+      keys?: { auth?: string; p256dh?: string };
+    };
+  }) {
+    return this.post<{ success: boolean }>("/api/user/push/subscribe", body);
+  }
+
+  unsubscribeWebPush(endpoint: string) {
+    return this.delete<{ success: boolean }>("/api/user/push/subscribe", undefined, { endpoint });
+  }
 }

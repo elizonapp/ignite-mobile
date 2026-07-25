@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { useAuth } from "../../../components/AuthProvider";
@@ -7,19 +7,46 @@ import { useI18n } from "../../../i18n";
 import { resolveApiError } from "../../../api/resolve-error";
 import { resolveCaughtApiError } from "../../../api/resolve-caught-error";
 import { api } from "../../../lib/api";
+import {
+  canUseClientPush,
+  disableMobilePush,
+  enableMobilePush,
+  getMobilePushPreference,
+  getNativePushPermissionState,
+  getPushDeniedMessageKey,
+} from "../../../lib/push-notifications";
 import { SettingsSection, SettingsSubView, SettingsToggleRow } from "../components";
 
 export function NotificationsSettingsView({ onBack }: { onBack: () => void }) {
   const { t } = useI18n();
   const { user, refresh } = useAuth();
   const { show } = useToast();
+  const showPushToggle = canUseClientPush();
 
   const [emailNotifications, setEmailNotifications] = useState(Boolean(user?.emailNotifications));
   const [servicePowerActionEmail, setServicePowerActionEmail] = useState(Boolean(user?.servicePowerActionEmailOptIn));
   const [loginNotification, setLoginNotification] = useState(Boolean(user?.loginNotificationEmailOptIn));
   const [notificationSound, setNotificationSound] = useState(user?.notificationSoundEnabled !== false);
   const [newsletterOptIn, setNewsletterOptIn] = useState(Boolean(user?.newsletterOptIn));
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushPermission, setPushPermission] = useState<"granted" | "denied" | "prompt" | "unsupported">("prompt");
   const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!showPushToggle) return;
+    void (async () => {
+      const permission = await getNativePushPermissionState();
+      setPushPermission(permission);
+      if (permission !== "granted") {
+        if (getMobilePushPreference()) {
+          await disableMobilePush();
+        }
+        setPushEnabled(false);
+        return;
+      }
+      setPushEnabled(getMobilePushPreference());
+    })();
+  }, [showPushToggle]);
 
   const patchSetting = useCallback(
     async (key: string, body: Parameters<typeof api.settings.patchUserSettings>[0], apply: () => void) => {
@@ -40,6 +67,51 @@ export function NotificationsSettingsView({ onBack }: { onBack: () => void }) {
     },
     [refresh, show, t],
   );
+
+  const togglePush = async () => {
+    if (!showPushToggle) return;
+
+    const deniedKey = getPushDeniedMessageKey();
+
+    // Cannot enable while OS permission is denied (system dialog will not reappear).
+    if (!pushEnabled && pushPermission === "denied") {
+      show(t(deniedKey), "error");
+      return;
+    }
+
+    setBusy("push");
+    try {
+      if (pushEnabled) {
+        await disableMobilePush();
+        setPushEnabled(false);
+        setPushPermission(await getNativePushPermissionState());
+        return;
+      }
+
+      const permissionBefore = await getNativePushPermissionState();
+      if (permissionBefore === "denied") {
+        setPushPermission("denied");
+        setPushEnabled(false);
+        show(t(deniedKey), "error");
+        return;
+      }
+
+      const result = await enableMobilePush();
+      setPushPermission(result.permission);
+      setPushEnabled(result.ok);
+      if (!result.ok) {
+        if (result.permission === "denied") {
+          show(t(getPushDeniedMessageKey()), "error");
+        } else if (result.permission === "unsupported") {
+          show(t("settingsPushNotificationsUnsupported"), "error");
+        }
+      }
+    } catch (err) {
+      show(resolveCaughtApiError(err, t), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const subscribeNewsletter = async () => {
     setBusy("newsletter");
@@ -62,6 +134,25 @@ export function NotificationsSettingsView({ onBack }: { onBack: () => void }) {
   return (
     <SettingsSubView title={t("settingsNotifications")} onBack={onBack}>
       <SettingsSection title={t("settingsNotifications")}>
+        {showPushToggle && (
+          <SettingsToggleRow
+            label={t("settingsPushNotifications")}
+            description={
+              pushPermission === "denied"
+                ? t(getPushDeniedMessageKey())
+                : pushPermission === "unsupported"
+                  ? t("settingsPushNotificationsUnsupported")
+                  : t("settingsPushNotificationsDesc")
+            }
+            checked={pushEnabled && pushPermission === "granted"}
+            disabled={
+              busy === "push" ||
+              pushPermission === "unsupported" ||
+              pushPermission === "denied"
+            }
+            onChange={() => void togglePush()}
+          />
+        )}
         <SettingsToggleRow
           label={t("settingsEmailNotifications")}
           description={t("settingsEmailNotificationsDesc")}

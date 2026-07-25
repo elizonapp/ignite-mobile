@@ -88,6 +88,18 @@ Debug APK: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 The Capacitor CLI requires **Node.js ≥ 22**. In CI, the Android build runs `./gradlew assembleDebug` inside the `android/` directory after `cap sync`.
 
+## Native push notifications (iOS / Android)
+
+Push uses `@capacitor/push-notifications` with FCM (Android) and APNs (iOS). Users enable it under **Einstellungen → Benachrichtigungen**; the iOS system dialog uses:
+
+> Wir senden Ihnen Benachrichtigungen zu neuen Aktivitäten auf Ihrem Konto.
+
+Credential templates and ops steps: [`docs/PUSH_SETUP.md`](docs/PUSH_SETUP.md).
+
+Required local file after Firebase setup (Android FCM):
+
+- `android/app/google-services.json` (gitignored — see `docs/PUSH_SETUP.md`)
+
 ## Version
 
 The displayed version combines semver from `package.json` with the git commit:
