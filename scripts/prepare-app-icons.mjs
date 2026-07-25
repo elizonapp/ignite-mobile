@@ -1,68 +1,20 @@
 #!/usr/bin/env bun
 /**
- * Generates platform app icons from public/favicon.ico (square mark, not the wide logo).
+ * Generates platform app icons from public/app-icon-big.png.
+ * public/favicon.ico is left untouched.
  */
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const icoPath = path.join(root, "public/favicon.ico");
+const sourcePath = path.join(root, "public/app-icon-big.png");
 const buildDir = path.join(root, "build");
 const iconBg = { r: 9, g: 9, b: 11, alpha: 1 };
 
-/** @returns {{ width: number, height: number, pixels: Buffer }} */
-function decodeLargestIcoFrame(buffer) {
-  const count = buffer.readUInt16LE(4);
-  let best = null;
-
-  for (let i = 0; i < count; i++) {
-    const entryOffset = 6 + i * 16;
-    const width = buffer[entryOffset] || 256;
-    const height = buffer[entryOffset + 1] || 256;
-    const size = buffer.readUInt32LE(entryOffset + 8);
-    const dataOffset = buffer.readUInt32LE(entryOffset + 12);
-    const area = width * height;
-
-    if (!best || area > best.area) {
-      best = { width, height, size, dataOffset, area };
-    }
-  }
-
-  if (!best) {
-    throw new Error("favicon.ico enthält keine Bilddaten.");
-  }
-
-  const dib = buffer.subarray(best.dataOffset, best.dataOffset + best.size);
-  const headerSize = dib.readUInt32LE(0);
-  const xorHeight = dib.readInt32LE(8) / 2;
-  const bpp = dib.readUInt16LE(14);
-  const rowSize = Math.ceil((best.width * bpp) / 32) * 4;
-  const pixels = Buffer.alloc(best.width * xorHeight * 4);
-
-  for (let y = 0; y < xorHeight; y++) {
-    const srcY = xorHeight - 1 - y;
-    const srcRow = headerSize + srcY * rowSize;
-    for (let x = 0; x < best.width; x++) {
-      const srcIndex = srcRow + x * 4;
-      const dstIndex = (y * best.width + x) * 4;
-      pixels[dstIndex] = dib[srcIndex + 2];
-      pixels[dstIndex + 1] = dib[srcIndex + 1];
-      pixels[dstIndex + 2] = dib[srcIndex];
-      pixels[dstIndex + 3] = dib[srcIndex + 3];
-    }
-  }
-
-  return { width: best.width, height: xorHeight, pixels };
-}
-
 async function sourcePipeline() {
-  const buffer = await readFile(icoPath);
-  const frame = decodeLargestIcoFrame(buffer);
-  return sharp(frame.pixels, {
-    raw: { width: frame.width, height: frame.height, channels: 4 },
-  });
+  return sharp(sourcePath);
 }
 
 /**

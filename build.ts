@@ -112,7 +112,7 @@ console.log("\n🚀 Starting build process...\n");
 
 const iconScript = path.join(process.cwd(), "scripts/prepare-app-icons.mjs");
 if (existsSync(iconScript)) {
-  console.log("🎨 Preparing app icons from public/favicon.ico...\n");
+  console.log("Preparing app icons from public/app-icon-big.png...\n");
   const iconProc = Bun.spawn(["bun", iconScript], {
     cwd: process.cwd(),
     stdout: "inherit",
@@ -149,9 +149,6 @@ const result = await Bun.build({
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
     "process.env.APP_VERSION": JSON.stringify(appVersion),
-  },
-  alias: {
-    "@": path.join(process.cwd(), "src"),
   },
   ...cliConfig,
 });
