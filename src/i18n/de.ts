@@ -1357,6 +1357,20 @@ export const de: Dict = {
   checkoutAcceptTos: "Ich akzeptiere die Allgemeinen Geschäftsbedingungen.",
   checkoutAcceptWithdrawal:
     "Ich stimme zu, dass die Ausführung sofort beginnt und ich mein Widerrufsrecht bei vollständiger Vertragserfüllung verliere.",
+  checkoutAcceptWithdrawalPreorder:
+    "Ich habe die Widerrufsbelehrung zur Kenntnis genommen. Für Vorbestellungen beginnt die Ausführung erst mit der Auslieferung; das Widerrufsrecht erlischt durch die Bestellung nicht und bleibt bis zur Auslieferung (mindestens 14 Tage ab Bestellung) bestehen.",
+  checkoutAcceptWithdrawalMixed:
+    "Ich stimme zu, dass bei Sofortprodukten die Ausführung sofort beginnt und das Widerrufsrecht bei vollständiger Vertragserfüllung erlischt. Für Vorbestellungen beginnt die Ausführung erst mit der Auslieferung; das Widerrufsrecht bleibt für diese Positionen bis zur Auslieferung (mindestens 14 Tage ab Bestellung) bestehen.",
+  preorderBadge: "Vorbestellung",
+  preorderSectionTitle: "Vorbestellungen",
+  preorderSectionEmpty: "Keine offenen Vorbestellungen.",
+  preorderWithdraw: "Widerrufen",
+  preorderWithdrawConfirmTitle: "Vorbestellung widerrufen?",
+  preorderWithdrawConfirmBody:
+    "Die gesamte bezahlte Summe für dieses Produkt wird auf das ursprüngliche Zahlungsmittel erstattet. Die Vorbestellung wird storniert.",
+  preorderWithdrawSuccess: "Widerruf erfolgreich. Die Erstattung wird veranlasst.",
+  preorderOrderedAt: "Bestellt",
+  preorderDelivery: "Lieferung",
   checkoutTermsRequired: "Bitte akzeptieren Sie die Bedingungen und den Widerrufshinweis.",
   checkoutMollieMethodsHint: "Karte, PayPal und weitere Methoden über Mollie.",
   checkoutNewsletterOptIn: "Newsletter abonnieren",

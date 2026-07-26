@@ -27,6 +27,10 @@ export type ShopProduct = {
   locations?: string[];
   highlights?: string[];
   soldOut?: boolean;
+  preorderEnabled?: boolean;
+  preorderEarliestAt?: string | null;
+  preorderLatestAt?: string | null;
+  preorderApproxMonth?: string | null;
   backgroundImageUrls?: string[];
   schemaCardFields?: Array<{
     key?: string;

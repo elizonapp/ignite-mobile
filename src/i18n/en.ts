@@ -1360,6 +1360,20 @@ export const en = {
   checkoutAcceptTos: "I accept the terms and conditions.",
   checkoutAcceptWithdrawal:
     "I agree that execution begins immediately and I lose my right of withdrawal upon full performance of the service.",
+  checkoutAcceptWithdrawalPreorder:
+    "I have taken note of the withdrawal information. For pre-orders, performance begins only upon delivery; the right of withdrawal is not extinguished by placing the order and remains until delivery (at least 14 days from order).",
+  checkoutAcceptWithdrawalMixed:
+    "I agree that for immediate products performance begins immediately and the right of withdrawal expires upon full performance. For pre-orders, performance begins only upon delivery; the right of withdrawal for those items remains until delivery (at least 14 days from order).",
+  preorderBadge: "Pre-order",
+  preorderSectionTitle: "Pre-orders",
+  preorderSectionEmpty: "No open pre-orders.",
+  preorderWithdraw: "Withdraw",
+  preorderWithdrawConfirmTitle: "Withdraw pre-order?",
+  preorderWithdrawConfirmBody:
+    "The full amount paid for this product will be refunded to the original payment method. The pre-order will be canceled.",
+  preorderWithdrawSuccess: "Withdrawal successful. The refund will be processed.",
+  preorderOrderedAt: "Ordered",
+  preorderDelivery: "Delivery",
   checkoutTermsRequired: "Please accept the terms and withdrawal notice.",
   checkoutMollieMethodsHint: "Card, PayPal and other methods via Mollie.",
   checkoutNewsletterOptIn: "Subscribe to the newsletter",

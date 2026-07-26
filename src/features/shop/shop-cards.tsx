@@ -262,6 +262,14 @@ export function ShopProductCard({
 
         <h3 className="text-center text-lg font-semibold text-(--text-primary)">{product.name}</h3>
 
+        {product.preorderEnabled ? (
+          <div className="mt-1 flex justify-center">
+            <span className="rounded-full bg-blue-500/15 px-2.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+              {t("preorderBadge")}
+            </span>
+          </div>
+        ) : null}
+
         {sync.chip ? (
           <div className="mt-1 flex min-h-[1.125rem] items-center justify-center">
             {product.chip ? (

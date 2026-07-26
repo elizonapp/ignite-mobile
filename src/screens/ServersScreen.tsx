@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { Input } from '../components/ui/input';
 import { SkeletonList } from '../components/ui/SkeletonBlock';
 import { ServerCard } from '../components/dashboard/ServerCard';
+import { MobilePreordersSection } from '../components/dashboard/MobilePreordersSection';
 import { useRouter } from '../components/Router';
 import { useServersList } from '../hooks/useServersList';
 import { useBatchedServiceStatus } from '../hooks/useBatchedServiceStatus';
@@ -40,6 +41,7 @@ export function ServersScreen() {
   return (
     <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
       <main className="safe-x flex-1 space-y-4 pb-24 pt-2">
+        <MobilePreordersSection />
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-(--text-muted)" />
           <Input

@@ -85,7 +85,16 @@ export type CalculatePayload = {
 
 export type CartCalculateResponse = {
   success: boolean;
-  items?: Array<{ productId: string; productName: string; total: number; quantity?: number }>;
+  items?: Array<{
+    productId: string;
+    productName: string;
+    total: number;
+    quantity?: number;
+    preorderEnabled?: boolean;
+    preorderEarliestAt?: string | null;
+    preorderLatestAt?: string | null;
+    preorderApproxMonth?: string | null;
+  }>;
   subtotal?: number;
   tax?: number;
   total?: number;

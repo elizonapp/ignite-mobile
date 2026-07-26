@@ -44,6 +44,10 @@ export type ShopProductDetail = {
   category?: string | null;
   chip?: string | null;
   soldOut?: boolean;
+  preorderEnabled?: boolean;
+  preorderEarliestAt?: string | null;
+  preorderLatestAt?: string | null;
+  preorderApproxMonth?: string | null;
   priceMonthly: string | number;
   priceYearly?: number | null;
   setupFee?: number;

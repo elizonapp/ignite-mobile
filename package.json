@@ -1,7 +1,7 @@
 {
   "name": "elizon-mobile",
-  "version": "0.8.5",
-  "description": "elizon desktop client",
+  "version": "1.0.0",
+  "description": "elizon mobile client",
   "author": "elizon",
   "repository": {
     "type": "git",

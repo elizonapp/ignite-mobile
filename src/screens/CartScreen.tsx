@@ -9,6 +9,10 @@ import type { CartCalculateResponse } from "../api/checkout";
 import { cartItemToApiPayload } from "../lib/cart-configured";
 import type { CartItem } from "../lib/cart-service";
 import { cn } from "../lib/utils";
+import {
+  formatMobilePreorderDeliveryLabel,
+  mobilePreorderCapacityDisclaimer,
+} from "../lib/preorder-display";
 
 function configSummary(item: CartItem, t: (k: string) => string): string[] {
   const lines: string[] = [];
@@ -114,6 +118,33 @@ export function CartScreen() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-(--text-primary)">{item.productName}</p>
+                        {(priced as { preorderEnabled?: boolean } | undefined)?.preorderEnabled ? (
+                          <div className="mt-1 space-y-1">
+                            <span className="inline-flex rounded-full bg-blue-500/15 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">
+                              {t("preorderBadge")}
+                            </span>
+                            <p className="text-[11px] text-(--text-secondary)">
+                              {formatMobilePreorderDeliveryLabel(
+                                {
+                                  preorderEnabled: true,
+                                  preorderEarliestAt:
+                                    (priced as { preorderEarliestAt?: string | null }).preorderEarliestAt ??
+                                    null,
+                                  preorderLatestAt:
+                                    (priced as { preorderLatestAt?: string | null }).preorderLatestAt ??
+                                    null,
+                                  preorderApproxMonth:
+                                    (priced as { preorderApproxMonth?: string | null })
+                                      .preorderApproxMonth ?? null,
+                                },
+                                lang
+                              )}
+                            </p>
+                            <p className="text-[11px] text-(--text-muted)">
+                              {mobilePreorderCapacityDisclaimer(lang)}
+                            </p>
+                          </div>
+                        ) : null}
                         {item.categoryName ? (
                           <p className="text-xs text-(--text-muted)">{item.categoryName}</p>
                         ) : null}

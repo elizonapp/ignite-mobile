@@ -34,6 +34,10 @@ import {
   type ShopProductDetail,
   type ShopUpgradeConfig,
 } from "../../lib/shop-product-detail";
+import {
+  formatMobilePreorderDeliveryLabel,
+  mobilePreorderCapacityDisclaimer,
+} from "../../lib/preorder-display";
 import { useShopPricingState } from "./shop-pricing";
 
 export function ShopProductScreen({
@@ -273,6 +277,11 @@ export function ShopProductScreen({
                     {t("productSoldOut")}
                   </span>
                 ) : null}
+                {product.preorderEnabled ? (
+                  <span className="rounded-full bg-blue-500/15 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                    {t("preorderBadge")}
+                  </span>
+                ) : null}
               </div>
               {chipLabel ? (
                 <span className="inline-flex rounded-full bg-(--elizon-primary)/10 px-3 py-1 text-xs font-medium text-(--elizon-primary)">
@@ -283,7 +292,7 @@ export function ShopProductScreen({
                 <p className="text-sm leading-relaxed text-(--text-secondary)">{product.description}</p>
               ) : null}
 
-              {!product.soldOut ? (
+              {!product.soldOut || product.preorderEnabled ? (
                 <div className="space-y-2">
                   {promotion || monthlyOffer ? (
                     <div className="flex flex-wrap items-baseline gap-2">
@@ -309,6 +318,19 @@ export function ShopProductScreen({
                   <p className="text-sm text-(--text-muted)">
                     /{billingCycle} {t("days")} · {vat(lang)}
                   </p>
+                  {product.preorderEnabled ? (
+                    <div className="space-y-1 rounded-xl border border-blue-500/25 bg-blue-500/5 p-3">
+                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        {t("preorderBadge")}
+                      </p>
+                      <p className="text-xs text-(--text-secondary)">
+                        {formatMobilePreorderDeliveryLabel(product, lang)}
+                      </p>
+                      <p className="text-xs text-(--text-muted)">
+                        {mobilePreorderCapacityDisclaimer(lang)}
+                      </p>
+                    </div>
+                  ) : null}
                   {billingCycle !== 30 ? (
                     <p className="text-xs text-(--text-muted)">
                       ≈ {fmt(pricing.equivalentMonthlyPrice, lang)} {t("productPerMonth")}

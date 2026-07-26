@@ -582,7 +582,17 @@ function PaymentStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: numb
             onChange={(e) => c.setAcceptWithdrawal(e.target.checked)}
             className="mt-1"
           />
-          <span className="text-(--text-secondary)">{t("checkoutAcceptWithdrawal")}</span>
+          <span className="text-(--text-secondary)">
+            {(() => {
+              const items = c.pricing?.items ?? [];
+              const anyPreorder = items.some((i) => Boolean(i.preorderEnabled));
+              const allPreorder =
+                items.length > 0 && items.every((i) => Boolean(i.preorderEnabled));
+              if (allPreorder) return t("checkoutAcceptWithdrawalPreorder");
+              if (anyPreorder) return t("checkoutAcceptWithdrawalMixed");
+              return t("checkoutAcceptWithdrawal");
+            })()}
+          </span>
         </label>
         {!c.isBusiness ? (
           <label className="flex cursor-pointer items-start gap-2 text-sm">
