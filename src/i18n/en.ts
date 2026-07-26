@@ -1384,9 +1384,7 @@ export const en = {
   checkoutDone: "Done",
   checkoutBank: "Bank",
   hostedFlowTitle: "External flow",
-  hostedFlowHint: "This runs inside the app.",
   hostedFlowBlocked: "This page cannot be embedded.",
-  hostedFlowContinue: "Continue in app",
   checkoutSuccess: "Order placed successfully.",
   checkoutError: "Checkout failed. Please try again.",
 
@@ -2820,6 +2818,8 @@ export const en = {
   idVerificationEnjynFailed: "Automated verification failed. You can try again.",
   idVerificationEnjynLinkExpiresIn: "Link valid for {time}",
   idVerificationEnjynOpenLink: "Start verification",
+  idVerificationCameraDenied: "Camera access was denied. Please allow camera access in system settings to continue identity verification.",
+  idVerificationCameraUnsupported: "No camera is available on this device.",
   idVerificationEnjynOpenVerifyLink: "Open verification link",
   idVerificationEnjynPending: "Please wait until verification is complete. This page updates automatically.",
   idVerificationEnjynPrepare: "Start verification when you can open the link or scan the QR code immediately.",

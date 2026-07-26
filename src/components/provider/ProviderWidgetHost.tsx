@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { Puzzle } from "lucide-react";
 
+import { isMobileNative } from "../../lib/platform";
 import { useProviderT } from "./use-provider-t";
 import ResourceUsageWidget from "./widgets/ResourceUsageWidget";
 import IpAddressesWidget from "./widgets/IpAddressesWidget";
@@ -20,6 +21,10 @@ const WIDGET_COMPONENTS: Record<string, ComponentType<ProviderWidgetProps>> = {
   "console-vnc": ConsoleWidget,
   "console-terminal": ConsoleWidget,
 };
+
+function isUpgradeWidget(widgetId: string): boolean {
+  return widgetId === "upgrade" || widgetId.includes("upgrade");
+}
 
 function UnavailableWidget({ widgetId }: { widgetId: string }) {
   const t = useProviderT();
@@ -45,11 +50,13 @@ export function ProviderWidgetHost({
   context?: ProviderWidgetContext;
   className?: string;
 }) {
-  if (slots.length === 0) return null;
+  const hideUpgrade = isMobileNative();
+  const visibleSlots = hideUpgrade ? slots.filter((slot) => !isUpgradeWidget(slot.widget)) : slots;
+  if (visibleSlots.length === 0) return null;
 
   return (
     <div className={`space-y-4 ${className ?? ""}`}>
-      {slots.map((slot, index) => {
+      {visibleSlots.map((slot, index) => {
         const Widget = WIDGET_COMPONENTS[slot.widget];
         const key = `${slot.widget}-${index}`;
         if (!Widget) return <UnavailableWidget key={key} widgetId={slot.widget} />;

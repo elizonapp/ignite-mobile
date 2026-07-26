@@ -51,6 +51,8 @@
 	<false/>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Wir senden Ihnen Benachrichtigungen zu neuen Aktivitäten auf Ihrem Konto.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Zugriff für Identitätsverifikation durch Drittanbieter</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

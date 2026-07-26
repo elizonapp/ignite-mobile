@@ -1,12 +1,58 @@
 @import "../styles/globals.css";
 
-html, body, #root {
-  min-height: 100vh;
-  min-height: 100dvh;
+/* App-Shell: Viewport fixieren, damit nur der Content-Bereich scrollt
+   (Header / BottomNav bleiben als Flex-Chrome stehen). */
+html,
+body,
+#root {
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
   margin: 0;
+  overflow: hidden;
 }
 
 #root {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+/*
+  Capacitor WebViews can still pan the document even with overflow:hidden.
+  Pin the whole document to the visual viewport on native mobile.
+*/
+html.mobile-app,
+html.mobile-app body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html.mobile-app #root {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+}
+
+html.mobile-app .app-shell {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html.mobile-app .app-main {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
 }

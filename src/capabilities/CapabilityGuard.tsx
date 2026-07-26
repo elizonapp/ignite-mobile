@@ -1,8 +1,15 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Monitor } from "lucide-react";
 
+import { useRouter } from "../components/Router";
 import { useI18n } from "../i18n";
-import { canAccessFloatingIps, canAccessWallet, canManageBilling, canPurchase } from "../lib/platform";
+import {
+  canAccessFloatingIps,
+  canAccessWallet,
+  canManageBilling,
+  canPurchase,
+  isMobileNative,
+} from "../lib/platform";
 
 export type Capability = "purchase" | "billing" | "wallet" | "floatingIps";
 
@@ -34,6 +41,17 @@ export function DesktopOnlyHint({ capability }: { capability: Capability }) {
   );
 }
 
+/** Silent bounce to dashboard for purchase routes on iOS/Android. */
+function PurchaseNativeRedirect() {
+  const { navigate } = useRouter();
+
+  useEffect(() => {
+    navigate({ name: "dashboard" });
+  }, [navigate]);
+
+  return null;
+}
+
 type CapabilityGuardProps = {
   capability: Capability;
   children: ReactNode;
@@ -43,6 +61,10 @@ type CapabilityGuardProps = {
 export function CapabilityGuard({ capability, children, fallback }: CapabilityGuardProps) {
   if (capabilityAllowed(capability)) {
     return <>{children}</>;
+  }
+
+  if (capability === "purchase" && isMobileNative()) {
+    return <PurchaseNativeRedirect />;
   }
 
   return <>{fallback ?? <DesktopOnlyHint capability={capability} />}</>;

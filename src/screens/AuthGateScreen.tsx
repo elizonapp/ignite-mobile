@@ -13,11 +13,11 @@ export function AuthGateScreen() {
   const desktop = isDesktopClient();
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-(--bg-base)">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col bg-(--bg-base)">
       <AuthPageGlow />
       <AuthLegalProvider>
         <AuthChrome />
-        <main className="safe-bottom relative flex flex-1 flex-col overflow-y-auto px-4 pb-8 sm:px-6 lg:px-8">
+        <main className="safe-bottom relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-8 sm:px-6 lg:px-8">
           <div className="flex flex-1 flex-col">
             {mode === "login" || !desktop ? (
               <LoginScreen onRegister={desktop ? () => setMode("register") : undefined} />

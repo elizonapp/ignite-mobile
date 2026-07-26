@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { canManageBilling } from "../../lib/platform";
+import { canManageBilling, isMobileNative } from "../../lib/platform";
 import { useProviderT } from "./use-provider-t";
 import { ProviderActionBar } from "./ProviderActionBar";
 import { ProviderFieldGrid } from "./ProviderFieldGrid";
@@ -19,12 +19,19 @@ import type {
 
 const ADVANCED_TAB_ID = "__advanced";
 const BILLING_TAB_ID = "billing";
+const UPGRADE_TAB_ID = "upgrade";
+
+function isUpgradeWidget(widgetId: string): boolean {
+  return widgetId === "upgrade" || widgetId.includes("upgrade");
+}
 
 function pickWidgets(defined: WidgetSlot[] | undefined, allowed: Map<string, WidgetSlot>): WidgetSlot[] {
   if (!defined) return [];
+  const hideUpgrade = isMobileNative();
   return defined
     .map((slot) => allowed.get(slot.widget))
-    .filter((slot): slot is WidgetSlot => Boolean(slot));
+    .filter((slot): slot is WidgetSlot => Boolean(slot))
+    .filter((slot) => !(hideUpgrade && isUpgradeWidget(slot.widget)));
 }
 
 type Props = {
@@ -67,13 +74,16 @@ export function ProviderView({
 
   const billingAllowed = canManageBilling() && access?.canManageBilling !== false;
 
+  const mobileNative = isMobileNative();
+
   const allowedWidgets = useMemo(() => {
     const map = new Map<string, WidgetSlot>();
     for (const slot of view.widgets) {
+      if (mobileNative && isUpgradeWidget(slot.widget)) continue;
       if (!map.has(slot.widget)) map.set(slot.widget, slot);
     }
     return map;
-  }, [view.widgets]);
+  }, [view.widgets, mobileNative]);
 
   const actionsByKey = useMemo(() => new Map(view.actions.map((a) => [a.key, a])), [view.actions]);
   const fieldsByKey = useMemo(() => new Map(view.fields.map((f) => [f.key, f])), [view.fields]);
@@ -87,6 +97,8 @@ export function ProviderView({
     const tabs = (view.tabs ?? []).filter((tab) => {
       // Billing tab is hidden on native / when the backend denies billing.
       if (tab.id === BILLING_TAB_ID && !billingAllowed) return false;
+      // Upgrades are desktop-only (shop/checkout unavailable on iOS/Android).
+      if (tab.id === UPGRADE_TAB_ID && mobileNative) return false;
 
       const hasFields = (tab.fields?.length ?? 0) > 0;
       const hasActions = (tab.actions?.length ?? 0) > 0;
@@ -100,7 +112,7 @@ export function ProviderView({
       tabs.push({ id: ADVANCED_TAB_ID, labelKey: "providerTabAdvanced", tier: 3 });
     }
     return tabs;
-  }, [view.tabs, layout.advanced, allowedWidgets, billingAllowed]);
+  }, [view.tabs, layout.advanced, allowedWidgets, billingAllowed, mobileNative]);
 
   const [activeKey, setActiveKey] = useState<string>("");
   const activeTab = visibleTabs.find((tab) => tab.id === activeKey) ?? visibleTabs[0];

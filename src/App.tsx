@@ -103,12 +103,18 @@ function Shell() {
   const { route } = useRouter();
 
   if (route.name === "hosted-flow") {
-    return <HostedFlowScreen url={route.url} title={route.title} />;
+    return (
+      <HostedFlowScreen
+        url={route.url}
+        title={route.title}
+        fallbackRoute={route.fallbackRoute}
+      />
+    );
   }
 
   return (
     <>
-      <div className="flex min-h-dvh flex-col">
+      <div className="app-shell flex h-dvh min-h-0 flex-1 flex-col overflow-hidden">
         {isLoading ? (
           <BootScreen />
         ) : !isAuthenticated ? (
@@ -189,11 +195,26 @@ function AuthenticatedShell() {
 
   return (
     <>
-      <div className="flex flex-1 min-h-0">
+      {/*
+        On native, pin the authenticated shell to the visual viewport.
+        Capacitor WebViews can pan the document even with overflow:hidden on html/body;
+        a fixed shell keeps header + bottom nav from scrolling away.
+      */}
+      <div
+        className={
+          mobileNative
+            ? "fixed inset-0 z-0 flex flex-col overflow-hidden bg-(--bg-base)"
+            : "flex min-h-0 flex-1"
+        }
+      >
         {!mobileNative && <Sidebar routeName={route.name} navigate={navigate} />}
-        <div className={`flex min-h-0 flex-1 flex-col overflow-hidden ${mobileNative ? "" : "lg:ml-64"}`}>
+        <div
+          className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+            mobileNative ? "" : "lg:ml-64"
+          }`}
+        >
           <Header />
-          <div className="min-h-0 flex-1 overflow-auto px-4 py-4 lg:px-6 lg:py-6">
+          <div className="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 py-4 lg:px-6 lg:py-6">
               {route.name === "dashboard" && <DashboardScreen />}
               {route.name === "servers" && <ServersScreen />}
               {route.name === "server" && <ServerDetailScreen id={route.id} />}

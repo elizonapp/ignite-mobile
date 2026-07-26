@@ -5,7 +5,7 @@ import { useCart } from "../cart/CartProvider";
 import { useAuth } from "../AuthProvider";
 import { IconNetPoints, IconWallet } from "../dashboard/dashboard-icons";
 import { useI18n } from "../../i18n";
-import { canPurchase, isDesktopClient } from "../../lib/platform";
+import { canPurchase, isDesktopClient, isMobileNative } from "../../lib/platform";
 import { useRouter } from "../Router";
 import { CommandPaletteTrigger } from "./CommandPalette";
 
@@ -44,13 +44,13 @@ export function Header() {
   const { navigate } = useRouter();
   const { itemCount } = useCart();
   const desktop = isDesktopClient();
-  const showCart = canPurchase();
+  const showCart = canPurchase() && !isMobileNative();
 
   const balance = Number(user?.balance) || 0;
   const netPoints = Number(user?.netPointsBalance) || 0;
 
   return (
-    <header className="glass-navbar app-header safe-top safe-x sticky top-0 z-20 flex shrink-0 items-center gap-3 border-b border-(--border) px-4 py-2.5">
+    <header className="glass-navbar app-header safe-top safe-x z-40 flex shrink-0 items-center gap-3 border-b border-(--border) bg-(--bg-base) px-4 py-2.5">
       {desktop ? (
         <div className="min-w-0 flex-1">
           <CommandPaletteTrigger className="h-10 w-full" />

@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(NotificationSettingsPlugin.class);
+        registerPlugin(AppUrlRouterPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

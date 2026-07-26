@@ -5,13 +5,19 @@ const config: CapacitorConfig = {
   appName: 'elizon',
   webDir: 'dist',
   ios: {
-    contentInset: 'always',
+    // CSS safe-area handles insets; 'always' makes the WebView itself scroll
+    // and breaks sticky/fixed shell chrome (header + bottom nav).
+    contentInset: 'never',
     backgroundColor: '#09090b',
   },
   android: {
     backgroundColor: '#09090b',
   },
   plugins: {
+    // Native HTTP bypasses Android WebView CORS (Origin: https://localhost).
+    CapacitorHttp: {
+      enabled: true,
+    },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },

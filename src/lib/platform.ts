@@ -76,8 +76,12 @@ export function canAccessFloatingIps(): boolean {
   return getDesktopOS() !== "darwin";
 }
 
-/** Purchases are unavailable on macOS desktop; available on other platforms. */
+/** Purchases unavailable on iOS/Android native and macOS desktop. */
 export function canPurchase(): boolean {
+  if (isMobileNative()) {
+    const os = getMobileOS();
+    return os !== "ios" && os !== "android";
+  }
   return !isMacOSDesktop();
 }
 

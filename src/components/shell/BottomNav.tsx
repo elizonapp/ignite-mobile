@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { LayoutDashboard, MessageSquare, Server, Settings } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,7 +24,7 @@ export function BottomNav({ active, onChange }: { active: NavTab; onChange: (tab
   return (
     <nav
       aria-label={t("navPrimary")}
-      className="glass-navbar safe-bottom safe-x sticky bottom-0 z-30 mt-auto border-t border-(--border)"
+      className="glass-navbar app-bottom-nav safe-bottom safe-x z-40 shrink-0 border-t border-(--border) bg-(--bg-base)"
     >
       <ul className="grid grid-cols-4">
         {items.map((item) => {

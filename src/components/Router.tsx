@@ -32,7 +32,7 @@ export type Route =
   | { name: "family" }
   | { name: "vroute" }
   | { name: "console"; id: string }
-  | { name: "hosted-flow"; url: string; title?: string };
+  | { name: "hosted-flow"; url: string; title?: string; fallbackRoute?: Route };
 
 type RouterContextValue = {
   route: Route;

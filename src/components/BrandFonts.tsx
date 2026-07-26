@@ -44,13 +44,7 @@ export function BrandFonts() {
     style.textContent = buildFontFaceCss(baseUrl);
     document.documentElement.classList.add("fonts-loaded");
 
-    const onBaseChange = () => {
-      style!.textContent = buildFontFaceCss(getBrandAssetUrl(""));
-    };
-    window.addEventListener("elizon:api-base-changed", onBaseChange);
-
     return () => {
-      window.removeEventListener("elizon:api-base-changed", onBaseChange);
       document.documentElement.classList.remove("fonts-loaded");
     };
   }, []);

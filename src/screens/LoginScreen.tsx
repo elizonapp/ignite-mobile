@@ -1,23 +1,37 @@
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
 
-import { resolveApiError } from "../api/resolve-error";
 import { AuthField } from "../components/auth/auth-field";
 import { AuthShell } from "../components/auth/auth-shell";
 import { useAuth } from "../components/AuthProvider";
 import { useToast } from "../components/Toast";
-import { useRouter } from "../components/Router";
 import { useI18n } from "../i18n";
 import { getApiBaseUrl } from "../lib/config";
+import { openHostedFlow } from "../lib/hosted-flow";
+import { isMobileNative } from "../lib/platform";
 
 type LoginScreenProps = {
   onRegister?: () => void;
 };
 
+/** Android WebView autofill often fills the DOM without updating React state. */
+function readLoginForm(form: HTMLFormElement, fallback: {
+  email: string;
+  password: string;
+  twoFactorCode: string;
+}) {
+  const fd = new FormData(form);
+  const email = String(fd.get("email") ?? fallback.email).trim();
+  // Strip only trailing CR/LF that some Android keyboards/autofill append
+  const password = String(fd.get("password") ?? fallback.password).replace(/[\r\n]+$/g, "");
+  const twoFactorCode = String(fd.get("twoFactorCode") ?? fallback.twoFactorCode).replace(/\D/g, "");
+  return { email, password, twoFactorCode };
+}
+
 export function LoginScreen({ onRegister }: LoginScreenProps) {
   const { t } = useI18n();
   const { login } = useAuth();
   const { show } = useToast();
-  const { navigate } = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,23 +40,59 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
   const [rememberMe, setRememberMe] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugLine, setDebugLine] = useState<string | null>(null);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
     setError(null);
+    setDebugLine(null);
+
+    const formValues = readLoginForm(e.currentTarget, { email, password, twoFactorCode });
+    // Keep controlled state in sync with what we actually send
+    setEmail(formValues.email);
+    setPassword(formValues.password);
+    if (formValues.twoFactorCode) setTwoFactorCode(formValues.twoFactorCode);
+
+    const native = isMobileNative();
+    if (native) {
+      const line = [
+        `platform=${Capacitor.getPlatform()}`,
+        `host=${(() => {
+          try {
+            return new URL(getApiBaseUrl()).host;
+          } catch {
+            return "?";
+          }
+        })()}`,
+        `emailLen=${formValues.email.length}`,
+        `pwLen=${formValues.password.length}`,
+      ].join(" · ");
+      console.warn("[elizon.auth.login]", line);
+      setDebugLine(line);
+    }
+
     try {
-      const result = await login({ email, password, twoFactorCode: twoFactorCode || undefined, rememberMe });
+      const result = await login({
+        email: formValues.email,
+        password: formValues.password,
+        twoFactorCode: formValues.twoFactorCode || undefined,
+        rememberMe,
+      });
       if (result.success) {
         show(t("dashWelcome"), "success");
         return;
       }
       if (result.requiresTwoFactor) {
         setRequires2fa(true);
+        setDebugLine(null);
         return;
       }
       setError(result.error);
+      if (native) {
+        setDebugLine((prev) => `${prev ?? ""} · fail=${result.error}`.trim());
+      }
     } finally {
       setBusy(false);
     }
@@ -52,12 +102,11 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
     setRequires2fa(false);
     setTwoFactorCode("");
     setError(null);
+    setDebugLine(null);
   };
 
   const openForgotPassword = () => {
-    navigate({
-      name: "hosted-flow",
-      url: `${getApiBaseUrl()}/auth/forgot-password`,
+    openHostedFlow(`${getApiBaseUrl()}/auth/forgot-password`, {
       title: t("authForgotPassword"),
     });
   };
@@ -69,29 +118,40 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
         <p className="mt-2 text-sm text-(--text-secondary)">{t("authLoginSubtitle")}</p>
       </div>
 
-      <form noValidate onSubmit={submit} className="space-y-5">
+      <form noValidate onSubmit={submit} className="space-y-5" autoComplete="on">
         {!requires2fa ? (
           <>
             <AuthField
               id="login-email"
+              name="email"
               label={t("authEmail")}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
               placeholder={t("authEmailPlaceholder")}
               required
-              autoComplete="email"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
             />
 
             <AuthField
               id="login-password"
+              name="password"
               label={t("authPassword")}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
               placeholder="••••••••"
               required
               autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               labelAction={
                 <button
                   type="button"
@@ -106,6 +166,7 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
             <label className="flex cursor-pointer items-center gap-2.5">
               <input
                 id="rememberMe"
+                name="rememberMe"
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
@@ -119,6 +180,7 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
             <p className="text-sm text-(--text-secondary)">{t("auth2faSubtitle")}</p>
             <AuthField
               id="login-2fa"
+              name="twoFactorCode"
               label={t("auth2faCode")}
               inputMode="numeric"
               pattern="[0-9]*"
@@ -127,7 +189,11 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
               required
               value={twoFactorCode}
               onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
+              onInput={(e) =>
+                setTwoFactorCode((e.target as HTMLInputElement).value.replace(/\D/g, ""))
+              }
               placeholder="123456"
+              autoComplete="one-time-code"
             />
           </>
         )}
@@ -150,6 +216,11 @@ export function LoginScreen({ onRegister }: LoginScreenProps) {
         </button>
 
         {error && <p className="text-center text-sm text-(--error)">{error}</p>}
+        {debugLine && (
+          <p className="break-all text-center text-[10px] leading-relaxed text-(--text-muted)">
+            {debugLine}
+          </p>
+        )}
 
         {requires2fa && (
           <button

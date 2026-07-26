@@ -15,7 +15,7 @@ import { useTheme } from '../components/ThemeProvider';
 import { useToast } from '../components/Toast';
 import { useI18n, type Lang } from '../i18n';
 import { api } from '../lib/api';
-import { APP_VERSION, getApiBaseUrl, setApiBaseUrl } from '../lib/config';
+import { APP_VERSION } from '../lib/config';
 import { isElectron } from '../lib/platform';
 import { cn } from '../lib/utils';
 import { formatUserGreetingName } from '../lib/userName';
@@ -83,7 +83,6 @@ export function SettingsScreen() {
   const { openLegalHub } = useLegal();
   const { show } = useToast();
   const { navigate, route } = useRouter();
-  const [apiUrl, setApiUrl] = useState(getApiBaseUrl());
   const [view, setView] = useState<SettingsView>("main");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [idVerificationEnforcementRequired, setIdVerificationEnforcementRequired] = useState(false);
@@ -147,15 +146,6 @@ export function SettingsScreen() {
   };
 
   const showPaymentMethods = canManageSavedPaymentMethodsUser(user);
-
-  const persistApiUrl = () => {
-    try {
-      setApiBaseUrl(apiUrl);
-      show(t("save"), "success");
-    } catch (err) {
-      show(resolveCaughtApiError(err, t), "error");
-    }
-  };
 
   const onLogout = async () => {
     await logout();
@@ -260,16 +250,6 @@ export function SettingsScreen() {
               onChange={(next) => setTheme(next as "dark" | "light")}
             />
           </Row>
-        </SettingsSectionBlock>
-
-        <SettingsSectionBlock title={t("settingsApi")}>
-          <p className="text-[11px] text-(--text-muted)">{t("settingsApiHint")}</p>
-          <div className="flex items-center gap-2">
-            <Input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} inputMode="url" autoCapitalize="off" autoCorrect="off" className="h-10 rounded-xl" />
-          </div>
-          <Button onClick={persistApiUrl} className="btn-primary w-full justify-center rounded-xl py-2.5">
-            {t("save")}
-          </Button>
         </SettingsSectionBlock>
 
         <SettingsSectionBlock title={t("settingsAbout")}>

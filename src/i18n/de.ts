@@ -1381,9 +1381,7 @@ export const de: Dict = {
   checkoutDone: "Fertig",
   checkoutBank: "Bank",
   hostedFlowTitle: "Externer Vorgang",
-  hostedFlowHint: "Der Vorgang läuft innerhalb der App.",
   hostedFlowBlocked: "Diese Seite kann nicht eingebettet werden.",
-  hostedFlowContinue: "In der App fortfahren",
   checkoutSuccess: "Bestellung erfolgreich aufgegeben.",
   checkoutError: "Bestellung fehlgeschlagen. Bitte erneut versuchen.",
 
@@ -2828,6 +2826,8 @@ export const de: Dict = {
   idVerificationEnjynFailed: "Die automatisierte Verifikation ist fehlgeschlagen. Sie können es erneut versuchen.",
   idVerificationEnjynLinkExpiresIn: "Link gültig für {time}",
   idVerificationEnjynOpenLink: "Verifizierung starten",
+  idVerificationCameraDenied: "Kamerazugriff wurde verweigert. Bitte erlauben Sie die Kamera in den Systemeinstellungen, um die Identitätsverifikation fortzusetzen.",
+  idVerificationCameraUnsupported: "Auf diesem Gerät ist keine Kamera verfügbar.",
   idVerificationEnjynOpenVerifyLink: "Verifizierungslink öffnen",
   idVerificationEnjynPending: "Bitte warten Sie, bis die Verifikation abgeschlossen ist. Diese Seite aktualisiert sich automatisch.",
   idVerificationEnjynPrepare: "Starten Sie die Verifikation, wenn Sie den Link sofort öffnen oder den QR-Code scannen können.",

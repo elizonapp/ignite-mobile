@@ -7,6 +7,7 @@ import { ENJYN_LINK_SESSION_TTL_MS } from "../../../api/id-verification";
 import { useToast } from "../../../components/Toast";
 import { useI18n } from "../../../i18n";
 import { api } from "../../../lib/api";
+import { ensureCameraPermission } from "../../../lib/camera-permission";
 import { openHostedFlow } from "../../../lib/hosted-flow";
 
 type Address = IdVerificationAddress;
@@ -113,6 +114,8 @@ export function IdVerificationFlow({
   const backRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const callbackHandledRef = useRef(false);
+  /** Avoid re-entrancy when re-opening the file picker after the camera prompt. */
+  const filePickerUnlockedRef = useRef(false);
 
   const [callbackOutcome, setCallbackOutcome] = useState<EnjynCallbackOutcome>(null);
   const [isCheckingCallback, setIsCheckingCallback] = useState(false);
@@ -365,6 +368,26 @@ export function IdVerificationFlow({
     }
   };
 
+  const ensureKycCamera = async (): Promise<boolean> => {
+    const permission = await ensureCameraPermission();
+    if (permission === "granted") return true;
+    if (permission === "unsupported") {
+      show(t("idVerificationCameraUnsupported"), "error");
+      return false;
+    }
+    show(t("idVerificationCameraDenied"), "error");
+    return false;
+  };
+
+  const openEnjynVerify = async () => {
+    if (!enjynVerifyUrl) return;
+    if (!(await ensureKycCamera())) return;
+    openHostedFlow(enjynVerifyUrl, {
+      title: t("idVerificationEnjynTitle"),
+      fallbackRoute: { name: "settings", view: "id-verification" },
+    });
+  };
+
   const handleStartEnjyn = async () => {
     if (!verificationId) return;
     const needsConsent = !status?.pending?.consentGiven;
@@ -372,6 +395,7 @@ export function IdVerificationFlow({
       show(t("idVerificationConsentRequired"), "error");
       return;
     }
+    if (!(await ensureKycCamera())) return;
     setIsSubmitting(true);
     try {
       const json = await api.idVerification.enjynStart(
@@ -398,6 +422,7 @@ export function IdVerificationFlow({
       show(t("idVerificationConsentRequired"), "error");
       return;
     }
+    if (!(await ensureKycCamera())) return;
     setIsSubmitting(true);
     try {
       const json = await api.idVerification.enjynRestart(
@@ -891,7 +916,7 @@ export function IdVerificationFlow({
 
               <button
                 type="button"
-                onClick={() => openHostedFlow(enjynVerifyUrl, { title: t("idVerificationEnjynTitle") })}
+                onClick={() => void openEnjynVerify()}
                 className="btn-primary inline-flex"
               >
                 {t("idVerificationEnjynOpenVerifyLink")}
@@ -937,6 +962,19 @@ export function IdVerificationFlow({
                 type="file"
                 accept="image/png,image/jpeg"
                 capture="environment"
+                onClick={(e) => {
+                  if (filePickerUnlockedRef.current) {
+                    filePickerUnlockedRef.current = false;
+                    return;
+                  }
+                  e.preventDefault();
+                  const input = e.currentTarget;
+                  void (async () => {
+                    if (!(await ensureKycCamera())) return;
+                    filePickerUnlockedRef.current = true;
+                    input.click();
+                  })();
+                }}
                 className="w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-(--primary)/15 file:px-4 file:py-2 file:text-sm file:font-medium file:text-(--primary)"
               />
             </div>

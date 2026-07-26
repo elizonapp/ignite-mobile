@@ -100,7 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback<AuthContextValue["login"]>(
     async ({ email, password, twoFactorCode, rememberMe }) => {
       try {
-        const data = await api.auth.login({ email, password, twoFactorCode, rememberMe: !!rememberMe });
+        const data = await api.auth.login({
+          email: email.trim(),
+          password,
+          twoFactorCode,
+          rememberMe: !!rememberMe,
+        });
 
         if (data?.success && data.token && data.user) {
           setSessionToken(data.token, { persist: rememberMe !== false });
@@ -114,6 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       } catch (err) {
         if (err instanceof ApiError) {
+          console.warn("[elizon.auth.login] api-error", {
+            status: err.status,
+            code: err.code,
+            message: err.message,
+          });
           const payload = err.payload as { requiresTwoFactor?: boolean } | null;
           return {
             success: false,
@@ -121,7 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             requiresTwoFactor: payload?.requiresTwoFactor,
           };
         }
-        return { success: false, error: mobileTranslate("authBadCredentials") };
+        console.warn("[elizon.auth.login] network-error", err);
+        // CORS / offline / aborted fetch — not a credential failure
+        return { success: false, error: mobileTranslate("networkError") };
       }
     },
     [refresh],
