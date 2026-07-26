@@ -131,8 +131,9 @@ const androidSplashSizes = {
  */
 async function writeSplash(width, height, outFile) {
   await mkdir(path.dirname(outFile), { recursive: true });
-  const maxW = Math.round(width * 0.62);
-  const maxH = Math.round(height * 0.28);
+  // Keep clear of screen edges; portrait phones need horizontal margin.
+  const maxW = Math.round(width * 0.72);
+  const maxH = Math.round(height * 0.22);
   const logo = await sharp(splashLogoPath)
     .resize(maxW, maxH, { fit: "inside", background: splashBg })
     .png()
@@ -161,13 +162,30 @@ for (const [folder, [width, height]] of Object.entries(androidSplashSizes)) {
   );
 }
 
-// Android 12+ centered splash icon (wordmark on black square).
+/**
+ * Android 12+ SplashScreen API draws the icon inside a circle (~2/3 of the
+ * asset). A wide wordmark must fit inside that circle or it gets clipped.
+ * Canvas 1152px; logo bbox kept within ~520px so corners stay inside the mask.
+ */
 {
-  const size = 576;
-  const max = Math.round(size * 0.72);
+  const size = 1152;
+  const circleSafe = Math.round(size * 0.52);
   const outFile = path.join(root, "android/app/src/main/res/drawable/splash_logo.png");
+  const logoMeta = await sharp(splashLogoPath).metadata();
+  const logoW = logoMeta.width || 1;
+  const logoH = logoMeta.height || 1;
+  // Fit rectangle inside circle of diameter circleSafe:
+  // (w/2)^2 + (h/2)^2 <= (r)^2  with w/h = logo aspect
+  const aspect = logoW / logoH;
+  const maxW = Math.floor(
+    (circleSafe * aspect) / Math.sqrt(aspect * aspect + 1),
+  );
+  const maxH = Math.floor(maxW / aspect);
   const logo = await sharp(splashLogoPath)
-    .resize(max, max, { fit: "inside", background: splashBg })
+    .resize(Math.max(1, maxW), Math.max(1, maxH), {
+      fit: "inside",
+      background: splashBg,
+    })
     .png()
     .toBuffer();
   await sharp({
@@ -176,5 +194,7 @@ for (const [folder, [width, height]] of Object.entries(androidSplashSizes)) {
     .composite([{ input: logo, gravity: "centre" }])
     .png()
     .toFile(outFile);
-  console.log(`[splash] Wrote ${path.relative(root, outFile)} (${size}x${size})`);
+  console.log(
+    `[splash] Wrote ${path.relative(root, outFile)} (${size}x${size}, logo ${maxW}x${maxH} in circle)`,
+  );
 }
