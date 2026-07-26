@@ -66,7 +66,7 @@ export function DomainsScreen() {
     try {
       const data = await api.domains.add(newDomain);
       if (data.success) {
-        show(t("actionDone"), "success");
+        show(t("domainAdded"), "success");
         setAddingDomain(false);
         setNewDomain("");
         await loadDomains();
@@ -197,7 +197,7 @@ function DomainRecordsView({ domain, onBack }: { domain: Domain; onBack: () => v
       await api.domains.createRecord(domain.id, newRecord);
       setShowAdd(false);
       setNewRecord({ type: "A", name: "", content: "", ttl: 300 });
-      show(t("actionDone"), "success");
+      show(t("domainRecordCreated"), "success");
       void load();
     } catch (err) {
       show(resolveCaughtApiError(err, t), "error");
@@ -208,7 +208,7 @@ function DomainRecordsView({ domain, onBack }: { domain: Domain; onBack: () => v
     try {
       await api.domains.deleteRecord(domain.id, recordId);
       setRecords((r) => r.filter((x) => x.id !== recordId));
-      show(t("actionDone"), "success");
+      show(t("domainRecordDeleted"), "success");
     } catch (err) {
       show(resolveCaughtApiError(err, t), "error");
     }
@@ -332,7 +332,7 @@ function AddDomainView({ onBack, onDone }: { onBack: () => void; onDone: () => v
     try {
       const data = await api.domains.add(domain);
       if (data.success) {
-        show(t("actionDone"), "success");
+        show(t("domainAdded"), "success");
         onDone();
       } else {
         show(resolveApiError(data, t, { fallbackKey: "unknownError" }), "error");

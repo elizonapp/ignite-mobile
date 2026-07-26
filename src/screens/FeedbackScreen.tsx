@@ -130,7 +130,7 @@ export function FeedbackScreen() {
 
   const submit = async () => {
     if (rating === 0) {
-      show(t("feedbackRating"), "error");
+      show(t("feedbackRatingRequired"), "error");
       return;
     }
     if (!hasValidLink) {

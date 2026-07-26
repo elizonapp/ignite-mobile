@@ -544,7 +544,7 @@ function PasswordChange({ onBack }: { onBack: () => void }) {
     setIsSaving(true);
     try {
       const data = await api.auth.changePassword({ currentPassword, newPassword });
-      if (data.success) { show(t("save"), "success"); onBack(); }
+      if (data.success) { show(t("passwordChanged"), "success"); onBack(); }
       else show(resolveApiError(data, t, { fallbackKey: "unknownError" }), "error");
     } catch (err) {
       show(resolveCaughtApiError(err, t), "error");
@@ -615,7 +615,7 @@ function TwoFactorManagement({ onBack }: { onBack: () => void }) {
         setShowSetup(false);
         setVerificationCode("");
         await refresh();
-        show(t("save"), "success");
+        show(t("twoFactorEnabled"), "success");
         if (data.backupCodes) show(`${t("twoFactorBackupCodes")}: ${data.backupCodes.join(", ")}`, "info");
       } else {
         show(resolveApiError(data, t, { fallbackKey: "unknownError" }), "error");
@@ -637,7 +637,7 @@ function TwoFactorManagement({ onBack }: { onBack: () => void }) {
         setDisableCode("");
         setDisablePassword("");
         await refresh();
-        show(t("save"), "success");
+        show(t("twoFactorDisabled"), "success");
       } else {
         show(resolveApiError(data, t, { fallbackKey: "unknownError" }), "error");
       }

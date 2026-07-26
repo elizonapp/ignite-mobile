@@ -430,7 +430,7 @@ export function IdVerificationFlow({
         needsConsent ? { explicitConsent: true } : {},
       );
       if (json.success) {
-        show(t("idVerificationEnjynOpenLink"), "success");
+        show(t("idVerificationEnjynStarted"), "success");
         await fetchStatus();
         setStep("enjyn");
       } else {

@@ -210,7 +210,7 @@ export function SupportScreen() {
         priority: newPriority,
       });
       if (data.success && data.ticket) {
-        show(t("save"), "success");
+        show(t("ticketCreated"), "success");
         setShowNewTicket(false);
         setNewSubject("");
         setNewMessage("");
@@ -232,7 +232,7 @@ export function SupportScreen() {
     try {
       const data = await api.support.reply(ticketId, replyMessage);
       if (data.success) {
-        show(t("save"), "success");
+        show(t("replySent"), "success");
         setReplyMessage("");
         const detail = await api.support.ticket(ticketId);
         if (detail.success) setSelectedTicket(detail.ticket as Ticket);

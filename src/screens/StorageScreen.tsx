@@ -76,7 +76,7 @@ export function StorageScreen() {
   const detach = async (id: string) => {
     try {
       await api.patch(`/api/storage/${id}`, { action: "detach" });
-      show(t("actionDone"), "success");
+      show(t("storageDetached"), "success");
       void load();
     } catch (err) {
       show(resolveCaughtApiError(err, t), "error");

@@ -619,6 +619,7 @@ export const en = {
   passwordConfirm: "Confirm new password",
   passwordMismatch: "Passwords do not match.",
   passwordTooShort: "Password must be at least 8 characters.",
+  passwordChanged: "Password changed.",
 
   // 2FA
   twoFactorEnabled: "Two-factor authentication is enabled",
@@ -646,9 +647,11 @@ export const en = {
   ticketMessage: "Message",
   ticketMessagePlaceholder: "Describe your issue in detail…",
   ticketCreate: "Create ticket",
+  ticketCreated: "Ticket created.",
   ticketReply: "Reply",
   ticketReplyPlaceholder: "Type your reply…",
   ticketSend: "Send",
+  replySent: "Reply sent.",
   ticketOpenCount: "Open tickets",
   ticketAvgResponse: "Avg. response",
   supportFirstResponse: "First response",
@@ -1445,6 +1448,9 @@ export const en = {
   domainExport: "Export zone",
   domainAdd: "Add domain",
   domainAddPlaceholder: "example.com",
+  domainAdded: "Domain added.",
+  domainRecordCreated: "DNS record created.",
+  domainRecordDeleted: "DNS record deleted.",
 
   // IP Manager
   ipManagerTitle: "IP Manager",
@@ -1503,6 +1509,7 @@ export const en = {
   affiliateCommissions: "Commissions",
   affiliatePayouts: "Payouts",
   affiliatePayoutMethod: "Payout method",
+  affiliatePayoutMethodSaved: "Payout method saved.",
   affiliatePayoutMethodUpdate: "Update method",
   affiliatePaypal: "PayPal",
   affiliateSepa: "SEPA",
@@ -1533,6 +1540,7 @@ export const en = {
   feedbackCategoryOther: "Other",
   feedbackCategoryGeneralHint: "Only once every 4 weeks.",
   feedbackRating: "Rating",
+  feedbackRatingRequired: "Please select a rating.",
   feedbackMessage: "Message",
   feedbackMessagePlaceholder: "Tell us more (optional)…",
   feedbackSelectTicketOrService: "Select ticket or service",
@@ -2818,6 +2826,7 @@ export const en = {
   idVerificationEnjynFailed: "Automated verification failed. You can try again.",
   idVerificationEnjynLinkExpiresIn: "Link valid for {time}",
   idVerificationEnjynOpenLink: "Start verification",
+  idVerificationEnjynStarted: "Verification started.",
   idVerificationCameraDenied: "Camera access was denied. Please allow camera access in system settings to continue identity verification.",
   idVerificationCameraUnsupported: "No camera is available on this device.",
   idVerificationEnjynOpenVerifyLink: "Open verification link",

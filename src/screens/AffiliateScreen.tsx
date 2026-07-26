@@ -359,7 +359,7 @@ function PayoutMethodForm({
         : { type: "SEPA", iban, bic, accountHolder };
       const data = await api.patch<{ success: boolean; error?: string }>("/api/affiliates/me/payout-method", body);
       if (data.success) {
-        show(t("save"), "success");
+        show(t("affiliatePayoutMethodSaved"), "success");
         onSaved();
       } else {
         show(resolveApiError(data, t, { fallbackKey: "unknownError" }), "error");
