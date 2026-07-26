@@ -15,11 +15,10 @@ const buildDir = path.join(root, "build");
 const iconBg = { r: 9, g: 9, b: 11, alpha: 1 };
 const splashBg = { r: 0, g: 0, b: 0, alpha: 1 };
 
-/** Prefer mobile-local asset (CI / standalone repo), then monorepo website public/. */
+/** Splash logo: mobile-local only (standalone CI repo has no monorepo ../../public). */
 async function resolveSplashLogoPath() {
   const candidates = [
     path.join(root, "public", "logo-dark.webp"),
-    path.join(root, "..", "..", "public", "logo-dark.webp"),
     sourcePath,
   ];
   for (const candidate of candidates) {
@@ -30,7 +29,7 @@ async function resolveSplashLogoPath() {
       // try next
     }
   }
-  throw new Error("No splash logo found (public/logo-dark.webp or app-icon-big.png)");
+  throw new Error("No splash logo found (expected public/logo-dark.webp or public/app-icon-big.png)");
 }
 
 const splashLogoPath = await resolveSplashLogoPath();

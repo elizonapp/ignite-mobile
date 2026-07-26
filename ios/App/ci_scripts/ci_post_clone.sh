@@ -66,4 +66,12 @@ bun run build
 echo "==> Syncing Capacitor iOS"
 bunx cap sync ios
 
+# Capacitor on Windows writes backslash paths into Package.swift; Swift rejects them.
+PACKAGE_SWIFT="ios/App/CapApp-SPM/Package.swift"
+if [[ -f "$PACKAGE_SWIFT" ]]; then
+  echo "==> Normalizing Package.swift dependency paths (forward slashes)"
+  # Replace Windows path separators in path: "..." literals only.
+  perl -i -pe 's/(path:\s*")([^"]*)(")/$1 . ($2 =~ s|\\|/|gr) . $3/ge' "$PACKAGE_SWIFT"
+fi
+
 echo "==> Post-clone complete"
