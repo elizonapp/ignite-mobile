@@ -1,21 +1,40 @@
 #!/usr/bin/env bun
 /**
  * Generates platform app icons from public/app-icon-big.png
- * and Android splash screens from the website logo (logo-dark.webp).
+ * and Android splash screens from public/logo-dark.webp (elizon wordmark).
  * public/favicon.ico is left untouched.
  */
-import { mkdir } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourcePath = path.join(root, "public/app-icon-big.png");
-/** Full elizon wordmark (same asset as the website). */
-const splashLogoPath = path.join(root, "..", "..", "public", "logo-dark.webp");
 const buildDir = path.join(root, "build");
 const iconBg = { r: 9, g: 9, b: 11, alpha: 1 };
 const splashBg = { r: 0, g: 0, b: 0, alpha: 1 };
+
+/** Prefer mobile-local asset (CI / standalone repo), then monorepo website public/. */
+async function resolveSplashLogoPath() {
+  const candidates = [
+    path.join(root, "public", "logo-dark.webp"),
+    path.join(root, "..", "..", "public", "logo-dark.webp"),
+    sourcePath,
+  ];
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // try next
+    }
+  }
+  throw new Error("No splash logo found (public/logo-dark.webp or app-icon-big.png)");
+}
+
+const splashLogoPath = await resolveSplashLogoPath();
+console.log(`[splash] Using ${path.relative(root, splashLogoPath) || splashLogoPath}`);
 
 async function sourcePipeline() {
   return sharp(sourcePath);
