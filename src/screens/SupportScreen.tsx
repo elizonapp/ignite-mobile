@@ -29,8 +29,11 @@ type Ticket = {
   priority: string;
   createdAt: string;
   updatedAt: string;
-  service?: { id: string; name: string; status?: string };
+  service?: { id: string; name: string; status?: string; canOpenService?: boolean };
   messages?: TicketMessage[];
+  viewerRole?: "OWNER" | "SERVICE_OWNER" | "SHARED_SUPPORT" | "STAFF";
+  serviceOwnerCanRead?: boolean;
+  isTicketOwner?: boolean;
 };
 
 type TicketStats = {
@@ -82,6 +85,14 @@ export function SupportScreen() {
   const [newSubject, setNewSubject] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [newPriority, setNewPriority] = useState<"high" | "medium" | "low">("medium");
+  const [newServiceId, setNewServiceId] = useState("");
+  const [attachableServices, setAttachableServices] = useState<
+    Array<{ id: string; name: string; owned: boolean }>
+  >([]);
+  const [shareCandidates, setShareCandidates] = useState<
+    Array<{ id: string; displayName: string; email: string }>
+  >([]);
+  const [shareWithUserIds, setShareWithUserIds] = useState<string[]>([]);
   const [replyMessage, setReplyMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketTab, setTicketTab] = useState<"open" | "closed">("open");
@@ -200,6 +211,35 @@ export function SupportScreen() {
     }
   };
 
+  useEffect(() => {
+    if (!showNewTicket) return;
+    void (async () => {
+      try {
+        const data = await api.support.attachableServices();
+        if (data.success) setAttachableServices(data.services ?? []);
+      } catch {
+        setAttachableServices([]);
+      }
+    })();
+  }, [showNewTicket]);
+
+  useEffect(() => {
+    if (!showNewTicket || !newServiceId) {
+      setShareCandidates([]);
+      setShareWithUserIds([]);
+      return;
+    }
+    void (async () => {
+      try {
+        const data = await api.support.shareCandidates(newServiceId);
+        if (data.success) setShareCandidates(data.candidates ?? []);
+        else setShareCandidates([]);
+      } catch {
+        setShareCandidates([]);
+      }
+    })();
+  }, [showNewTicket, newServiceId]);
+
   const createTicket = async () => {
     if (!newSubject.trim() || !newMessage.trim()) return;
     setIsSubmitting(true);
@@ -208,6 +248,9 @@ export function SupportScreen() {
         subject: newSubject,
         message: newMessage,
         priority: newPriority,
+        serviceId: newServiceId || undefined,
+        shareWithUserIds:
+          newServiceId && shareWithUserIds.length > 0 ? shareWithUserIds : undefined,
       });
       if (data.success && data.ticket) {
         show(t("ticketCreated"), "success");
@@ -215,6 +258,8 @@ export function SupportScreen() {
         setNewSubject("");
         setNewMessage("");
         setNewPriority("medium");
+        setNewServiceId("");
+        setShareWithUserIds([]);
         void fetchTickets();
       } else {
         show(resolveApiError(data, t, { fallbackKey: "unknownError" }), "error");
@@ -305,6 +350,17 @@ export function SupportScreen() {
           </div>
         </div>
         <main className="safe-x safe-bottom flex-1 space-y-3 overflow-y-auto pb-4">
+          {selectedTicket.serviceOwnerCanRead && selectedTicket.viewerRole === "OWNER" ? (
+            <div className="rounded-xl border border-(--warning)/30 bg-(--warning)/5 px-3 py-2 text-xs text-(--warning)">
+              {t("ticketServiceOwnerCanReadNotice")}
+            </div>
+          ) : null}
+          {(selectedTicket.viewerRole === "SERVICE_OWNER" ||
+            selectedTicket.viewerRole === "SHARED_SUPPORT") && (
+            <div className="rounded-xl border border-(--elizon-primary)/30 bg-(--elizon-primary)/5 px-3 py-2 text-xs text-(--elizon-primary)">
+              {t("ticketSharedParticipantNotice")}
+            </div>
+          )}
           {selectedTicket.messages?.map((msg) => (
             <div key={msg.id} className={cn("glass p-3", msg.isStaff && "border-l-2 border-(--elizon-primary)")}>
               <div className="mb-1 flex items-center justify-between text-xs text-(--text-muted)">
@@ -373,6 +429,47 @@ export function SupportScreen() {
               ))}
             </div>
           </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-(--text-muted)">{t("supportAssignService")}</Label>
+            <select
+              value={newServiceId}
+              onChange={(e) => {
+                setNewServiceId(e.target.value);
+                setShareWithUserIds([]);
+              }}
+              className="w-full rounded-xl border border-(--border) bg-transparent px-3 py-2.5 text-sm text-(--text-primary) focus:border-(--elizon-primary) focus:outline-none"
+            >
+              <option value="">{t("supportNoService")}</option>
+              {attachableServices.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            {newServiceId &&
+            attachableServices.find((s) => s.id === newServiceId)?.owned === false ? (
+              <p className="text-xs text-(--warning)">{t("ticketServiceOwnerCanReadNotice")}</p>
+            ) : null}
+          </div>
+          {newServiceId && shareCandidates.length > 0 ? (
+            <div className="space-y-2">
+              <Label className="text-xs text-(--text-muted)">{t("ticketShareWithLabel")}</Label>
+              {shareCandidates.map((c) => (
+                <label key={c.id} className="flex items-center gap-2 text-sm text-(--text-primary)">
+                  <input
+                    type="checkbox"
+                    checked={shareWithUserIds.includes(c.id)}
+                    onChange={() =>
+                      setShareWithUserIds((prev) =>
+                        prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                      )
+                    }
+                  />
+                  <span className="truncate">{c.displayName}</span>
+                </label>
+              ))}
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <Label className="text-xs text-(--text-muted)">{t("ticketMessage")}</Label>
             <textarea

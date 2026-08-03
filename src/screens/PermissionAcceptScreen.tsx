@@ -62,6 +62,12 @@ export function PermissionAcceptScreen({ permissionId }: PermissionAcceptScreenP
           return t("permissionSettings");
         case "manage_permissions":
           return t("permissionManagePermissions");
+        case "usage_metrics_view":
+          return t("permissionUsageMetricsView");
+        case "usage_metrics_export":
+          return t("permissionUsageMetricsExport");
+        case "support_ticket":
+          return t("permissionSupportTicket");
         default:
           return perm;
       }
