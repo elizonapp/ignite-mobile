@@ -15,6 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { AppModal } from "../components/ui/AppModal";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -117,21 +118,10 @@ function ModalShell({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
-      onClick={onClose}
-    >
-      <div
-        className="glass max-h-[90vh] w-full max-w-lg overflow-y-auto p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 className="mb-4 text-base font-semibold text-(--text-primary)">{title}</h2>
-        {children}
-      </div>
-    </div>
+    <AppModal open onClose={onClose} closeAriaLabel={title} className="overflow-y-auto p-4">
+      <h2 className="mb-4 text-base font-semibold text-(--text-primary)">{title}</h2>
+      {children}
+    </AppModal>
   );
 }
 

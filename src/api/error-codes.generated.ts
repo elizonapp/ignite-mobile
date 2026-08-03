@@ -63,6 +63,8 @@ export const ApiErrorCodes = {
   checkoutDomainBusinessfundNotAllowed: "checkoutDomainBusinessfundNotAllowed",
   checkoutDomainInvalid: "checkoutDomainInvalid",
   checkoutDomainInvalidTerm: "checkoutDomainInvalidTerm",
+  checkoutDomainRegistrantAddressRequired: "checkoutDomainRegistrantAddressRequired",
+  checkoutDomainRegistrantPhoneRequired: "checkoutDomainRegistrantPhoneRequired",
   checkoutDomainSingleItemOnly: "checkoutDomainSingleItemOnly",
   checkoutFailed: "checkoutFailed",
   checkoutValidationFailed: "checkoutValidationFailed",

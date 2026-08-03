@@ -4,7 +4,8 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { useRouter } from "../components/Router";
 import { ProviderView } from "../components/provider";
-import { ServicePendingActionBanner } from "../components/provider/ServiceBillingPanel";
+import { DomainServicePanel } from "../components/provider/DomainServicePanel";
+import { ServiceBillingPanel, ServicePendingActionBanner } from "../components/provider/ServiceBillingPanel";
 import { useI18n } from "../i18n";
 import { useServiceDetail } from "../hooks/useServiceDetail";
 import { useProviderView } from "../hooks/useProviderView";
@@ -30,6 +31,11 @@ export function ServerDetailScreen({ id }: { id: string }) {
 
   const identity = view?.identity ?? null;
   const title = identity?.displayName || identity?.name || server?.name || t("loading");
+  const looksLikeDomainService =
+    Boolean(server?.isDomainService) ||
+    String(server?.name || "")
+      .toLowerCase()
+      .startsWith("domain ");
 
   const handleActionCompleted = () => {
     void refresh(true);
@@ -82,7 +88,22 @@ export function ServerDetailScreen({ id }: { id: string }) {
           />
         ) : null}
 
-        {viewLoading ? (
+        {looksLikeDomainService ? (
+          <>
+            <DomainServicePanel
+              serviceId={id}
+              canManageSettings={access?.canManageSettings !== false}
+            />
+            <ServiceBillingPanel
+              serviceId={id}
+              serviceName={server?.name || id}
+              onRefresh={() => void refresh(true)}
+              onNavigateToInvoices={() => navigate({ name: "invoices" })}
+              onNavigateToInvoiceDetail={(invoiceId) => navigate({ name: "invoice-detail", id: invoiceId })}
+              onNavigateToInvoicePay={(invoiceId) => navigate({ name: "invoice-pay", id: invoiceId })}
+            />
+          </>
+        ) : viewLoading ? (
           <div className="space-y-3">
             <div className="glass h-11 animate-pulse" />
             <div className="glass h-40 animate-pulse" />

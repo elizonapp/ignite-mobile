@@ -9,6 +9,10 @@ type CartContextValue = {
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   updateBillingCycle: (lineId: string, billingCycle: number) => void;
+  updateItem: (
+    lineId: string,
+    updates: Partial<Pick<CartItem, "whoisPrivacyEnabled" | "domainRegistrantPhone">>,
+  ) => void;
   clearCart: () => void;
 };
 
@@ -34,6 +38,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       updateBillingCycle: (lineId, billingCycle) => {
         cartService.updateBillingCycle(lineId, billingCycle);
+      },
+      updateItem: (lineId, updates) => {
+        cartService.updateItem(lineId, updates);
       },
       clearCart: () => {
         cartService.clearCart();

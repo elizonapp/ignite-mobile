@@ -7,6 +7,7 @@ import { hideElizonPlusUi, showElizonPlusFeatures } from "../../lib/elizon-plus"
 import { useAuth } from "../AuthProvider";
 import { useRouter } from "../Router";
 import type { Route } from "../Router";
+import { AppModal } from "../ui/AppModal";
 import { Input } from "../ui/input";
 
 /* Navigationsziele – gleiche Reihenfolge wie Sidebar (Jakobsches Gesetz) */
@@ -121,65 +122,59 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
         </kbd>
       </button>
 
-      {open && (
-        <div
-          className="glass-overlay fixed inset-0 z-50 flex items-start justify-center p-4 pt-[12vh]"
-          onClick={close}
-        >
-          <div
-            className="glass w-full max-w-lg p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("commandPaletteTitle")}
-            onClick={(event) => event.stopPropagation()}
+      <AppModal
+        open={open}
+        onClose={close}
+        closeAriaLabel={t("close")}
+        align="center"
+        overlayClassName="items-start pt-[12vh] sm:items-start sm:pb-4"
+        className="p-4"
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-sm font-medium text-(--text-primary)">{t("commandPaletteTitle")}</p>
+          <button
+            type="button"
+            onClick={close}
+            className="rounded-[var(--radius-control)] p-1.5 text-(--text-muted) hover:bg-(--surface-soft)"
+            aria-label={t("close")}
           >
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-(--text-primary)">{t("commandPaletteTitle")}</p>
+            <IconClose className="size-4" />
+          </button>
+        </div>
+        <Input
+          autoFocus
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setActiveIndex(0);
+          }}
+          onKeyDown={onInputKeyDown}
+          placeholder={t("commandPalettePlaceholder")}
+          className="h-10 rounded-[var(--radius-control)]"
+        />
+        <ul className="mt-3 max-h-64 space-y-0.5 overflow-y-auto">
+          {results.length === 0 && (
+            <li className="px-3 py-2 text-xs text-(--text-muted)">{t("commandPaletteEmpty")}</li>
+          )}
+          {results.map((entry, index) => (
+            <li key={entry.route.name}>
               <button
                 type="button"
-                onClick={close}
-                className="rounded-[var(--radius-control)] p-1.5 text-(--text-muted) hover:bg-(--surface-soft)"
-                aria-label={t("close")}
+                onClick={() => select(entry.route)}
+                onMouseEnter={() => setActiveIndex(index)}
+                className={`flex w-full items-center rounded-[var(--radius-control)] px-3 py-2 text-left text-sm transition-colors ${
+                  index === activeIndex
+                    ? "bg-(--primary)/10 text-(--primary)"
+                    : "text-(--text-secondary) hover:bg-(--surface-soft)"
+                }`}
               >
-                <IconClose className="size-4" />
+                {entry.label}
               </button>
-            </div>
-            <Input
-              autoFocus
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setActiveIndex(0);
-              }}
-              onKeyDown={onInputKeyDown}
-              placeholder={t("commandPalettePlaceholder")}
-              className="h-10 rounded-[var(--radius-control)]"
-            />
-            <ul className="mt-3 max-h-64 space-y-0.5 overflow-y-auto">
-              {results.length === 0 && (
-                <li className="px-3 py-2 text-xs text-(--text-muted)">{t("commandPaletteEmpty")}</li>
-              )}
-              {results.map((entry, index) => (
-                <li key={entry.route.name}>
-                  <button
-                    type="button"
-                    onClick={() => select(entry.route)}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    className={`flex w-full items-center rounded-[var(--radius-control)] px-3 py-2 text-left text-sm transition-colors ${
-                      index === activeIndex
-                        ? "bg-(--primary)/10 text-(--primary)"
-                        : "text-(--text-secondary) hover:bg-(--surface-soft)"
-                    }`}
-                  >
-                    {entry.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-xs text-(--text-muted)">{t("commandPaletteStub")}</p>
-          </div>
-        </div>
-      )}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-xs text-(--text-muted)">{t("commandPaletteStub")}</p>
+      </AppModal>
     </>
   );
 }

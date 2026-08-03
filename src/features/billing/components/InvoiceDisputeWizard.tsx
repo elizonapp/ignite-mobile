@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useI18n } from "../../../i18n";
 import { resolveApiError } from "../../../api/resolve-error";
 import { resolveCaughtApiError } from "../../../api/resolve-caught-error";
+import { AppModal } from "../../../components/ui/AppModal";
 import { api } from "../../../lib/api";
 import { cn } from "../../../lib/utils";
 import { formatDate } from "../lib";
@@ -33,8 +34,6 @@ export function InvoiceDisputeWizard({
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  if (!open) return null;
 
   const deadlineLabel = formatDate(disputeDeadlineAt, lang);
   const trimmedReason = reason.trim();
@@ -69,19 +68,13 @@ export function InvoiceDisputeWizard({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <button
-        type="button"
-        aria-label={t("cancel")}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={resetAndClose}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="invoice-dispute-title"
-        className="glass-overlay relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-(--border) p-5 shadow-lg"
-      >
+    <AppModal
+      open={open}
+      onClose={resetAndClose}
+      closeAriaLabel={t("cancel")}
+      closeDisabled={submitting}
+      className="overflow-y-auto p-5"
+    >
         <h2 id="invoice-dispute-title" className="text-lg font-semibold text-(--text-primary)">
           {t("billingDisputeTitle")}
         </h2>
@@ -173,7 +166,6 @@ export function InvoiceDisputeWizard({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </AppModal>
   );
 }

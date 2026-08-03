@@ -3,6 +3,7 @@ import { Globe, Loader2, Plus, RefreshCw } from "lucide-react";
 
 import { CapabilityGuard } from "../capabilities/CapabilityGuard";
 import { useToast } from "../components/Toast";
+import { AppModal } from "../components/ui/AppModal";
 import { useI18n } from "../i18n";
 import { resolveApiError } from "../api/resolve-error";
 import { resolveCaughtApiError } from "../api/resolve-caught-error";
@@ -176,14 +177,14 @@ export function FloatingIpsScreen() {
 
       {showOrder && (
         <CapabilityGuard capability="purchase">
-          <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-            <button
-              type="button"
-              aria-label={t("cancel")}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowOrder(false)}
-            />
-            <div className="glass-overlay relative z-10 w-full max-w-md space-y-4 rounded-xl border border-(--border) p-5">
+          <AppModal
+            open={showOrder}
+            onClose={() => setShowOrder(false)}
+            closeAriaLabel={t("cancel")}
+            closeDisabled={isOrdering}
+            maxWidthClassName="max-w-md"
+            className="space-y-4 overflow-y-auto p-5"
+          >
               <h2 className="text-lg font-semibold text-(--text-primary)">{t("floatingIpOrder")}</h2>
               <div className="space-y-3">
                 <label className="block space-y-1">
@@ -240,8 +241,7 @@ export function FloatingIpsScreen() {
                   {isOrdering ? <Loader2 className="size-4 animate-spin" /> : t("floatingIpOrderConfirm")}
                 </button>
               </div>
-            </div>
-          </div>
+          </AppModal>
         </CapabilityGuard>
       )}
     </div>

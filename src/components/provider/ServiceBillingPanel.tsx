@@ -80,6 +80,10 @@ export function ServiceBillingPanel({
   const [bonusRenewLoading, setBonusRenewLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
+  const [confirmDomainWithdraw, setConfirmDomainWithdraw] = useState(false);
+  const [domainWithdrawing, setDomainWithdrawing] = useState(false);
+  const [isDomainService, setIsDomainService] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState<string | null>(null);
   const [businessBillingActive, setBusinessBillingActive] = useState(false);
   const [autoBillingEnabled, setAutoBillingEnabled] = useState(false);
   const [useNetPointsFirst, setUseNetPointsFirst] = useState(false);
@@ -107,6 +111,9 @@ export function ServiceBillingPanel({
       const svc = svcRes?.server as Record<string, unknown> | undefined;
       const svcBilling = svc?.billing as ServiceBilling | undefined;
       if (svcBilling) setBilling(svcBilling);
+
+      setIsDomainService(Boolean(svc?.isDomainService));
+      setServiceStatus(typeof svc?.status === "string" ? svc.status : null);
 
       const product = svc?.product as Record<string, unknown> | undefined;
       const category = product?.productCategory as Record<string, unknown> | undefined;
@@ -361,7 +368,11 @@ export function ServiceBillingPanel({
     subscription.cancelAtPeriodEnd &&
     subscription.cancellation?.source === "admin" &&
     subscription.cancellation.locked;
-  const canCancel = isActive && !subscription.cancelAtPeriodEnd;
+  const isDomainPendingExecution =
+    isDomainService && String(serviceStatus || "").toUpperCase() === "PROVISIONING";
+  const canWithdrawDomain =
+    isDomainPendingExecution && isActive && !isBusiness && !subscription.cancelAtPeriodEnd;
+  const canCancel = isActive && !subscription.cancelAtPeriodEnd && !isDomainPendingExecution;
   const canReactivate = isActive && !!subscription.cancelAtPeriodEnd && !adminLockedCancel;
 
   const statusLabel = adminLockedCancel
@@ -894,6 +905,70 @@ export function ServiceBillingPanel({
           >
             {autopayLoading ? t("loading") : t("save")}
           </button>
+        </section>
+      )}
+
+      {/* Domain pending: Widerruf (like preorders), not Kündigung */}
+      {canWithdrawDomain && (
+        <section className="glass space-y-3 p-4">
+          <h3 className="text-sm font-semibold text-(--text-primary)">{t("domainOrderWithdrawTitle")}</h3>
+          <p className="text-xs text-(--text-muted)">{t("domainOrderWithdrawDesc")}</p>
+          {confirmDomainWithdraw ? (
+            <div className="space-y-2 rounded-xl border border-(--border) bg-(--bg-elevated) p-3">
+              <p className="text-xs font-medium text-(--text-primary)">
+                {t("domainOrderWithdrawConfirmTitle")}
+              </p>
+              <p className="text-xs text-(--text-muted)">{t("domainOrderWithdrawConfirmBody")}</p>
+              <p className="text-xs font-medium text-(--text-primary)">{serviceName}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={domainWithdrawing}
+                  onClick={() => {
+                    void (async () => {
+                      setDomainWithdrawing(true);
+                      try {
+                        const res = await api.services.domainWithdraw(serviceId);
+                        if (!res.success) {
+                          show(
+                            typeof res.error === "string" ? res.error : t("domainOrderWithdrawError"),
+                            "error",
+                          );
+                          return;
+                        }
+                        show(t("domainOrderWithdrawSuccess"), "success");
+                        setConfirmDomainWithdraw(false);
+                        await handleRefreshAfterBillingAction();
+                      } catch (err) {
+                        show(resolveCaughtApiError(err, t) || t("domainOrderWithdrawError"), "error");
+                      } finally {
+                        setDomainWithdrawing(false);
+                      }
+                    })();
+                  }}
+                  className="rounded-xl border border-(--error)/40 px-3 py-1.5 text-xs font-semibold text-(--error) disabled:opacity-50"
+                >
+                  {domainWithdrawing ? t("domainOrderWithdrawing") : t("domainOrderWithdrawConfirm")}
+                </button>
+                <button
+                  type="button"
+                  disabled={domainWithdrawing}
+                  onClick={() => setConfirmDomainWithdraw(false)}
+                  className="btn-primary rounded-xl px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                >
+                  {t("domainOrderWithdrawCancel")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDomainWithdraw(true)}
+              className="rounded-xl border border-(--error)/40 px-4 py-2 text-xs font-medium text-(--error) transition-colors hover:bg-(--error)/10"
+            >
+              {t("domainOrderWithdraw")}
+            </button>
+          )}
         </section>
       )}
 

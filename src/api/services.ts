@@ -200,4 +200,12 @@ export class ServicesResource extends ResourceClient {
       `/api/services/${encodeURIComponent(id)}/billing-cycles`,
     );
   }
+
+  /** POST /api/services/:id/domain/withdraw — Widerruf vor Registrar-Ausführung */
+  domainWithdraw(id: string) {
+    return this.post<{ success: boolean; amount?: number; domain?: string; error?: string }>(
+      `/api/services/${encodeURIComponent(id)}/domain/withdraw`,
+      {},
+    );
+  }
 }

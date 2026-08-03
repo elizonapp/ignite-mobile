@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCircle, Clock, CreditCard, Loader2, Wallet, XCircle } from "lucide-react";
 
 import { useAuth } from "../components/AuthProvider";
+import { AppModal } from "../components/ui/AppModal";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useToast } from "../components/Toast";
@@ -527,8 +528,14 @@ export function BusinessScreen() {
       />
 
       {showFundRequest && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
-          <div className="glass w-full max-w-md space-y-4 p-4">
+        <AppModal
+          open={showFundRequest}
+          onClose={() => setShowFundRequest(false)}
+          closeAriaLabel={t("cancel")}
+          closeDisabled={busy}
+          maxWidthClassName="max-w-md"
+          className="space-y-4 overflow-y-auto p-4"
+        >
             <h3 className="text-base font-semibold text-(--text-primary)">{t("businessFundRequest")}</h3>
             <p className="text-sm text-(--text-muted)">{t("businessFundRequestDesc")}</p>
             <div className="space-y-1.5">
@@ -578,8 +585,7 @@ export function BusinessScreen() {
                 {t("businessFundSubmitRequest")}
               </button>
             </div>
-          </div>
-        </div>
+        </AppModal>
       )}
     </div>
   );

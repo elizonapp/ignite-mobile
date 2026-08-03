@@ -230,11 +230,7 @@ export function useCheckout() {
   const guthabenSufficient = userBalance >= orderTotal;
 
   const hasDomainCheckout = useMemo(
-    () =>
-      cartItems.some((item) => {
-        const haystack = `${item.categoryName ?? ""} ${item.categoryId} ${item.productSlug}`.toLowerCase();
-        return haystack.includes("domain");
-      }),
+    () => cartItems.some((item) => (item.itemType ?? "new") === "domain"),
     [cartItems],
   );
 
@@ -306,7 +302,18 @@ export function useCheckout() {
   }, [step, orderTotal, availableMethods, paymentMethod, isPaymentMethodEnabled]);
 
   const addressReady = useMemo(() => {
-    if (selectedAddressId && !showNewAddressForm) return true;
+    if (selectedAddressId && !showNewAddressForm) {
+      if (!hasDomainCheckout) return true;
+      const addr = bootstrap?.addresses.find((a) => a.id === selectedAddressId);
+      return (
+        !!String(addr?.firstName ?? "").trim() &&
+        !!String(addr?.lastName ?? "").trim() &&
+        !!String(addr?.street ?? "").trim() &&
+        !!String(addr?.zip ?? "").trim() &&
+        !!String(addr?.city ?? "").trim() &&
+        !!String(addr?.countryCode ?? "").trim()
+      );
+    }
     if (!showNewAddressForm) return false;
     const required = [
       newAddress.firstName,
@@ -318,7 +325,7 @@ export function useCheckout() {
     ];
     if (isBusiness) required.push(newAddress.companyName, newAddress.vatId);
     return required.every((v) => v.trim().length > 0);
-  }, [selectedAddressId, showNewAddressForm, newAddress, isBusiness]);
+  }, [selectedAddressId, showNewAddressForm, newAddress, isBusiness, hasDomainCheckout, bootstrap?.addresses]);
 
   const validateSelection = useCallback(async () => {
     if (cartItems.length === 0) return { ok: false as const, message: t("checkoutNoProduct") };
@@ -482,6 +489,15 @@ export function useCheckout() {
       setShowTermsError(true);
       return { kind: "error", message: t("checkoutTermsRequired") };
     }
+    if (hasDomainCheckout) {
+      if (cartItems.length !== 1) {
+        return { kind: "error", message: t("checkoutDomainSingleItemOnly") };
+      }
+      const domainItem = cartItems.find((item) => (item.itemType ?? "new") === "domain");
+      if (!String(domainItem?.domainRegistrantPhone || "").trim()) {
+        return { kind: "error", message: t("checkoutDomainRegistrantPhoneRequired") };
+      }
+    }
     setShowTermsError(false);
     setSubmitting(true);
     setSubmitError(null);
@@ -548,6 +564,7 @@ export function useCheckout() {
     offerToken,
     acceptTos,
     acceptWithdrawal,
+    hasDomainCheckout,
     lang,
     buildBillingPayload,
     refresh,

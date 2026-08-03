@@ -20,7 +20,7 @@ import { useRouter } from "../../components/Router";
 import { useLegal } from "../../components/legal/LegalProvider";
 import type { CheckoutPaymentMethod } from "../../api/checkout";
 import { useCheckout, type NewAddressForm } from "./useCheckout";
-import type { CartItem } from "../../lib/cart-service";
+import { cartService, type CartItem } from "../../lib/cart-service";
 
 type I18nKey = keyof Dict;
 
@@ -286,21 +286,61 @@ function CartStep({ c, formatPrice }: { c: CheckoutCtx; formatPrice: (v: number)
             pricedItems.find((entry) => (entry as { lineId?: string }).lineId === item.lineId) ??
             pricedItems.find((entry) => entry.productId === item.productId);
           const config = itemConfigLines(item, t);
+          const isDomain = (item.itemType ?? "new") === "domain";
           return (
             <div
               key={item.lineId}
-              className="flex items-start justify-between gap-3 rounded-xl border border-(--border) p-3"
+              className="space-y-2 rounded-xl border border-(--border) p-3"
             >
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-(--text-primary)">{item.productName}</p>
-                <p className="text-xs text-(--text-muted)">
-                  {item.quantity} × {item.billingCycle} {t("days")}
-                </p>
-                {config ? <p className="mt-1 text-[11px] text-(--text-muted)">{config}</p> : null}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-(--text-primary)">{item.productName}</p>
+                  <p className="text-xs text-(--text-muted)">
+                    {isDomain
+                      ? `${item.domainYears ?? Math.max(1, Math.floor(item.billingCycle / 365))} ${t("checkoutDomainYearsSuffix")}`
+                      : `${item.quantity} × ${item.billingCycle} ${t("days")}`}
+                  </p>
+                  {config ? <p className="mt-1 text-[11px] text-(--text-muted)">{config}</p> : null}
+                </div>
+                <span className="shrink-0 text-sm font-semibold text-(--elizon-primary)">
+                  {c.pricingLoading ? "…" : formatPrice(priced?.total ?? item.priceMonthly * item.quantity)}
+                </span>
               </div>
-              <span className="shrink-0 text-sm font-semibold text-(--elizon-primary)">
-                {c.pricingLoading ? "…" : formatPrice(priced?.total ?? item.priceMonthly * item.quantity)}
-              </span>
+              {isDomain ? (
+                <div className="space-y-2 border-t border-(--border) pt-2">
+                  <label className="flex cursor-pointer items-start gap-2 text-sm text-(--text-secondary)">
+                    <input
+                      type="checkbox"
+                      checked={item.whoisPrivacyEnabled !== false}
+                      onChange={(e) =>
+                        cartService.updateItem(item.lineId, { whoisPrivacyEnabled: e.target.checked })
+                      }
+                      className="mt-1 shrink-0 rounded border-(--border) text-(--elizon-primary) focus:ring-(--elizon-primary)"
+                    />
+                    <span>{t("checkoutDomainWhoisPrivacyCopy")}</span>
+                  </label>
+                  <p className="pl-6 text-xs text-(--text-muted)">{t("checkoutDomainRegistrantAddressHint")}</p>
+                  <div className="pl-6">
+                    <label
+                      className="mb-1 block text-xs font-medium text-(--text-secondary)"
+                      htmlFor={`domain-phone-${item.lineId}`}
+                    >
+                      {t("checkoutDomainRegistrantPhoneLabel")}
+                    </label>
+                    <input
+                      id={`domain-phone-${item.lineId}`}
+                      type="tel"
+                      autoComplete="tel"
+                      value={String(item.domainRegistrantPhone || "")}
+                      onChange={(e) =>
+                        cartService.updateItem(item.lineId, { domainRegistrantPhone: e.target.value })
+                      }
+                      placeholder={t("checkoutDomainRegistrantPhonePlaceholder")}
+                      className="w-full rounded-lg border border-(--border) bg-(--bg-elevated) px-3 py-2 text-sm focus:border-(--elizon-primary) focus:outline-none"
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
           );
         })}

@@ -296,6 +296,16 @@ export function cartItemToApiPayload(item: CartItem): Record<string, unknown> {
     ...(itemType === "renewal" && item.subscriptionId ? { subscriptionId: item.subscriptionId } : {}),
     ...(itemType === "renewal" && item.daysExtension != null ? { daysExtension: item.daysExtension } : {}),
     ...(itemType === "upgrade" && item.serviceId ? { serviceId: item.serviceId } : {}),
+    ...(itemType === "domain"
+      ? {
+          domainName: item.domainName,
+          domainYears: item.domainYears,
+          domainOrderId: item.domainOrderId,
+          renewalPrice: item.renewalPrice,
+          whoisPrivacyEnabled: item.whoisPrivacyEnabled !== false,
+          domainRegistrantPhone: String(item.domainRegistrantPhone || "").trim(),
+        }
+      : {}),
     ...(item.locationId ? { locationId: item.locationId } : {}),
     ...(item.templateId != null ? { templateId: item.templateId } : {}),
     ...(item.additionalIPv4 != null ? { additionalIPv4: item.additionalIPv4 } : {}),

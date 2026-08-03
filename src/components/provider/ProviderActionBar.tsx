@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 
 import { useToast } from "../Toast";
+import { AppModal } from "../ui/AppModal";
 import { api } from "../../lib/api";
 import { resolveApiError } from "../../api/resolve-error";
 import { resolveCaughtApiError } from "../../api/resolve-caught-error";
@@ -107,63 +108,57 @@ export function ProviderActionBar({ serviceId, actions, resourceName, onComplete
       </div>
 
       {confirmFor?.confirm ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-          <button
-            type="button"
-            aria-label={t(confirmFor.confirm.cancelLabelKey)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={closeConfirm}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="glass-overlay relative z-10 w-full max-w-md space-y-4 rounded-xl border border-(--border) p-5 shadow-lg"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-semibold text-(--text-primary)">{t(confirmFor.confirm.titleKey)}</h2>
-              <button
-                type="button"
-                onClick={closeConfirm}
-                aria-label={t(confirmFor.confirm.cancelLabelKey)}
-                className="shrink-0 rounded-lg p-1 text-(--text-muted) hover:bg-white/10"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <p className="text-sm text-(--text-muted)">{t(confirmFor.confirm.messageKey)}</p>
-
-            {needsNameInput ? (
-              <label className="block text-[10px] uppercase tracking-wide text-(--text-muted)">
-                {t("providerConfirmTypeName").replace("{name}", resourceName ?? "")}
-                <input
-                  type="text"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  autoFocus
-                  className="mt-1.5 min-h-11 w-full rounded-[var(--radius-control)] border border-(--border) bg-(--bg-base) px-3 py-2 text-sm normal-case tracking-normal text-(--text-primary) outline-none focus:ring-1 focus:ring-(--error)"
-                />
-              </label>
-            ) : null}
-
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={closeConfirm}
-                className="min-h-11 rounded-xl border border-(--border) px-4 py-2.5 text-sm font-medium text-(--text-primary) hover:bg-white/5"
-              >
-                {t(confirmFor.confirm.cancelLabelKey)}
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmAndExecute()}
-                disabled={!nameMatches}
-                className="min-h-11 rounded-xl bg-(--error) px-4 py-2.5 text-sm font-medium text-white hover:bg-(--error)/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {t(confirmFor.confirm.confirmLabelKey)}
-              </button>
-            </div>
+        <AppModal
+          open
+          onClose={closeConfirm}
+          closeAriaLabel={t(confirmFor.confirm.cancelLabelKey)}
+          maxWidthClassName="max-w-md"
+          className="space-y-4 overflow-y-auto p-5"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-lg font-semibold text-(--text-primary)">{t(confirmFor.confirm.titleKey)}</h2>
+            <button
+              type="button"
+              onClick={closeConfirm}
+              aria-label={t(confirmFor.confirm.cancelLabelKey)}
+              className="shrink-0 rounded-lg p-1 text-(--text-muted) hover:bg-white/10"
+            >
+              <X className="size-4" />
+            </button>
           </div>
-        </div>
+          <p className="text-sm text-(--text-muted)">{t(confirmFor.confirm.messageKey)}</p>
+
+          {needsNameInput ? (
+            <label className="block text-[10px] uppercase tracking-wide text-(--text-muted)">
+              {t("providerConfirmTypeName").replace("{name}", resourceName ?? "")}
+              <input
+                type="text"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                autoFocus
+                className="mt-1.5 min-h-11 w-full rounded-[var(--radius-control)] border border-(--border) bg-(--bg-base) px-3 py-2 text-sm normal-case tracking-normal text-(--text-primary) outline-none focus:ring-1 focus:ring-(--error)"
+              />
+            </label>
+          ) : null}
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={closeConfirm}
+              className="min-h-11 rounded-xl border border-(--border) px-4 py-2.5 text-sm font-medium text-(--text-primary) hover:bg-white/5"
+            >
+              {t(confirmFor.confirm.cancelLabelKey)}
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmAndExecute()}
+              disabled={!nameMatches}
+              className="min-h-11 rounded-xl bg-(--error) px-4 py-2.5 text-sm font-medium text-white hover:bg-(--error)/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t(confirmFor.confirm.confirmLabelKey)}
+            </button>
+          </div>
+        </AppModal>
       ) : null}
     </div>
   );

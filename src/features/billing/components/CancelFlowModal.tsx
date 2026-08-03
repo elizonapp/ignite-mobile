@@ -5,6 +5,7 @@ import type { ServiceSubscriptionSummary } from "../../../api/services";
 import { getApiErrorCode, resolveApiError } from "../../../api/resolve-error";
 import { resolveCaughtApiError } from "../../../api/resolve-caught-error";
 import { useToast } from "../../../components/Toast";
+import { AppModal } from "../../../components/ui/AppModal";
 import { api } from "../../../lib/api";
 
 type Step = "intro" | "offer" | "final";
@@ -164,8 +165,6 @@ export function CancelFlowModal({
     }
   };
 
-  if (!open) return null;
-
   const title =
     step === "intro"
       ? t("billingCancellation")
@@ -174,18 +173,12 @@ export function CancelFlowModal({
         : t("billingCancelFlowFinalTitle");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <button
-        type="button"
-        aria-label={t("cancel")}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={loading ? undefined : resetAndClose}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="glass-overlay relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-(--border) shadow-lg"
-      >
+    <AppModal
+      open={open}
+      onClose={resetAndClose}
+      closeAriaLabel={t("cancel")}
+      closeDisabled={loading}
+    >
         <div className="flex items-center justify-between gap-3 border-b border-(--border) px-5 py-4">
           <h2 className="text-lg font-semibold text-(--text-primary)">{title}</h2>
           <button
@@ -199,7 +192,7 @@ export function CancelFlowModal({
           </button>
         </div>
 
-        <div className="space-y-4 overflow-y-auto p-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
           {step === "intro" && isContract && (
             <>
               <p className="text-sm text-(--text-secondary)">{t("billingContractCancelIntro")}</p>
@@ -404,7 +397,6 @@ export function CancelFlowModal({
             </>
           )}
         </div>
-      </div>
-    </div>
+    </AppModal>
   );
 }

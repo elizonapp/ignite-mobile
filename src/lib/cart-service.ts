@@ -17,7 +17,7 @@ export type CartCustomization = {
   storageGb?: number;
 };
 
-export type CartItemType = "new" | "renewal" | "upgrade";
+export type CartItemType = "new" | "renewal" | "upgrade" | "domain";
 
 export type CartItem = {
   lineId: string;
@@ -46,6 +46,12 @@ export type CartItem = {
   dockerImage?: string;
   environment?: Record<string, string>;
   providerVariables?: Record<string, string>;
+  domainName?: string;
+  domainYears?: number;
+  domainOrderId?: string;
+  domainRegistrantPhone?: string;
+  whoisPrivacyEnabled?: boolean;
+  renewalPrice?: number;
   customization?: CartCustomization;
   customizationPrices?: Record<string, number | undefined>;
   configuredSpecs?: {
@@ -131,6 +137,21 @@ function writeCart(cart: Cart): void {
 
 function mergeNewItem(cart: Cart, item: Omit<CartItem, "lineId">): Cart {
   const itemType = item.itemType ?? "new";
+
+  if (itemType === "domain") {
+    return {
+      items: [
+        ...cart.items,
+        {
+          ...item,
+          itemType: "domain",
+          quantity: 1,
+          lineId: generateLineId(),
+          whoisPrivacyEnabled: item.whoisPrivacyEnabled !== false,
+        },
+      ],
+    };
+  }
 
   if ((itemType === "renewal" || itemType === "upgrade") && item.serviceId) {
     const existingIndex = cart.items.findIndex(
@@ -218,6 +239,29 @@ export const cartService = {
     const cart = {
       items: readCart().items.map((item) =>
         item.lineId === lineId ? { ...item, billingCycle } : item,
+      ),
+    };
+    writeCart(cart);
+    return cart;
+  },
+
+  updateItem(
+    lineId: string,
+    updates: Partial<Pick<CartItem, "whoisPrivacyEnabled" | "domainRegistrantPhone">>,
+  ): Cart {
+    const cart = {
+      items: readCart().items.map((item) =>
+        item.lineId === lineId
+          ? {
+              ...item,
+              ...(updates.whoisPrivacyEnabled !== undefined
+                ? { whoisPrivacyEnabled: updates.whoisPrivacyEnabled }
+                : {}),
+              ...(updates.domainRegistrantPhone !== undefined
+                ? { domainRegistrantPhone: updates.domainRegistrantPhone }
+                : {}),
+            }
+          : item,
       ),
     };
     writeCart(cart);

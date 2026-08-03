@@ -60,7 +60,7 @@ export type CheckoutCartLine = {
   productName: string;
   quantity: number;
   billingCycle: number;
-  itemType: "new" | "renewal" | "upgrade";
+  itemType: "new" | "renewal" | "upgrade" | "domain";
   serviceId?: string;
   subscriptionId?: string;
   daysExtension?: number;
@@ -68,6 +68,12 @@ export type CheckoutCartLine = {
   contractTermMonths?: number;
   customization?: { vcores?: number; memory?: number; storage?: number };
   locationId?: string;
+  domainName?: string;
+  domainYears?: number;
+  domainOrderId?: string;
+  domainRegistrantPhone?: string;
+  whoisPrivacyEnabled?: boolean;
+  renewalPrice?: number;
 };
 
 export type CartValidateResponse = {

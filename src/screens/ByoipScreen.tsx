@@ -7,6 +7,7 @@ import { CustomerFeatureUnavailable } from "../components/CustomerFeatureUnavail
 import { useAuth } from "../components/AuthProvider";
 import { useRouter } from "../components/Router";
 import { DnsListToolbar } from "../components/dns/dns-list-toolbar";
+import { AppModal } from "../components/ui/AppModal";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -834,9 +835,15 @@ function ApplyFormPanel(props: ApplyFormPanelProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
-      <div className="glass max-h-[90vh] w-full max-w-lg overflow-y-auto p-4">{content}</div>
-    </div>
+    <AppModal
+      open
+      onClose={onCancel}
+      closeAriaLabel={t("cancel")}
+      closeDisabled={applying}
+      className="overflow-y-auto p-4"
+    >
+      {content}
+    </AppModal>
   );
 }
 

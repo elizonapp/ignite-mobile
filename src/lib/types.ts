@@ -25,6 +25,7 @@ export type DashboardServer = {
   suspendReason?: string | null;
   terminationPending?: boolean;
   reinstallPending?: boolean;
+  isDomainService?: boolean;
   providerAddress?: string | null;
   ploiStats?: {
     domain: string;
