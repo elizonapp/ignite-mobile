@@ -231,8 +231,8 @@ export function SubdomainsScreen() {
 
   if (!desktop && showForm) {
     return (
-      <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
-        <header className="safe-top safe-x flex items-center gap-2 pb-3 pt-2">
+      <div className="mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
+        <header className="safe-x flex items-center gap-2 pb-3 pt-0">
           <button
             type="button"
             onClick={wizardStep === 0 ? closeForm : () => setWizardStep(0)}

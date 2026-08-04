@@ -47,8 +47,8 @@ export function ServerDetailScreen({ id }: { id: string }) {
   };
 
   return (
-    <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
-      <header className="safe-top safe-x flex items-center gap-2 pb-3 pt-2">
+    <div className="mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
+      <header className="safe-x flex items-center gap-2 pb-3 pt-0">
         <Button
           variant="ghost"
           size="icon"
