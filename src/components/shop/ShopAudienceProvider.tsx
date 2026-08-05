@@ -8,6 +8,9 @@ import {
   type ReactNode,
 } from "react";
 
+import { useAuth } from "../AuthProvider";
+import { isBusinessAccount } from "../../lib/shop-catalog";
+
 export type ShopAudience = "private" | "business";
 
 const STORAGE_KEY = "elizon_audience";
@@ -16,13 +19,26 @@ function isAudience(value: unknown): value is ShopAudience {
   return value === "private" || value === "business";
 }
 
-function readStoredAudience(): ShopAudience {
+/** Returns null when the user has never chosen / been defaulted. */
+function readStoredAudience(): ShopAudience | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return isAudience(raw) ? raw : "private";
+    return isAudience(raw) ? raw : null;
   } catch {
-    return "private";
+    return null;
   }
+}
+
+function writeStoredAudience(next: ShopAudience) {
+  try {
+    localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    // ignore
+  }
+}
+
+function audienceFromAccountType(accountType?: string | null): ShopAudience {
+  return isBusinessAccount(accountType) ? "business" : "private";
 }
 
 type ShopAudienceContextValue = {
@@ -38,29 +54,25 @@ const ShopAudienceContext = createContext<ShopAudienceContextValue>({
 });
 
 export function ShopAudienceProvider({ children }: { children: ReactNode }) {
-  const [audience, setAudienceState] = useState<ShopAudience>(() => readStoredAudience());
+  const { user, isLoading } = useAuth();
+  const [audience, setAudienceState] = useState<ShopAudience>(() => readStoredAudience() ?? "private");
 
   const setAudience = useCallback((next: ShopAudience) => {
     setAudienceState(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // ignore
-    }
+    writeStoredAudience(next);
   }, []);
 
+  // When auth is ready and the user has no stored preference yet, default from
+  // accountType (BUSINESS → business, else private) and persist — matching web.
+  // Never override an explicit choice already in localStorage.
   useEffect(() => {
-    const stored = readStoredAudience();
-    if (stored !== audience) setAudience(stored);
-    else {
-      try {
-        localStorage.setItem(STORAGE_KEY, audience);
-      } catch {
-        // ignore
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reconcile once on mount
-  }, []);
+    if (isLoading) return;
+    if (readStoredAudience() !== null) return;
+
+    const next = audienceFromAccountType(user?.accountType);
+    setAudienceState(next);
+    writeStoredAudience(next);
+  }, [isLoading, user?.accountType]);
 
   const value = useMemo(
     () => ({

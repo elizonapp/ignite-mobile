@@ -1,12 +1,11 @@
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { PushNotifications, type Token, type ActionPerformed, type PushNotificationSchema } from "@capacitor/push-notifications";
 
-import { api } from "./api";
+import { api, getSessionToken } from "./api";
 import { getDesktopOS, getMobileOS, isElectron, isMobileNative } from "./platform";
 
 const PREF_KEY = "elizon.clientPushEnabled";
 const TOKEN_KEY = "elizon.mobilePushDeviceToken";
-const WEB_ENDPOINT_KEY = "elizon.desktopPushEndpoint";
 
 type PushNavigateHandler = (target: { serviceId?: string }) => void;
 
@@ -19,24 +18,18 @@ const NotificationSettings = registerPlugin<NotificationSettingsPlugin>("Notific
 let listenersReady = false;
 let registrationInFlight: Promise<boolean> | null = null;
 let navigateHandler: PushNavigateHandler | null = null;
-let swMessageBound = false;
+let desktopPushBound = false;
 
 function canUseNativePush(): boolean {
   return isMobileNative() && Capacitor.isPluginAvailable("PushNotifications");
 }
 
-function canUseDesktopWebPush(): boolean {
-  return (
-    isElectron() &&
-    typeof window !== "undefined" &&
-    "Notification" in window &&
-    "serviceWorker" in navigator &&
-    "PushManager" in window
-  );
+function canUseDesktopNativePush(): boolean {
+  return isElectron() && typeof window !== "undefined" && Boolean(window.electron?.push);
 }
 
 export function canUseClientPush(): boolean {
-  return canUseNativePush() || canUseDesktopWebPush();
+  return canUseNativePush() || canUseDesktopNativePush();
 }
 
 export function getMobilePushPreference(): boolean {
@@ -65,32 +58,21 @@ function setStoredDeviceToken(token: string | null): void {
   else window.localStorage.removeItem(TOKEN_KEY);
 }
 
-function getStoredWebEndpoint(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(WEB_ENDPOINT_KEY);
-}
-
-function setStoredWebEndpoint(endpoint: string | null): void {
-  if (typeof window === "undefined") return;
-  if (endpoint) window.localStorage.setItem(WEB_ENDPOINT_KEY, endpoint);
-  else window.localStorage.removeItem(WEB_ENDPOINT_KEY);
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const output = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
-  return output;
-}
-
-async function uploadDeviceToken(token: string): Promise<void> {
+async function uploadMobileDeviceToken(token: string): Promise<void> {
   const platform = getMobileOS();
   await api.user.registerDeviceToken({
     deviceToken: token,
     platform: platform === "unknown" ? Capacitor.getPlatform() : platform,
     channel: "MOBILE_NATIVE",
+  });
+  setStoredDeviceToken(token);
+}
+
+async function uploadDesktopDeviceToken(token: string): Promise<void> {
+  await api.user.registerDeviceToken({
+    deviceToken: token,
+    platform: getDesktopOS(),
+    channel: "ELECTRON",
   });
   setStoredDeviceToken(token);
 }
@@ -108,21 +90,28 @@ function extractServiceId(data: unknown): string | undefined {
   return undefined;
 }
 
-function bindServiceWorkerMessages(): void {
-  if (swMessageBound || typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
-  navigator.serviceWorker.addEventListener("message", (event) => {
-    const data = event.data as { type?: string; serviceId?: string } | null;
-    if (data?.type !== "elizon-push-click") return;
-    navigateHandler?.({ serviceId: data.serviceId });
+function bindDesktopPushListeners(): void {
+  if (desktopPushBound || !canUseDesktopNativePush()) return;
+  const push = window.electron?.push;
+  if (!push) return;
+
+  push.onToken?.((payload) => {
+    if (!payload?.token || !getMobilePushPreference()) return;
+    void uploadDesktopDeviceToken(payload.token).catch(() => {});
   });
-  swMessageBound = true;
+
+  push.onNotificationClick?.((payload) => {
+    navigateHandler?.({ serviceId: payload?.serviceId || extractServiceId(payload?.data) });
+  });
+
+  desktopPushBound = true;
 }
 
 async function ensureListeners(): Promise<void> {
   if (!canUseNativePush() || listenersReady) return;
 
   await PushNotifications.addListener("registration", (token: Token) => {
-    void uploadDeviceToken(token.value).catch(() => {});
+    void uploadMobileDeviceToken(token.value).catch(() => {});
   });
 
   await PushNotifications.addListener("registrationError", () => {});
@@ -139,7 +128,7 @@ async function ensureListeners(): Promise<void> {
 
 export function setPushNavigateHandler(handler: PushNavigateHandler | null): void {
   navigateHandler = handler;
-  if (handler) bindServiceWorkerMessages();
+  if (handler) bindDesktopPushListeners();
 }
 
 export function getPushDeniedMessageKey():
@@ -177,11 +166,16 @@ export async function getNativePushPermissionState(): Promise<"granted" | "denie
     return state;
   }
 
-  if (canUseDesktopWebPush()) {
-    const permission = Notification.permission;
-    if (permission === "granted") return "granted";
-    if (permission === "denied") return "denied";
-    return "prompt";
+  if (canUseDesktopNativePush()) {
+    try {
+      const support = await window.electron?.push?.isSupported?.();
+      if (!support?.notifications) return "unsupported";
+      if (!support.supported) return "unsupported";
+      // Electron Notification permission is granted via main-process handler.
+      return "granted";
+    } catch {
+      return "unsupported";
+    }
   }
 
   return "unsupported";
@@ -204,45 +198,23 @@ async function ensureAndroidDefaultChannel(): Promise<void> {
   }
 }
 
-async function registerDesktopWebPush(): Promise<boolean> {
-  if (!canUseDesktopWebPush()) return false;
-  bindServiceWorkerMessages();
+async function registerDesktopNativePush(): Promise<boolean> {
+  if (!canUseDesktopNativePush()) return false;
+  bindDesktopPushListeners();
 
-  const keyRes = await api.user.pushPublicKey();
-  const publicKey = keyRes?.publicKey;
-  if (!publicKey) return false;
+  const authToken = getSessionToken();
+  const result = await window.electron?.push?.enable?.({ authToken });
+  if (!result?.ok || !result.token) return false;
 
-  const registration = await navigator.serviceWorker.register("./push-sw.js");
-  await navigator.serviceWorker.ready;
-
-  const existing = await registration.pushManager.getSubscription();
-  const subscription =
-    existing ||
-    (await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-    }));
-
-  const json = subscription.toJSON();
-  await api.user.subscribeWebPush({
-    platform: "electron",
-    subscription: {
-      endpoint: json.endpoint,
-      keys: {
-        auth: json.keys?.auth,
-        p256dh: json.keys?.p256dh,
-      },
-    },
-  });
-  if (json.endpoint) setStoredWebEndpoint(json.endpoint);
+  await uploadDesktopDeviceToken(result.token);
   return true;
 }
 
 export async function registerMobilePush(): Promise<boolean> {
-  if (canUseDesktopWebPush()) {
+  if (canUseDesktopNativePush()) {
     if (!getMobilePushPreference()) return false;
     try {
-      return await registerDesktopWebPush();
+      return await registerDesktopNativePush();
     } catch {
       return false;
     }
@@ -293,10 +265,12 @@ export async function enableMobilePush(): Promise<{ ok: boolean; permission: "gr
         const osEnabled = await areAndroidNotificationsEnabled();
         if (!osEnabled) permission = "denied";
       }
-    } else if (canUseDesktopWebPush()) {
-      const result = await Notification.requestPermission();
-      permission = result === "granted" ? "granted" : result === "denied" ? "denied" : "prompt";
     }
+  }
+
+  if (permission === "unsupported") {
+    setMobilePushPreference(false);
+    return { ok: false, permission };
   }
 
   if (permission !== "granted") {
@@ -322,21 +296,12 @@ export async function disableMobilePush(): Promise<void> {
     setStoredDeviceToken(null);
   }
 
-  const endpoint = getStoredWebEndpoint();
-  if (endpoint) {
+  if (canUseDesktopNativePush()) {
     try {
-      await api.user.unsubscribeWebPush(endpoint);
+      await window.electron?.push?.disable?.();
     } catch {
       // ignore
     }
-    try {
-      const registration = await navigator.serviceWorker.getRegistration("./push-sw.js");
-      const sub = await registration?.pushManager.getSubscription();
-      await sub?.unsubscribe();
-    } catch {
-      // ignore
-    }
-    setStoredWebEndpoint(null);
   }
 
   if (canUseNativePush()) {
@@ -364,7 +329,7 @@ export async function reconcileMobilePushWithOsPermission(): Promise<"granted" |
   if (!canUseClientPush()) return "unsupported";
   const permission = await getNativePushPermissionState();
   if (permission === "denied" || permission === "unsupported") {
-    if (getMobilePushPreference() || getStoredDeviceToken() || getStoredWebEndpoint()) {
+    if (getMobilePushPreference() || getStoredDeviceToken()) {
       await disableMobilePush();
     } else {
       setMobilePushPreference(false);
@@ -386,7 +351,6 @@ export async function syncMobilePushAfterAuth(): Promise<void> {
 export async function unregisterMobilePushOnLogout(): Promise<void> {
   if (!canUseClientPush()) return;
   const token = getStoredDeviceToken();
-  const endpoint = getStoredWebEndpoint();
   if (token) {
     try {
       await api.user.disableDeviceToken(token);
@@ -395,13 +359,12 @@ export async function unregisterMobilePushOnLogout(): Promise<void> {
     }
     setStoredDeviceToken(null);
   }
-  if (endpoint) {
+  if (canUseDesktopNativePush()) {
     try {
-      await api.user.unsubscribeWebPush(endpoint);
+      await window.electron?.push?.disable?.();
     } catch {
       // ignore
     }
-    setStoredWebEndpoint(null);
   }
   if (canUseNativePush() && getMobileOS() === "android") {
     try {

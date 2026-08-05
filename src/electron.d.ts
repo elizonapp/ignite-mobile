@@ -28,6 +28,21 @@ type ElectronStoredSession = {
   persist: boolean;
 };
 
+type ElectronPushEnableResult = {
+  ok: boolean;
+  token?: string | null;
+  error?: string;
+};
+
+type ElectronPushTokenPayload = {
+  token: string;
+};
+
+type ElectronPushClickPayload = {
+  serviceId?: string;
+  data?: Record<string, unknown>;
+};
+
 declare global {
   interface Window {
     electron?: {
@@ -38,6 +53,15 @@ declare global {
         get: () => Promise<ElectronStoredSession>;
         set: (token: string, persist?: boolean) => Promise<{ ok: boolean }>;
         clear: () => Promise<{ ok: boolean }>;
+      };
+      push?: {
+        enable: (payload?: { authToken?: string | null }) => Promise<ElectronPushEnableResult>;
+        disable: () => Promise<{ ok: boolean }>;
+        getToken: () => Promise<{ token: string | null }>;
+        isSupported: () => Promise<{ supported: boolean; notifications: boolean }>;
+        setAuthToken: (token: string | null) => Promise<{ ok: boolean }>;
+        onToken: (callback: (payload: ElectronPushTokenPayload) => void) => () => void;
+        onNotificationClick: (callback: (payload: ElectronPushClickPayload) => void) => () => void;
       };
     };
   }

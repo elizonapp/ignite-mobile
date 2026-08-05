@@ -102,7 +102,7 @@ export function NotificationsSettingsView({ onBack }: { onBack: () => void }) {
       if (!result.ok) {
         if (result.permission === "denied") {
           show(t(getPushDeniedMessageKey()), "error");
-        } else if (result.permission === "unsupported") {
+        } else {
           show(t("settingsPushNotificationsUnsupported"), "error");
         }
       }

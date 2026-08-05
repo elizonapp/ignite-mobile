@@ -20,6 +20,7 @@ export type DomainRegistrationByService = {
   domain: string;
   status: string;
   registrar?: string;
+  autoRenew?: boolean;
   whoisPrivacyEnabled?: boolean;
   nameserverMode?: string;
   nameserversJson?: string | null;
@@ -31,6 +32,15 @@ export type DomainRegistrationByService = {
     provider?: string | null;
     registrantJson?: string | null;
   };
+};
+
+export type LiveRegistryStatus = {
+  source: "whois" | "domain-robot" | "whois+domain-robot" | "none";
+  fetchedAt: string;
+  statuses: string[];
+  transferLock?: boolean | null;
+  error?: string | null;
+  fromCache?: boolean;
 };
 
 export class DomainsResource extends ResourceClient {
@@ -55,9 +65,12 @@ export class DomainsResource extends ResourceClient {
   }
 
   registrationByService(serviceId: string) {
-    return this.get<{ success: boolean; registration?: DomainRegistrationByService; error?: string }>(
-      `/api/domains/registrations/by-service/${encodeURIComponent(serviceId)}`,
-    );
+    return this.get<{
+      success: boolean;
+      registration?: DomainRegistrationByService;
+      liveRegistryStatus?: LiveRegistryStatus | null;
+      error?: string;
+    }>(`/api/domains/registrations/by-service/${encodeURIComponent(serviceId)}`);
   }
 
   registrationAction(

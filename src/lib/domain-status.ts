@@ -38,6 +38,10 @@ const DOMAIN_STATUS_I18N_KEYS: Record<string, string> = {
   CLIENTTRANSFERPROHIBITED: "domainStatusTransferLocked",
   SERVER_TRANSFER_PROHIBITED: "domainStatusTransferLocked",
   SERVERTRANSFERPROHIBITED: "domainStatusTransferLocked",
+  ADD_PERIOD: "domainStatusAddPeriod",
+  ADDPERIOD: "domainStatusAddPeriod",
+  AUTO_RENEW_PERIOD: "domainStatusAutoRenewPeriod",
+  AUTORENEWPERIOD: "domainStatusAutoRenewPeriod",
   INACTIVE: "domainStatusInactive",
   SUSPENDED: "domainStatusSuspended",
 };
@@ -45,8 +49,11 @@ const DOMAIN_STATUS_I18N_KEYS: Record<string, string> = {
 export function normalizeDomainStatus(status: string | null | undefined): string {
   return String(status || "")
     .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[-\s]+/g, "_")
     .toUpperCase()
-    .replace(/[-\s]+/g, "_");
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 export function formatDomainStatusLabel(
@@ -64,6 +71,7 @@ export function formatDomainStatusLabel(
 
   return raw
     .replace(/[_-]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .toLowerCase()
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -81,4 +89,40 @@ export function isDomainStatusTransferPending(status: string | null | undefined)
 export function isDomainStatusActive(status: string | null | undefined): boolean {
   const key = normalizeDomainStatus(status);
   return key === "ACTIVE" || key === "REGISTERED" || key === "OK";
+}
+
+const PENDING_TRANSFER_KEYS = new Set([
+  "PENDING_TRANSFER",
+  "PENDINGTRANSFER",
+  "TRANSFER_PENDING",
+  "PENDING",
+]);
+
+const UNHEALTHY_LIVE_KEYS = new Set([
+  ...PENDING_TRANSFER_KEYS,
+  "EXPIRED",
+  "EXPIRING",
+  "CLIENT_HOLD",
+  "CLIENTHOLD",
+  "SERVER_HOLD",
+  "SERVERHOLD",
+  "HOLD",
+  "HOLD_LOCK",
+  "PENDING_DELETE",
+  "PENDINGDELETE",
+  "REDEMPTION_GRACE",
+  "REDEMPTION_PERIOD",
+  "REDEMPTIONPERIOD",
+  "INACTIVE",
+  "SUSPENDED",
+  "FAILED",
+]);
+
+export function liveStatusesIncludePendingTransfer(statuses: string[]): boolean {
+  return statuses.some((s) => PENDING_TRANSFER_KEYS.has(normalizeDomainStatus(s)));
+}
+
+export function isLiveRegistryStatusHealthy(statuses: string[]): boolean {
+  if (!statuses.length) return false;
+  return !statuses.some((s) => UNHEALTHY_LIVE_KEYS.has(normalizeDomainStatus(s)));
 }

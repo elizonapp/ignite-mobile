@@ -555,7 +555,7 @@ export const de: Dict = {
   settingsPushNotificationsDeniedIos:
     "Push-Benachrichtigungen sind unter iOS deaktiviert. Bitte aktivieren Sie sie unter Einstellungen → elizon → Mitteilungen.",
   settingsPushNotificationsDeniedDesktop:
-    "Push-Benachrichtigungen sind im System deaktiviert. Bitte aktivieren Sie sie in den Benachrichtigungseinstellungen von Windows oder Linux für elizon.",
+    "Push-Benachrichtigungen sind im System deaktiviert. Bitte aktivieren Sie sie in den Benachrichtigungseinstellungen von Windows, Linux oder macOS für elizon.",
   settingsPushNotificationsUnsupported: "Push-Benachrichtigungen sind auf diesem Gerät nicht verfügbar.",
   settingsEmailNotifications: "E-Mail-Benachrichtigungen",
   settingsEmailNotificationsDesc: "E-Mail-Updates über Ihr Konto erhalten",
@@ -1444,6 +1444,8 @@ export const de: Dict = {
   domainTabContactsDesc: "Registrar-Handles für Inhaber, Admin, Technik und Zone.",
   domainOverviewTransferPendingHint:
     "Der Transfer dieser Domain läuft noch. Manche Aktionen sind erst nach Abschluss verfügbar.",
+  domainOverviewLiveStatusUnavailable:
+    "Registry-Status konnte nicht live geladen werden. Angezeigt wird der zuletzt bekannte Lifecycle-Status.",
   domainSettingsNameserverN: "Nameserver {{n}}",
   domainStatusActive: "Aktiv",
   domainStatusTransferPending: "Transfer ausstehend",
@@ -1466,6 +1468,8 @@ export const de: Dict = {
   domainStatusClientHold: "Registrar-Hold",
   domainStatusServerHold: "Registry-Hold",
   domainStatusTransferLocked: "Transfer gesperrt",
+  domainStatusAddPeriod: "Anlegefrist",
+  domainStatusAutoRenewPeriod: "Verlängerungsfrist",
   domainStatusInactive: "Inaktiv",
   domainStatusSuspended: "Ausgesetzt",
   serverDomainName: "Domain",

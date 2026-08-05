@@ -5,12 +5,19 @@ import {
   formatDomainStatusLabel,
   isDomainStatusActive,
   isDomainStatusTransferPending,
+  isLiveRegistryStatusHealthy,
+  liveStatusesIncludePendingTransfer,
 } from "../../lib/domain-status";
 import { useI18n } from "../../i18n";
 import { useToast } from "../Toast";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import type { DomainContactRole, DomainRegistrationByService, DomainStoredContact } from "../../api/domains";
+import type {
+  DomainContactRole,
+  DomainRegistrationByService,
+  DomainStoredContact,
+  LiveRegistryStatus,
+} from "../../api/domains";
 
 type ContactForm = {
   handleId: string;
@@ -122,6 +129,7 @@ export function DomainServicePanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [registration, setRegistration] = useState<DomainRegistrationByService | null>(null);
+  const [liveRegistryStatus, setLiveRegistryStatus] = useState<LiveRegistryStatus | null>(null);
   const [contactRole, setContactRole] = useState<DomainContactRole>("owner");
   const [forms, setForms] = useState<Record<DomainContactRole, ContactForm>>({
     owner: emptyForm(),
@@ -144,10 +152,12 @@ export function DomainServicePanel({
       if (!data?.success || !data.registration) {
         setError(typeof data?.error === "string" ? data.error : t("domainPanelLoadFailed"));
         setRegistration(null);
+        setLiveRegistryStatus(null);
         return;
       }
       const reg = data.registration;
       setRegistration(reg);
+      setLiveRegistryStatus(data.liveRegistryStatus ?? null);
       setForms(parseForms(reg));
       setAutoRenew(Boolean(reg.autoRenew));
       setWhoisPrivacy(reg.whoisPrivacyEnabled !== false);
@@ -162,6 +172,7 @@ export function DomainServicePanel({
     } catch {
       setError(t("domainPanelLoadFailed"));
       setRegistration(null);
+      setLiveRegistryStatus(null);
     } finally {
       setLoading(false);
     }
@@ -295,8 +306,14 @@ export function DomainServicePanel({
   }
 
   const locale = lang === "de" ? "de-DE" : "en-GB";
-  const statusPending = isDomainStatusTransferPending(registration.status);
-  const statusActive = isDomainStatusActive(registration.status);
+  const liveStatuses = liveRegistryStatus?.statuses ?? [];
+  const hasLive = liveStatuses.length > 0;
+  const statusPending = hasLive
+    ? liveStatusesIncludePendingTransfer(liveStatuses)
+    : isDomainStatusTransferPending(registration.status);
+  const statusActive = hasLive
+    ? isLiveRegistryStatusHealthy(liveStatuses)
+    : isDomainStatusActive(registration.status);
   const tabs: { id: MobileTab; label: string }[] = [
     { id: "overview", label: t("overview") },
     { id: "contacts", label: t("domainTabContacts") },
@@ -336,18 +353,40 @@ export function DomainServicePanel({
                 {registration.domain}
               </div>
             </div>
-            <span
-              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                statusActive
-                  ? "bg-(--success)/10 text-(--success)"
-                  : statusPending
-                    ? "bg-(--warning)/10 text-(--warning)"
-                    : "bg-(--surface-soft) text-(--text-primary)"
-              }`}
-            >
-              {formatDomainStatusLabel(registration.status, (key) => t(key as Parameters<typeof t>[0]))}
-            </span>
+            {hasLive ? (
+              <div className="flex max-w-[60%] flex-wrap justify-end gap-1.5">
+                {liveStatuses.map((code) => (
+                  <span
+                    key={code}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      statusActive
+                        ? "bg-(--success)/10 text-(--success)"
+                        : statusPending
+                          ? "bg-(--warning)/10 text-(--warning)"
+                          : "bg-(--surface-soft) text-(--text-primary)"
+                    }`}
+                  >
+                    {formatDomainStatusLabel(code, (key) => t(key as Parameters<typeof t>[0]))}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  statusActive
+                    ? "bg-(--success)/10 text-(--success)"
+                    : statusPending
+                      ? "bg-(--warning)/10 text-(--warning)"
+                      : "bg-(--surface-soft) text-(--text-primary)"
+                }`}
+              >
+                {formatDomainStatusLabel(registration.status, (key) => t(key as Parameters<typeof t>[0]))}
+              </span>
+            )}
           </div>
+          {!hasLive && liveRegistryStatus ? (
+            <p className="text-xs text-(--text-muted)">{t("domainOverviewLiveStatusUnavailable")}</p>
+          ) : null}
           {statusPending ? (
             <p className="rounded-xl border border-(--warning)/30 bg-(--warning)/10 px-3 py-2 text-sm text-(--warning)">
               {t("domainOverviewTransferPendingHint")}

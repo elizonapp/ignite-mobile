@@ -551,7 +551,7 @@ export const en = {
   settingsPushNotificationsDeniedIos:
     "Push notifications are disabled on iOS. Please enable them under Settings → elizon → Notifications.",
   settingsPushNotificationsDeniedDesktop:
-    "Push notifications are disabled in the system. Please enable them in Windows or Linux notification settings for elizon.",
+    "Push notifications are disabled in the system. Please enable them in Windows, Linux, or macOS notification settings for elizon.",
   settingsPushNotificationsUnsupported: "Push notifications are not available on this device.",
   settingsEmailNotifications: "Email notifications",
   settingsEmailNotificationsDesc: "Receive email updates about your account",
@@ -1447,6 +1447,8 @@ export const en = {
   domainTabContactsDesc: "Registrar handles for owner, admin, tech and zone.",
   domainOverviewTransferPendingHint:
     "This domain transfer is still pending. Some actions become available only after completion.",
+  domainOverviewLiveStatusUnavailable:
+    "Registry status could not be loaded live. Showing the last known lifecycle status.",
   domainSettingsNameserverN: "Nameserver {{n}}",
   domainStatusActive: "Active",
   domainStatusTransferPending: "Transfer pending",
@@ -1469,6 +1471,8 @@ export const en = {
   domainStatusClientHold: "Registrar hold",
   domainStatusServerHold: "Registry hold",
   domainStatusTransferLocked: "Transfer locked",
+  domainStatusAddPeriod: "Add period",
+  domainStatusAutoRenewPeriod: "Auto-renew period",
   domainStatusInactive: "Inactive",
   domainStatusSuspended: "Suspended",
   serverDomainName: "Domain",

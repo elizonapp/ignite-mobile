@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "../../../components/ui/button";
@@ -35,6 +35,29 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
   const [vatNumber, setVatNumber] = useState(user?.vatNumber ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [reverificationOpen, setReverificationOpen] = useState(false);
+  const [identVerified, setIdentVerified] = useState(Boolean(user?.identVerified));
+
+  useEffect(() => {
+    setIdentVerified(Boolean(user?.identVerified));
+  }, [user?.identVerified]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void api.idVerification
+      .status()
+      .then((status) => {
+        if (cancelled || !status) return;
+        setIdentVerified(
+          Boolean(status.verified || status.user?.identVerified || user?.identVerified),
+        );
+      })
+      .catch(() => {
+        /* optional */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.identVerified]);
 
   const legalNameDirty =
     firstName.trim() !== (user?.firstName ?? "").trim() ||
@@ -46,7 +69,7 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
       return;
     }
 
-    if (legalNameDirty && user?.identVerified && !acknowledgeNameChangeReverification) {
+    if (legalNameDirty && identVerified && !acknowledgeNameChangeReverification) {
       setReverificationOpen(true);
       return;
     }
@@ -96,7 +119,7 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-(--text-primary)">
             {isBusiness ? t("accountTypeBusiness") : t("accountTypePrivate")}
           </span>
-          {user?.identVerified && (
+          {identVerified && (
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400">
               {t("identVerifiedBadge")}
             </span>

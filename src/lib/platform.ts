@@ -27,6 +27,10 @@ export function getDesktopOS(): DesktopOS {
   if (typeof navigator === "undefined") return "web";
 
   if (isElectron()) {
+    const fromBridge = window.electron?.platform;
+    if (fromBridge === "darwin" || fromBridge === "win32" || fromBridge === "linux") {
+      return fromBridge;
+    }
     const electronProcess = (window as Window & { process?: { platform?: string } }).process;
     const platform = electronProcess?.platform;
     if (platform === "darwin" || platform === "win32" || platform === "linux") {

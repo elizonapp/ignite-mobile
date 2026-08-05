@@ -86,6 +86,11 @@ export function SettingsScreen() {
   const [view, setView] = useState<SettingsView>("main");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [idVerificationEnforcementRequired, setIdVerificationEnforcementRequired] = useState(false);
+  const [identVerified, setIdentVerified] = useState(Boolean(user?.identVerified));
+
+  useEffect(() => {
+    setIdentVerified(Boolean(user?.identVerified));
+  }, [user?.identVerified]);
 
   useEffect(() => {
     if (route.name === "settings" && route.view === "id-verification") {
@@ -93,21 +98,35 @@ export function SettingsScreen() {
     }
   }, [route]);
 
-  const showIdVerification =
-    Boolean(user?.dateOfBirth) &&
-    calculateAge(new Date(user!.dateOfBirth!)) >= 16 &&
-    (!user?.identVerified || idVerificationEnforcementRequired);
+  const idVerificationAgeEligible =
+    Boolean(user?.dateOfBirth) && calculateAge(new Date(user!.dateOfBirth!)) >= 16;
 
   useEffect(() => {
-    if (!showIdVerification) return;
+    if (!idVerificationAgeEligible || !user?.id) return;
     let cancelled = false;
-    void api.idVerification.enforcementStatus().then((data) => {
-      if (!cancelled && data.success) {
-        setIdVerificationEnforcementRequired(Boolean(data.required));
+    void Promise.all([
+      api.idVerification.status().catch(() => null),
+      api.idVerification.enforcementStatus().catch(() => null),
+    ]).then(([status, enforcement]) => {
+      if (cancelled) return;
+      if (status) {
+        setIdentVerified(
+          Boolean(status.verified || status.user?.identVerified || user?.identVerified),
+        );
       }
-    }).catch(() => { /* optional */ });
-    return () => { cancelled = true; };
-  }, [showIdVerification]);
+      if (enforcement?.success !== false && enforcement) {
+        setIdVerificationEnforcementRequired(Boolean(enforcement.required));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [idVerificationAgeEligible, user?.id, user?.identVerified, view]);
+
+  const showIdVerification =
+    idVerificationAgeEligible && (!identVerified || idVerificationEnforcementRequired);
+
+  const isBusiness = (user?.accountType ?? "").toUpperCase() === "BUSINESS";
 
   useEffect(() => {
     if (!isElectron() || !window.electron?.onUpdaterStatus) return;
@@ -186,10 +205,22 @@ export function SettingsScreen() {
 
       <main className="safe-x flex-1 space-y-4 pb-24 pt-2">
         <SettingsSectionBlock title={t("settingsAccount")}>
-          <div className="min-w-0">
-            <p className="text-xs text-(--text-muted)">{t("settingsSession")}</p>
-            <p className="truncate text-sm font-medium text-(--text-primary)">{displayName}</p>
-            <p className="truncate text-xs text-(--text-muted)">{user?.email ?? "—"}</p>
+          <div className="min-w-0 space-y-2">
+            <div>
+              <p className="text-xs text-(--text-muted)">{t("settingsSession")}</p>
+              <p className="truncate text-sm font-medium text-(--text-primary)">{displayName}</p>
+              <p className="truncate text-xs text-(--text-muted)">{user?.email ?? "—"}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-(--text-primary)">
+                {isBusiness ? t("accountTypeBusiness") : t("accountTypePrivate")}
+              </span>
+              {identVerified && (
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400">
+                  {t("identVerifiedBadge")}
+                </span>
+              )}
+            </div>
           </div>
 
           <SettingsNavRow icon={<User className="size-4" />} label={t("settingsProfile")} onClick={() => setView("profile")} />
