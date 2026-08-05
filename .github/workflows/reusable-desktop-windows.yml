@@ -9,7 +9,7 @@ on:
 
 jobs:
   desktop-windows:
-    name: Desktop Windows (Installer + Portable)
+    name: Desktop Windows (NSIS + Portable + MSIX)
     runs-on: windows-latest
     defaults:
       run:
@@ -21,7 +21,7 @@ jobs:
           bun-version: "1.2.10"
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "22.12"
 
       - run: bun install --frozen-lockfile
       - run: bun run build
@@ -39,6 +39,9 @@ jobs:
           }
           if (-not (Get-ChildItem release -Recurse -Filter 'ignite-desktop-setup-*.exe' | Select-Object -First 1)) {
             throw 'NSIS installer (ignite-desktop-setup-*.exe) not found in release/'
+          }
+          if (-not (Get-ChildItem release -Recurse -Filter 'ignite-desktop-*.msix' | Select-Object -First 1)) {
+            throw 'MSIX package (ignite-desktop-*.msix) not found in release/'
           }
 
       - uses: actions/upload-artifact@v6
@@ -60,9 +63,19 @@ jobs:
 
       - uses: actions/upload-artifact@v6
         with:
+          name: desktop-windows-msix
+          path: |
+            ${{ inputs.project-dir }}/release/ignite-desktop-*.msix
+            ${{ inputs.project-dir }}/release/ignite-desktop-*.msixupload
+          retention-days: 7
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
+        with:
           name: desktop-windows
           path: |
             ${{ inputs.project-dir }}/release/ignite-desktop-setup-*.exe
             ${{ inputs.project-dir }}/release/ignite-desktop-portable-*.exe
+            ${{ inputs.project-dir }}/release/ignite-desktop-*.msix
           retention-days: 5
           if-no-files-found: warn

@@ -84,6 +84,18 @@ else
   echo "[release] warning: Windows portable not found" >&2
 fi
 
+if file="$(find_one "$ROOT/desktop-windows-msix" "ignite-desktop-*.msix" "*.msix")"; then
+  stage_file "Windows MSIX" "$file" "${DESKTOP_PREFIX}-windows.msix"
+else
+  echo "[release] warning: Windows MSIX not found" >&2
+fi
+
+if file="$(find_one "$ROOT/desktop-windows-msix" "ignite-desktop-*.msixupload" "*.msixupload")"; then
+  stage_file "Windows MSIX upload" "$file" "${DESKTOP_PREFIX}-windows.msixupload"
+else
+  echo "[release] warning: Windows MSIX upload archive not found" >&2
+fi
+
 if file="$(find_one "$ROOT/desktop-macos" "ignite-desktop-*.dmg" "*.dmg")"; then
   stage_file "macOS DMG" "$file" "${DESKTOP_PREFIX}-macos.dmg"
 else

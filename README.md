@@ -15,7 +15,7 @@ Changes are made in the monorepo and mirrored to `ignite-mobile` via **Mirror sy
 
 - **Runtime / bundler:** [Bun](https://bun.sh) 1.2.x
 - **UI:** React 19, Tailwind CSS 4, Radix UI
-- **Desktop:** Electron 43 + electron-builder 26
+- **Desktop:** Electron 43 + electron-builder 27 (MSIX beta)
 - **Android:** Capacitor 8 (Node.js ≥ 22 for `cap sync`)
 - **API:** REST against elizon (`src/lib/api.ts`, resources under `src/api/`)
 
@@ -58,7 +58,8 @@ Platform-specific:
 ```bash
 bun run desktop:build:linux       # AppImage → release/
 bun run desktop:build:mac         # DMG → release/
-bun run desktop:build:win:builder # NSIS + portable .exe → release/
+bun run desktop:build:win:builder # NSIS + portable + MSIX → release/
+bun run desktop:build:win:msix    # MSIX only (Microsoft Store / sideload)
 ```
 
 Before each desktop build, `build/icon.png` is generated from `public/favicon.ico` (`bun run icons:desktop`), because electron-builder requires at least 256×256 — the bundled favicon only contains smaller sizes.
@@ -73,6 +74,8 @@ Packaged desktop builds check [GitHub Releases](https://github.com/elizonapp/ign
 - **Not supported:** Windows portable build (`PORTABLE_EXECUTABLE_DIR`)
 
 Each release includes `latest.yml` / `latest-linux.yml` / `latest-mac.yml` next to the installer artifacts (original electron-builder filenames). Bump `"version"` in `package.json` before merging to `main`, otherwise clients will not detect a newer build.
+
+Windows also produces an MSIX package (and `.msixupload` for Partner Center). Store listing needs a matching `msix.publisher` / identity from Partner Center before submission — until then the build uses the Store placeholder identity.
 
 Code signing is still disabled in CI; updates work, but Windows SmartScreen / macOS Gatekeeper may show warnings until signing is enabled.
 

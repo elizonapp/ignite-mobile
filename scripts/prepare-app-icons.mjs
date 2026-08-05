@@ -88,6 +88,49 @@ await writePng(
   { opaque: true },
 );
 
+/** MSIX / Microsoft Store tile assets (build/appx/). */
+const appxDir = path.join(buildDir, "appx");
+const appxAssets = {
+  "StoreLogo.png": 50,
+  "Square44x44Logo.png": 44,
+  "Square150x150Logo.png": 150,
+  "Wide310x150Logo.png": [310, 150],
+  "LargeTile.png": 310,
+  "SmallTile.png": 71,
+  "BadgeLogo.png": 24,
+  "SplashScreen.png": [620, 300],
+};
+for (const [name, size] of Object.entries(appxAssets)) {
+  const outFile = path.join(appxDir, name);
+  await mkdir(appxDir, { recursive: true });
+  if (Array.isArray(size)) {
+    const [w, h] = size;
+    await sharp({
+      create: { width: w, height: h, channels: 4, background: iconBg },
+    })
+      .composite([
+        {
+          input: await pipeline
+            .clone()
+            .resize(Math.round(Math.min(w, h) * 0.72), Math.round(Math.min(w, h) * 0.72), {
+              fit: "contain",
+              background: iconBg,
+            })
+            .flatten({ background: iconBg })
+            .removeAlpha()
+            .png()
+            .toBuffer(),
+          gravity: "centre",
+        },
+      ])
+      .png()
+      .toFile(outFile);
+    console.log(`[icons] Wrote ${path.relative(root, outFile)} (${w}x${h})`);
+  } else {
+    await writePng(pipeline, size, outFile, { opaque: true });
+  }
+}
+
 for (const [folder, size] of Object.entries(androidForegroundSizes)) {
   await writePng(
     pipeline,

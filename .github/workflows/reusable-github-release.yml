@@ -55,6 +55,12 @@ jobs:
           name: desktop-windows-portable
           path: artifacts/desktop-windows-portable
 
+      - name: Download Windows MSIX
+        uses: actions/download-artifact@v6
+        with:
+          name: desktop-windows-msix
+          path: artifacts/desktop-windows-msix
+
       - name: Download macOS DMG
         uses: actions/download-artifact@v6
         with:
@@ -93,6 +99,7 @@ jobs:
             | Linux | `ignite-desktop-*-linux.AppImage` |
             | Windows (installer) | `ignite-desktop-*-windows-setup.exe` |
             | Windows (portable) | `ignite-desktop-*-windows-portable.exe` |
+            | Windows (MSIX / Store) | `ignite-desktop-*-windows.msix` (+ `.msixupload`) |
             | macOS | `ignite-desktop-*-macos.dmg` |
             | Android (debug) | `ignite-mobile-*-android-debug.apk` |
 

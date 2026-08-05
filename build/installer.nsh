@@ -7,7 +7,8 @@
   !define MUI_FINISHPAGE_SHOWREADME_FUNCTION AddToStartup
 
   Function AddToStartup
-    CreateShortCut "$SMSTARTUP\${PRODUCT_FILENAME}.lnk" "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+    ; PRODUCT_FILENAME is a CLI define; APP_EXECUTABLE_FILENAME is only set later in common.nsh
+    CreateShortCut "$SMSTARTUP\${PRODUCT_FILENAME}.lnk" "$INSTDIR\${PRODUCT_FILENAME}.exe"
   FunctionEnd
 !endif
 
