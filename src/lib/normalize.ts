@@ -73,6 +73,9 @@ export function mapBaseServer(raw: Record<string, unknown>): DashboardServer {
     terminationPending: Boolean(raw.terminationPending),
     reinstallPending: Boolean(raw.reinstallPending),
     isDomainService: Boolean(raw.isDomainService),
+    domainName: typeof raw.domainName === "string" ? raw.domainName : null,
+    categoryFriendlyName:
+      typeof raw.categoryFriendlyName === "string" ? raw.categoryFriendlyName : null,
     providerAddress: (raw.providerAddress as string | null) ?? null,
     ploiStats:
       typeof raw.ploiStats === "object" && raw.ploiStats !== null

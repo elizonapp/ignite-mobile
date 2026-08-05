@@ -33,6 +33,7 @@ export function ServerDetailScreen({ id }: { id: string }) {
   const title = identity?.displayName || identity?.name || server?.name || t("loading");
   const looksLikeDomainService =
     Boolean(server?.isDomainService) ||
+    String(server?.providerType || "").toUpperCase() === "DOMAIN" ||
     String(server?.name || "")
       .toLowerCase()
       .startsWith("domain ");
@@ -45,6 +46,8 @@ export function ServerDetailScreen({ id }: { id: string }) {
     void refresh();
     void refetchView();
   };
+
+  const showBillingTab = access?.canManageBilling !== false;
 
   return (
     <div className="mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
@@ -71,7 +74,7 @@ export function ServerDetailScreen({ id }: { id: string }) {
       </header>
 
       <main className="safe-x flex-1 space-y-4 pb-24 pt-2">
-        <IdentityCard server={server} identity={identity} />
+        {!looksLikeDomainService ? <IdentityCard server={server} identity={identity} /> : null}
 
         {server?.terminationPending || server?.reinstallPending ? (
           <ServicePendingActionBanner
@@ -89,20 +92,23 @@ export function ServerDetailScreen({ id }: { id: string }) {
         ) : null}
 
         {looksLikeDomainService ? (
-          <>
-            <DomainServicePanel
-              serviceId={id}
-              canManageSettings={access?.canManageSettings !== false}
-            />
-            <ServiceBillingPanel
-              serviceId={id}
-              serviceName={server?.name || id}
-              onRefresh={() => void refresh(true)}
-              onNavigateToInvoices={() => navigate({ name: "invoices" })}
-              onNavigateToInvoiceDetail={(invoiceId) => navigate({ name: "invoice-detail", id: invoiceId })}
-              onNavigateToInvoicePay={(invoiceId) => navigate({ name: "invoice-pay", id: invoiceId })}
-            />
-          </>
+          <DomainServicePanel
+            serviceId={id}
+            canManageSettings={access?.canManageSettings !== false}
+            showBillingTab={showBillingTab}
+            billingContent={
+              showBillingTab ? (
+                <ServiceBillingPanel
+                  serviceId={id}
+                  serviceName={server?.name || id}
+                  onRefresh={() => void refresh(true)}
+                  onNavigateToInvoices={() => navigate({ name: "invoices" })}
+                  onNavigateToInvoiceDetail={(invoiceId) => navigate({ name: "invoice-detail", id: invoiceId })}
+                  onNavigateToInvoicePay={(invoiceId) => navigate({ name: "invoice-pay", id: invoiceId })}
+                />
+              ) : null
+            }
+          />
         ) : viewLoading ? (
           <div className="space-y-3">
             <div className="glass h-11 animate-pulse" />
@@ -162,8 +168,10 @@ function IdentityCard({
   };
 
   const status = server?.status;
-  const ip = identity?.primaryIpv4 || server?.ip || null;
-  const region = identity?.region || server?.location || null;
+  const rawIp = identity?.primaryIpv4 || server?.ip || null;
+  const rawRegion = identity?.region || server?.location || null;
+  const ip = rawIp && rawIp !== "—" ? rawIp : null;
+  const region = rawRegion && rawRegion !== "—" ? rawRegion : null;
   const product = identity?.productName || null;
 
   if (!server && !identity) {

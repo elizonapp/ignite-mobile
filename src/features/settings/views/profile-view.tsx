@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { ConfirmModal } from "../../../components/ui/ConfirmModal";
 import { useAuth } from "../../../components/AuthProvider";
 import { useToast } from "../../../components/Toast";
 import { useI18n, type Lang } from "../../../i18n";
@@ -18,6 +19,13 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
   const { show } = useToast();
 
   const isBusiness = (user?.accountType ?? "").toUpperCase() === "BUSINESS";
+  const nameChangeLocked = user?.nameChangeAllowed === false;
+  const nameChangeLockHint =
+    user?.nameChangeBlockedReason === "under_14"
+      ? t("settingsNameChangeLockedUnder14")
+      : user?.nameChangeBlockedReason === "cooldown"
+        ? t("settingsNameChangeLockedCooldown")
+        : null;
 
   const [firstName, setFirstName] = useState(user?.firstName ?? "");
   const [lastName, setLastName] = useState(user?.lastName ?? "");
@@ -26,8 +34,23 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
   const [companyName, setCompanyName] = useState(user?.companyName ?? "");
   const [vatNumber, setVatNumber] = useState(user?.vatNumber ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const [reverificationOpen, setReverificationOpen] = useState(false);
 
-  const save = async () => {
+  const legalNameDirty =
+    firstName.trim() !== (user?.firstName ?? "").trim() ||
+    lastName.trim() !== (user?.lastName ?? "").trim();
+
+  const save = async (acknowledgeNameChangeReverification = false) => {
+    if (nameChangeLocked && legalNameDirty) {
+      show(nameChangeLockHint || t("settingsNameChangeLockedCooldown"), "error");
+      return;
+    }
+
+    if (legalNameDirty && user?.identVerified && !acknowledgeNameChangeReverification) {
+      setReverificationOpen(true);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const data = await api.auth.updateProfile({
@@ -36,6 +59,9 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
         nickname: nickname.trim() || undefined,
         phone: phone.trim() || undefined,
         locale: lang,
+        ...(acknowledgeNameChangeReverification
+          ? { acknowledgeNameChangeReverification: true }
+          : {}),
         ...(isBusiness
           ? {
               companyName: companyName.trim() || undefined,
@@ -54,6 +80,7 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
       show(resolveCaughtApiError(err, t), "error");
     } finally {
       setIsSaving(false);
+      setReverificationOpen(false);
     }
   };
 
@@ -63,21 +90,41 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
 
   return (
     <SettingsSubView title={t("settingsProfile")} onBack={onBack}>
-      <div className="glass space-y-1 p-3">
+      <div className="glass space-y-2 p-3">
         <p className="text-xs text-(--text-muted)">{user?.email}</p>
-        <p className="text-sm font-medium text-(--text-primary)">
-          {isBusiness ? t("accountTypeBusiness") : t("accountTypePrivate")}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-(--text-primary)">
+            {isBusiness ? t("accountTypeBusiness") : t("accountTypePrivate")}
+          </span>
+          {user?.identVerified && (
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400">
+              {t("identVerifiedBadge")}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="space-y-1.5">
         <Label className="text-xs text-(--text-muted)">{t("settingsFirstName")}</Label>
-        <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-10 rounded-xl" />
+        <Input
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          disabled={nameChangeLocked}
+          className={`h-10 rounded-xl ${nameChangeLocked ? "opacity-60" : ""}`}
+        />
       </div>
       <div className="space-y-1.5">
         <Label className="text-xs text-(--text-muted)">{t("settingsLastName")}</Label>
-        <Input value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-10 rounded-xl" />
+        <Input
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          disabled={nameChangeLocked}
+          className={`h-10 rounded-xl ${nameChangeLocked ? "opacity-60" : ""}`}
+        />
       </div>
+      {nameChangeLockHint && (
+        <p className="text-[11px] text-(--text-muted)">{nameChangeLockHint}</p>
+      )}
       <div className="space-y-1.5">
         <Label className="text-xs text-(--text-muted)">{t("settingsNickname")}</Label>
         <Input value={nickname} onChange={(e) => setNickname(e.target.value)} className="h-10 rounded-xl" />
@@ -121,6 +168,18 @@ export function ProfileSettingsView({ onBack }: { onBack: () => void }) {
       <Button onClick={() => void save()} disabled={isSaving} className="btn-primary w-full justify-center rounded-xl py-3">
         {isSaving ? <Loader2 className="size-4 animate-spin" /> : t("saveChanges")}
       </Button>
+
+      <ConfirmModal
+        open={reverificationOpen}
+        title={t("settingsNameChangeReverificationTitle")}
+        description={t("settingsNameChangeReverificationMessage")}
+        confirmLabel={t("settingsNameChangeReverificationConfirm")}
+        cancelLabel={t("settingsNameChangeReverificationCancel")}
+        destructive
+        isLoading={isSaving}
+        onCancel={() => setReverificationOpen(false)}
+        onConfirm={() => void save(true)}
+      />
     </SettingsSubView>
   );
 }

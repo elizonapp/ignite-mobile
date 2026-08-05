@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from '../components/AuthProvider';
 import { ContractOverduePaymentBanner } from '../components/dashboard/ContractOverduePaymentBanner';
 import { MaintenanceBanner } from '../components/dashboard/MaintenanceBanner';
-import { QuickActions } from '../components/dashboard/QuickActions';
 import { ResourceUsage } from '../components/dashboard/ResourceUsage';
 import { ServerCard } from '../components/dashboard/ServerCard';
 import { StatGrid } from '../components/dashboard/StatGrid';
@@ -107,7 +106,7 @@ export function DashboardScreen() {
   }>;
 
   return (
-    <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
+    <div className="mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
       <main className="safe-x flex-1 space-y-5 pb-24 pt-2">
         {error && (
           <div className="glass border border-(--error)/30 p-3 text-sm text-(--error)">
@@ -178,13 +177,6 @@ export function DashboardScreen() {
               <p>{t("trafficSourceWalletBalance")}: {trafficSourceSummary.walletBalanceTb.toFixed(2)} TB</p>
               <p>{t("trafficSourceWalletUsed")}: {trafficSourceSummary.walletUsedTb.toFixed(2)} TB</p>
             </div>
-          </section>
-        )}
-
-        {isMobileNative() && (
-          <section className="space-y-2">
-            <SectionTitle title={t("quickActions")} />
-            <QuickActions />
           </section>
         )}
 

@@ -30,13 +30,27 @@ export function ServerCard({
 }) {
   const { t } = useI18n();
   const provider = (server.providerType || "").toUpperCase();
+  const isDomain =
+    Boolean(server.isDomainService) ||
+    provider === "DOMAIN" ||
+    String(server.name || "")
+      .toLowerCase()
+      .startsWith("domain ");
   const isPloi = provider === "PLOI";
   const isPlesk = provider === "PLESK";
-  const displayIp = isPloi
-    ? server.ploiStats?.domain || server.providerAddress || server.ip
-    : isPlesk
-      ? server.providerAddress || server.ip
-      : server.ip;
+  const domainName =
+    (typeof server.domainName === "string" && server.domainName.trim()) ||
+    (isDomain && typeof server.name === "string"
+      ? server.name.replace(/^domain\s+/i, "").trim()
+      : "") ||
+    "";
+  const displayIp = isDomain
+    ? domainName || "—"
+    : isPloi
+      ? server.ploiStats?.domain || server.providerAddress || server.ip
+      : isPlesk
+        ? server.providerAddress || server.ip
+        : server.ip;
   const ramPct = server.ram.total > 0 ? Math.round((server.ram.used / server.ram.total) * 100) : 0;
   const diskPct = server.disk.total > 0 ? Math.round((server.disk.used / server.disk.total) * 100) : 0;
   const cpuPct = Math.min(100, Math.max(0, +server.cpu.used.toFixed(1)));
@@ -87,17 +101,25 @@ export function ServerCard({
             {maintenance && <Badge variant="warning">{t("serverMaintenance")}</Badge>}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-(--text-muted)">
-            <span className="inline-flex items-center gap-1">
-              <IconMapPin className="h-4 w-4 shrink-0" />{" "}
-              {isPlesk
-                ? server.pleskStats?.locationLabel || server.location
-                : isPloi
-                  ? server.ploiStats?.locationLabel || server.location
-                  : server.location}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <IconGlobe className="h-4 w-4 shrink-0" /> {displayIp}
-            </span>
+            {isDomain ? (
+              <span className="inline-flex items-center gap-1">
+                <IconGlobe className="h-4 w-4 shrink-0" /> {displayIp}
+              </span>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1">
+                  <IconMapPin className="h-4 w-4 shrink-0" />{" "}
+                  {isPlesk
+                    ? server.pleskStats?.locationLabel || server.location
+                    : isPloi
+                      ? server.ploiStats?.locationLabel || server.location
+                      : server.location}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <IconGlobe className="h-4 w-4 shrink-0" /> {displayIp}
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -119,7 +141,17 @@ export function ServerCard({
         </div>
       )}
 
-      {isPlesk ? (
+      {isDomain ? (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-(--text-muted)">{t("serverDomainName")}</span>
+            <span className="truncate font-medium text-(--text-primary)">{domainName || "—"}</span>
+          </div>
+          {server.categoryFriendlyName ? (
+            <div className="text-sm text-(--text-muted)">{server.categoryFriendlyName}</div>
+          ) : null}
+        </div>
+      ) : isPlesk ? (
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-(--text-muted)">{t("pleskDomains")}</span>
@@ -157,20 +189,22 @@ export function ServerCard({
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between text-sm text-(--text-muted)">
-        <span className="truncate pr-2">
-          {isPloi
-            ? server.ploiStats?.locationLabel || server.location
-            : isPlesk
-              ? server.pleskStats?.locationLabel || server.location
-              : server.os}
-        </span>
-        {!isPloi && !isPlesk && (
-          <span className="whitespace-nowrap">
-            {t("serverUptime")} · {server.uptime}
+      {!isDomain ? (
+        <div className="mt-3 flex items-center justify-between text-sm text-(--text-muted)">
+          <span className="truncate pr-2">
+            {isPloi
+              ? server.ploiStats?.locationLabel || server.location
+              : isPlesk
+                ? server.pleskStats?.locationLabel || server.location
+                : server.os}
           </span>
-        )}
-      </div>
+          {!isPloi && !isPlesk && (
+            <span className="whitespace-nowrap">
+              {t("serverUptime")} · {server.uptime}
+            </span>
+          )}
+        </div>
+      ) : null}
     </button>
   );
 }

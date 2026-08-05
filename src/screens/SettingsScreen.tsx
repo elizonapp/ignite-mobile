@@ -95,7 +95,8 @@ export function SettingsScreen() {
 
   const showIdVerification =
     Boolean(user?.dateOfBirth) &&
-    calculateAge(new Date(user!.dateOfBirth!)) >= 18;
+    calculateAge(new Date(user!.dateOfBirth!)) >= 16 &&
+    (!user?.identVerified || idVerificationEnforcementRequired);
 
   useEffect(() => {
     if (!showIdVerification) return;

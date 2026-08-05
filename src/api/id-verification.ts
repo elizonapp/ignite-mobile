@@ -1,6 +1,6 @@
 import { ResourceClient } from "./resource-client";
 
-export const ENJYN_LINK_SESSION_TTL_MS = 30 * 60 * 1000;
+export const ENJYN_LINK_SESSION_TTL_MS = 60 * 60 * 1000;
 
 export type IdVerificationAddress = {
   id: string;

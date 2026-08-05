@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { api } from "../../lib/api";
+import {
+  formatDomainStatusLabel,
+  isDomainStatusActive,
+  isDomainStatusTransferPending,
+} from "../../lib/domain-status";
 import { useI18n } from "../../i18n";
 import { useToast } from "../Toast";
 import { Button } from "../ui/button";
@@ -20,7 +25,7 @@ type ContactForm = {
   phone: string;
 };
 
-type MobileTab = "overview" | "contacts" | "settings";
+type MobileTab = "overview" | "contacts" | "billing" | "settings";
 
 function emptyForm(): ContactForm {
   return {
@@ -100,9 +105,17 @@ function parseForms(reg: DomainRegistrationByService): Record<DomainContactRole,
 type Props = {
   serviceId: string;
   canManageSettings?: boolean;
+  /** When set, Abrechnung appears as a tab (parity with other services). */
+  billingContent?: ReactNode;
+  showBillingTab?: boolean;
 };
 
-export function DomainServicePanel({ serviceId, canManageSettings = true }: Props) {
+export function DomainServicePanel({
+  serviceId,
+  canManageSettings = true,
+  billingContent,
+  showBillingTab = false,
+}: Props) {
   const { t, lang } = useI18n();
   const { show } = useToast();
   const [tab, setTab] = useState<MobileTab>("overview");
@@ -173,8 +186,14 @@ export function DomainServicePanel({ serviceId, canManageSettings = true }: Prop
   };
 
   const active = forms[contactRole];
-  const statusUpper = String(registration?.status || "").toUpperCase();
-  const canEditSettings = statusUpper === "ACTIVE" || statusUpper === "TRANSFER_PENDING";
+  const canEditSettings =
+    isDomainStatusActive(registration?.status) || isDomainStatusTransferPending(registration?.status);
+
+  useEffect(() => {
+    if (tab === "billing" && !(showBillingTab && billingContent)) {
+      setTab("overview");
+    }
+  }, [tab, showBillingTab, billingContent]);
 
   const updateField = (field: keyof ContactForm, value: string) => {
     setForms((prev) => ({
@@ -276,10 +295,15 @@ export function DomainServicePanel({ serviceId, canManageSettings = true }: Prop
   }
 
   const locale = lang === "de" ? "de-DE" : "en-GB";
+  const statusPending = isDomainStatusTransferPending(registration.status);
+  const statusActive = isDomainStatusActive(registration.status);
   const tabs: { id: MobileTab; label: string }[] = [
-    { id: "overview", label: t("overview") || "Übersicht" },
-    { id: "contacts", label: t("domainTabContacts") || t("domainPanelContactsTitle") },
-    { id: "settings", label: t("serverTabSettings") || "Einstellungen" },
+    { id: "overview", label: t("overview") },
+    { id: "contacts", label: t("domainTabContacts") },
+    ...(showBillingTab && billingContent
+      ? [{ id: "billing" as const, label: t("billing") }]
+      : []),
+    { id: "settings", label: t("serverTabSettings") },
   ];
 
   return (
@@ -312,10 +336,23 @@ export function DomainServicePanel({ serviceId, canManageSettings = true }: Prop
                 {registration.domain}
               </div>
             </div>
-            <span className="rounded-full bg-(--surface-soft) px-2.5 py-1 text-xs font-medium text-(--text-primary)">
-              {registration.status}
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                statusActive
+                  ? "bg-(--success)/10 text-(--success)"
+                  : statusPending
+                    ? "bg-(--warning)/10 text-(--warning)"
+                    : "bg-(--surface-soft) text-(--text-primary)"
+              }`}
+            >
+              {formatDomainStatusLabel(registration.status, (key) => t(key as Parameters<typeof t>[0]))}
             </span>
           </div>
+          {statusPending ? (
+            <p className="rounded-xl border border-(--warning)/30 bg-(--warning)/10 px-3 py-2 text-sm text-(--warning)">
+              {t("domainOverviewTransferPendingHint")}
+            </p>
+          ) : null}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <div className="text-[11px] text-(--text-muted)">{t("domainPanelExpiresLabel")}</div>
@@ -334,6 +371,8 @@ export function DomainServicePanel({ serviceId, canManageSettings = true }: Prop
           </div>
         </section>
       ) : null}
+
+      {tab === "billing" && billingContent ? billingContent : null}
 
       {tab === "contacts" ? (
         <section className="glass space-y-4 p-4">

@@ -214,7 +214,7 @@ function AuthenticatedShell() {
           }`}
         >
           <Header />
-          <div className="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 py-4 lg:px-6 lg:py-6">
+          <div className="app-main min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain px-4 pt-2 pb-4 lg:px-6 lg:py-6">
               {route.name === "dashboard" && <DashboardScreen />}
               {route.name === "servers" && <ServersScreen />}
               {route.name === "server" && <ServerDetailScreen id={route.id} />}

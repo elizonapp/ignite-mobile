@@ -26,6 +26,8 @@ export type DashboardServer = {
   terminationPending?: boolean;
   reinstallPending?: boolean;
   isDomainService?: boolean;
+  domainName?: string | null;
+  categoryFriendlyName?: string | null;
   providerAddress?: string | null;
   ploiStats?: {
     domain: string;
@@ -79,6 +81,11 @@ export type AuthUser = {
   dateOfBirth?: string | null;
   vatNumber?: string | null;
   locale?: string | null;
+  identVerified?: boolean;
+  nameChangedAt?: string | null;
+  nameChangeAllowed?: boolean;
+  nameChangeBlockedReason?: "under_14" | "cooldown" | null;
+  nameChangeCooldownEndsAt?: string | null;
   emailNotifications?: boolean;
   loginNotificationEmailOptIn?: boolean;
   servicePowerActionEmailOptIn?: boolean;

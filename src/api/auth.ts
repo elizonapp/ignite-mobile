@@ -23,6 +23,7 @@ export class AuthResource extends ResourceClient {
     locale?: string;
     companyName?: string;
     vatNumber?: string;
+    acknowledgeNameChangeReverification?: boolean;
   }) {
     return this.put<{ success: boolean; error?: string; user?: unknown }>("/api/auth/me", data);
   }

@@ -1847,7 +1847,21 @@ export const ApiErrorCodes = {
   subscriptionSpecialTerminationPending: "subscriptionSpecialTerminationPending",
   subscriptionBuyoutNotAvailable: "subscriptionBuyoutNotAvailable",
   subscriptionFeePercentCanOnlyBeLowered: "subscriptionFeePercentCanOnlyBeLowered",
+  disputeReasonRequired: "disputeReasonRequired",
+  disputeReasonTooShort: "disputeReasonTooShort",
+  disputeReasonTooLong: "disputeReasonTooLong",
+  disputeWindowExpired: "disputeWindowExpired",
+  disputeNotLexwareInvoice: "disputeNotLexwareInvoice",
+  disputeNotAllowed: "disputeNotAllowed",
+  voucherWithdrawalBusinessNotAllowed: "voucherWithdrawalBusinessNotAllowed",
+  voucherWithdrawalNotEligible: "voucherWithdrawalNotEligible",
+  voucherWithdrawalPeriodExpired: "voucherWithdrawalPeriodExpired",
+  voucherWithdrawalRefundFailed: "voucherWithdrawalRefundFailed",
   contractDowngradeNotAllowed: "contractDowngradeNotAllowed",
+  identVerificationMinAge16: "identVerificationMinAge16",
+  nameChangeNotAllowedUnder14: "nameChangeNotAllowedUnder14",
+  nameChangeCooldownActive: "nameChangeCooldownActive",
+  nameChangeReverificationAckRequired: "nameChangeReverificationAckRequired",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCodes)[keyof typeof ApiErrorCodes];

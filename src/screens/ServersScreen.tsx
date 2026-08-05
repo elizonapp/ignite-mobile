@@ -39,7 +39,7 @@ export function ServersScreen() {
   }, [maintenance]);
 
   return (
-    <div className="mt-8 mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
+    <div className="mx-auto flex w-full max-w-screen lg:max-w-6xl flex-1 flex-col page-fullwidth">
       <main className="safe-x flex-1 space-y-4 pb-24 pt-2">
         <MobilePreordersSection />
         <div className="relative">
