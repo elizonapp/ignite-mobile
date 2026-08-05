@@ -74,4 +74,21 @@ if [[ -f "$PACKAGE_SWIFT" ]]; then
   sed -i '' '/path:/s|\\|/|g' "$PACKAGE_SWIFT"
 fi
 
+# Xcode Cloud enables IDEPackageOnlyUseVersionsFromResolvedFile by default.
+# `cap sync` rewrites CapApp-SPM/Package.swift (e.g. capacitor-swift-pm version),
+# which invalidates the committed Package.resolved and fails the archive unless
+# automatic resolution is allowed and the resolved file is refreshed.
+echo "==> Allowing SwiftPM to refresh Package.resolved after cap sync"
+defaults delete com.apple.dt.Xcode IDEPackageOnlyUseVersionsFromResolvedFile 2>/dev/null || true
+defaults delete com.apple.dt.Xcode IDEDisableAutomaticPackageResolution 2>/dev/null || true
+
+PACKAGE_RESOLVED="ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
+rm -f "$PACKAGE_RESOLVED"
+
+echo "==> Resolving Swift package dependencies"
+(
+  cd ios/App
+  xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+)
+
 echo "==> Post-clone complete"
